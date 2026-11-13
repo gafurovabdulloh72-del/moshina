@@ -191,7 +191,7 @@ void main(){
   c = uTM == 0 ? NeutralToneMapping(c) : uTM == 1 ? ACESFilmicToneMapping(c) : AgXToneMapping(c);
   c = clamp(c, 0.0, 1.0);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = max(mix(vec3(l), c, uSat), 0.0);
-  c = clamp((c - 0.18) * uCon + 0.18, 0.0, 1.0);
+  float l2 = max((l - 0.18) * uCon + 0.18, 0.0); c = clamp(c * (l2 / max(l, 1e-4)), 0.0, 1.0); // kontrast faqat yorqinlikka (to'yinganlik oshmasin)
   vec2 q = (vUv - 0.5) * vec2(1.0, 0.8); c *= 1.0 - uVig * smoothstep(0.2, 0.75, length(q));
   gl_FragColor = vec4(c, 1.0);
   #include <colorspace_fragment>
@@ -201,7 +201,7 @@ void main(){
 export function initGfx(game) {
   const { renderer, scene, camera, sky } = game;
   // tone mapping operatori bir marta (0-daraja materiallari ham shuni ishlatadi) — o'yin davomida almashtirilmaydi
-  const TM = [THREE.NeutralToneMapping, THREE.ACESFilmicToneMapping, THREE.AgXToneMapping], post = { tm: 1, exposure: 0.74, nightExp: 1.35, sat: 1.0, con: 1.0, vig: 0.14, bloom: 0.9, ao: 0.85, shafts: 1.0 };
+  const TM = [THREE.NeutralToneMapping, THREE.ACESFilmicToneMapping, THREE.AgXToneMapping], post = { tm: 1, exposure: 0.74, nightExp: 1.35, sat: 1.0, con: 1.04, vig: 0.14, bloom: 0.9, ao: 0.85, shafts: 1.0 };
   renderer.toneMapping = TM[post.tm]; renderer.toneMappingExposure = post.exposure;
 
   // ---------- relyef: mayda tekstura (rang shovqini) ----------
