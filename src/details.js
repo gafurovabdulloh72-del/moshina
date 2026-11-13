@@ -89,6 +89,10 @@ if (aF > 0.5) transformed.y -= aW * 0.07 * (1.0 - gC);
 // Hovuz/favvora suvi: kichik to'lqinlanadigan tekislik (osmon aksi scene.environment orqali)
 let WATER = null;
 export function waterSurface(w, d, round = false) {
+  const geo = round ? new THREE.CircleGeometry(w, 24).rotateX(-Math.PI / 2) : new THREE.PlaneGeometry(w, d, 10, 12).rotateX(-Math.PI / 2);
+  const mesh = new THREE.Mesh(geo, waterMat()); mesh.receiveShadow = true; return mesh;
+}
+function waterMat() {
   if (!WATER) {
     const m = (WATER = new THREE.MeshStandardMaterial({ color: 0x2f8fb8, roughness: 0.06, metalness: 0.0, transparent: true, opacity: 0.82, envMapIntensity: 1.3 }));
     const prev = m.onBeforeCompile;
@@ -105,8 +109,7 @@ transformed.y += 0.022 * sin(wa) + 0.018 * sin(wb) + 0.012 * sin(wc);
     };
     m.customProgramCacheKey = () => 'safar-hovuz-1' + (prev ? prev.toString().length : '');
   }
-  const geo = round ? new THREE.CircleGeometry(w, 24).rotateX(-Math.PI / 2) : new THREE.PlaneGeometry(w, d, 10, 12).rotateX(-Math.PI / 2);
-  const mesh = new THREE.Mesh(geo, WATER); mesh.receiveShadow = true; return mesh;
+  return WATER;
 }
 
 // ======================= MATN ATLASI (yo'l belgilari) =======================
@@ -149,7 +152,7 @@ const atlas = () => {
 };
 
 export function buildDetails(scene, game, site) {
-  const R = T.roads, rng = mulberry32(90417), out = { counts: {} };
+  const t0 = performance.now(), R = T.roads, rng = mulberry32(90417), out = { counts: {} };
   const cnt = (k) => (out.counts[k] = (out.counts[k] || 0) + 1);
   out.at = {}; const at = (k, x, z, yaw) => { const L = (out.at[k] = out.at[k] || []); if (L.length < 12) L.push([+x.toFixed(1), +gy(x, z).toFixed(1), +z.toFixed(1), +yaw.toFixed(2)]); }; // sinov/rasm uchun namunaviy joylar
   // ---------- dunyo bo'laklari (har biri: yorug'langan + yorug' + simlar, masofaga qarab ko'rinadi) ----------
@@ -190,7 +193,7 @@ export function buildDetails(scene, game, site) {
     const y = gy(x, z); if (!u) return;
     put(x, y, z, yaw, (g) => { g.color(0x9aa0a8); if (twoPosts) { g.box(-w * 0.32, (top + h / 2) / 2, -0.03, 0.08, top + h / 2, 0.08); g.box(w * 0.32, (top + h / 2) / 2, -0.03, 0.08, top + h / 2, 0.08); } else g.cyl(6, 0.045, 0.04, 0, top + h * 0.5);
       g.color(0x8a9098); if (back === 'rect') g.box(0, top, -0.01, w + 0.02, h + 0.02, 0.025); else if (back === 'disc') { g.push().translate(0, top, -0.01); g.prismZ(14, w / 2, 0.025); g.pop(); } else { g.push().translate(0, top - h * 0.12, -0.01); g.prismZ(3, w * 0.58, 0.025, { rot: Math.PI }); g.pop(); } });
-    plate(x, y + top, z, yaw, w, h, u); COL.addCircle(x, z, twoPosts ? w * 0.4 : 0.12, y - 1, y + top + h / 2); excl(x, z, 1.6); };
+    plate(x, y + top, z, yaw, w, h, u); COL.addCircle(x, z, twoPosts ? w * 0.4 : 0.12, y - 1, y + top + h / 2); };
   // 1a. chorrahalar oldida yo'nalish ko'rsatkichlari
   for (const N of nodes) {
     if (N.edges.length < 3) continue;
@@ -268,11 +271,11 @@ export function buildDetails(scene, game, site) {
     // 2c. yog'och elektr ustunlari va osilgan simlar (chap tomonda, ~48 m oraliq)
     let prev = null;
     for (let k = 6; k < e.count - 6; k += 12) {
-      const i = e.start + k, tx = R.tx[i], tz = R.tz[i], off = R.hw[i] + 5.6, x = R.x[i] + tz * off, z = R.z[i] - tx * off;
-      if (!dry(x, z) || !roadClear(x, z, 4.2) || solidNear(x, z, 1.2) || R.bridge[i] || (T.placeBy.uy && Math.hypot(x - T.placeBy.uy.x, z - T.placeBy.uy.z) < 45)) { prev = null; continue; }
+      const i = e.start + k, tx = R.tx[i], tz = R.tz[i], off = R.hw[i] + 3.9, x = R.x[i] + tz * off, z = R.z[i] - tx * off;
+      if (!dry(x, z) || !roadClear(x, z, 3.4) || solidNear(x, z, 1.2) || R.bridge[i] || (T.placeBy.uy && Math.hypot(x - T.placeBy.uy.x, z - T.placeBy.uy.z) < 45)) { prev = null; continue; }
       const y = gy(x, z), yaw = Math.atan2(tx, tz), H = 8.2, lean = (rng() - 0.5) * 0.03;
       put(x, y, z, yaw, (g) => { g.rotZ(lean); g.color(0x5f5040).cyl(6, 0.14, 0.1, -0.3, H, { shade: 0.06 }); g.color(0x4e4234).box(0, H - 0.55, 0, 2.1, 0.12, 0.13); g.box(-0.45, H - 0.85, 0, 0.06, 0.55, 0.06, { ox: 0.3 }); g.color(0xd8dcd8); for (const ax of [-0.9, 0.9]) { g.push().translate(ax, 0, 0); g.cyl(6, 0.055, 0.04, H - 0.49, H - 0.3); g.pop(); } g.cyl(6, 0.055, 0.04, H, H + 0.19); });
-      COL.addCircle(x, z, 0.16, y - 1, y + H); excl(x, z, 2.2); cnt('ustun'); at('ustun', x, z, yaw);
+      COL.addCircle(x, z, 0.16, y - 1, y + H); cnt('ustun'); at('ustun', x, z, yaw);
       const c = Math.cos(yaw), s = Math.sin(yaw), tops = [-0.9, 0, 0.9].map((ax) => [x + ax * c, y + H - 0.28 + (ax ? 0 : 0.46), z - ax * s]);
       if (prev && Math.hypot(prev[1][0] - x, prev[1][2] - z) < 75) for (let w = 0; w < 3; w++) { const a = prev[w], b = tops[w], L = Math.hypot(a[0] - b[0], a[2] - b[2]); wire(a, b, 0.012 * L + 0.25); }
       prev = tops;
@@ -288,7 +291,7 @@ export function buildDetails(scene, game, site) {
       if (!dry(x, z) || !roadClear(x, z, 0.9) || solidNear(x, z, 0.9) || known.some((q) => Math.hypot(q.x - x, q.z - z) < 20)) continue;
       acc = 0; const y = gy(x, z), yaw = side > 0 ? Math.atan2(tx, tz) : Math.atan2(-tx, -tz), H = 6.6; // +x tomoni yo'lga qaragan
       put(x, y, z, yaw, (g, gl) => { g.color(0x8c9096).cyl(7, 0.11, 0.07, 0, H, { shade: 0.05 }); g.push().translate(0, H - 0.1, 0).rotZ(-0.12); g.box(0.75, 0, 0, 1.6, 0.07, 0.07); g.pop(); g.color(0x5a5e66).box(1.55, H - 0.25, 0, 0.62, 0.14, 0.3, { tx: 0.8, tz: 0.9 }); gl.color(PAL.lamp).box(1.55, H - 0.34, 0, 0.46, 0.04, 0.2); });
-      const c = Math.cos(yaw), s = Math.sin(yaw), lx = x + 1.55 * c, lz = z - 1.55 * s; COL.addCircle(x, z, 0.14, y - 1, y + H); excl(x, z, 2); lamps.push({ x: lx, z: lz, y: Math.max(gy(lx, lz), roadY(i)) + 0.07, s: 11 }); site.lights.push({ x: lx, y: y + H - 0.4, z: lz, hex: 0xffd9a0, power: 0.85 }); known.push({ x, z }); side = -side; cnt('chiroq'); at('chiroq', x, z, yaw); } }
+      const c = Math.cos(yaw), s = Math.sin(yaw), lx = x + 1.55 * c, lz = z - 1.55 * s; COL.addCircle(x, z, 0.14, y - 1, y + H); lamps.push({ x: lx, z: lz, y: Math.max(gy(lx, lz), roadY(i)) + 0.07, s: 11 }); site.lights.push({ x: lx, y: y + H - 0.4, z: lz, hex: 0xffd9a0, power: 0.85 }); known.push({ x, z }); side = -side; cnt('chiroq'); at('chiroq', x, z, yaw); } }
   }
   for (const q of LMP) lamps.push({ x: q.x, z: q.z, y: gy(q.x, q.z) + 0.07, s: 9 });
   // avtobus bekati (qishloq markazidan o'tadigan yo'lda)
@@ -302,6 +305,18 @@ export function buildDetails(scene, game, site) {
       COL.addBox(x, z, 2.2, 1.0, yaw, y - 1, y + 2.8); excl(x, z, 5);
       const c = Math.cos(yaw), s = Math.sin(yaw), sx2 = x + 2.9 * c + 1.0 * s, sz2 = z - 2.9 * s + 1.0 * c; signPost(sx2, sz2, yaw, 0.6, 0.6, ico('bus', 0), 2.3, 'rect'); done = true; cnt('bekat'); at('bekat', x, z, yaw); }
   }
+
+  // aryq: beton bilan qoplangan sug'orish ariqchasi (Bog'iston ko'chalari bo'ylab, yo'lning chap chetida)
+  const AQ = [];
+  for (const id of ['bogiston']) { const p = T.placeBy[id]; if (!p) continue;
+    for (const e of edges) { let prev = null; for (let k = 1; k < e.count - 1; k++) { const i = e.start + k; const tx = R.tx[i], tz = R.tz[i], hw = R.hw[i], o0 = hw + 0.75, o1 = hw + 1.45, om = (o0 + o1) / 2, mx = R.x[i] + tz * om, mz = R.z[i] - tx * om;
+      let ok = Math.hypot(R.x[i] - p.x, R.z[i] - p.z) < p.r + 10 && !R.bridge[i] && dry(mx, mz); if (ok) { const nr = T.nearestRoad(mx, mz, 2); ok = nr.edge === e.id && nr.d - nr.hw > 0.5 && !solidNear(mx, mz, 0.45); }
+      if (!ok) { prev = null; continue; }
+      const y = Math.max(gy(mx, mz), R.y[i]) + 0.05, row = [[R.x[i] + tz * o0, y, R.z[i] - tx * o0], [R.x[i] + tz * o1, y, R.z[i] - tx * o1], tx, tz];
+      if (prev) { const [a, b] = prev, [c2, d] = row; AQ.push(a, c2, d, a, d, b); const L = Math.hypot(c2[0] - a[0], c2[2] - a[2]), yaw = Math.atan2(c2[0] - a[0], c2[2] - a[2]);
+        for (const [q0, q1, sd] of [[a, c2, -1], [b, d, 1]]) put((q0[0] + q1[0]) / 2, y - 0.05, (q0[2] + q1[2]) / 2, yaw, (g) => { g.color(0xb4b0a6).box(sd * 0.07, 0.11, 0, 0.14, 0.22, L + 0.02); }); }
+      prev = row; } } }
+  if (AQ.length) { const P = new Float32Array(AQ.length * 3), N = new Float32Array(AQ.length * 3); AQ.forEach((q, k) => { P[k * 3] = q[0]; P[k * 3 + 1] = q[1] + 0.07; P[k * 3 + 2] = q[2]; N[k * 3 + 1] = 1; }); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.computeBoundingSphere(); const m = new THREE.Mesh(g, waterMat()); m.receiveShadow = true; m.matrixAutoUpdate = false; m.frustumCulled = false; scene.add(m); out.aryq = m; /* doim chiziladi: sheyder yuklanishda yig'ilsin */ cnt('aryq'); }
 
   // ---------- 4) hovli detallari: to'siqlar, pochta qutisi, o'tin, kir arqoni, gul tuvaklari, axlat qutisi ----------
   const LAUNDRY = []; // [x,y,z,yaw,w,h,hex]
@@ -347,7 +362,7 @@ export function buildDetails(scene, game, site) {
   for (const [id, n] of [['bogiston', 3], ['bandargoh', 1], ['tegirmon', 1], ['karvon', 1]]) { const p = T.placeBy[id]; if (!p) continue; let got = 0;
     for (let t = 0; t < 300 && got < n; t++) { const a = rng() * 6.283, d = 10 + rng() * p.r, x = p.x + Math.cos(a) * d, z = p.z + Math.sin(a) * d, nr = T.nearestRoad(x, z, 2); if (nr.edge < 0 || nr.d - nr.hw < 2.2 || nr.d - nr.hw > 5 || !dry(x, z) || solidNear(x, z, 1.4)) continue;
       const y = gy(x, z), yaw = Math.atan2(nr.tx, nr.tz); put(x, y, z, yaw, (g) => { g.color(PAL.stoneD).box(0, 0.06, 0, 1.2, 0.12, 1.2); g.color(0x2f5f8a).cyl(8, 0.12, 0.1, 0.1, 1.15, { shade: 0.1 }); g.color(0x24496a).blob(0.13, 0, { cy: 1.18, sy: 0.8 }); g.push().translate(0, 0.78, 0.14).rotX(0.5); g.box(0, 0, 0.18, 0.06, 0.06, 0.4); g.pop(); g.push().translate(0, 1.15, 0).rotX(-0.35); g.box(0, 0, -0.35, 0.05, 0.05, 0.75); g.pop(); g.color(0x4a4e58).box(0, 0.14, 0.38, 0.4, 0.04, 0.3); });
-      COL.addCircle(x, z, 0.25, y - 1, y + 1.3); excl(x, z, 1.8); got++; cnt('nasos'); at('nasos', x, z, yaw); } }
+      COL.addCircle(x, z, 0.25, y - 1, y + 1.3); got++; cnt('nasos'); at('nasos', x, z, yaw); } }
 
   // ---------- qurish: bo'laklar ----------
   const lineMat = new THREE.LineBasicMaterial({ color: 0x1b1c1f, fog: true }), group = [];
@@ -364,7 +379,7 @@ export function buildDetails(scene, game, site) {
   // ko'cha chirog'i ostidagi yumshoq yorug'lik dog'i (haqiqiy chiroq emas — qo'shiluvchi tekislik)
   const poolTex = (() => { const S = 64, cv = document.createElement('canvas'); cv.width = cv.height = S; const cx = cv.getContext('2d'), gr = cx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(0.7, 'rgba(255,255,255,0.14)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); cx.fillStyle = gr; cx.fillRect(0, 0, S, S); return new THREE.CanvasTexture(cv); })();
   const poolMat = new THREE.MeshBasicMaterial({ map: poolTex, color: 0xffc070, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
-  const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), poolMat, Math.max(1, lamps.length)); pools.count = lamps.length; pools.frustumCulled = false; pools.renderOrder = 2;
+  const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), poolMat, Math.max(1, lamps.length)); pools.count = lamps.length; pools.frustumCulled = false; pools.renderOrder = 2; pools.onAfterRender = () => { pools.userData.ok = true; };
   { const o = new THREE.Object3D(); lamps.forEach((l, i) => { o.position.set(l.x, l.y, l.z); o.scale.set(l.s, 1, l.s); o.updateMatrix(); pools.setMatrixAt(i, o.matrix); }); } scene.add(pools);
   // mato: bayroqlar va kirlar
   const cmat = clothMat(), dum = new THREE.Object3D(), col = new THREE.Color();
@@ -381,7 +396,7 @@ export function buildDetails(scene, game, site) {
     const night = game.sky ? game.sky.night : 0; DU.uNight.value = night; DU.uHour.value = game.hour != null ? game.hour : 12;
     const cx = camera.position.x, cz = camera.position.z;
     for (const o of group) { const d2 = (o.x - cx) ** 2 + (o.z - cz) ** 2; for (const [m, r] of o.objs) m.visible = d2 < (r + CH * 0.71) ** 2; }
-    poolMat.opacity = smoothstep(0.25, 0.75, night) * 0.5; pools.visible = poolMat.opacity > 0.005;
+    poolMat.opacity = smoothstep(0.25, 0.75, night) * 0.5; pools.visible = poolMat.opacity > 0.005 || !pools.userData.ok; /* birinchi kadrda (kunduzi ham) bir marta chiziladi — keyin sheyder yig'ilmaydi */
     plateMat.emissiveIntensity = night * 0.1;
   };
   const prevBR = scene.onBeforeRender;
@@ -392,16 +407,16 @@ export function buildDetails(scene, game, site) {
   for (const c of CHIM) { c.acc = 0; c.k = ((c.ph * 13.7) % 1 + 1) % 1; }
   site.anim.push((dt, t, night) => {
     const fx = game.fx; if (!fx || typeof fx.emit !== 'function' || !game.camera || dt <= 0) return;
-    const cp = game.camera.position, share = 0.32 + 0.45 * night, wx = WINDDIR[0], wz = WINDDIR[1];
+    const cp = game.camera.position, share = 0.5 + 0.38 * night, wx = WINDDIR[0], wz = WINDDIR[1];
     for (const c of CHIM) {
       if (c.lv != null && (!home || home.lvl !== c.lv)) continue;
       if ((c.x - cp.x) ** 2 + (c.z - cp.z) ** 2 > 300 * 300) continue;
-      const on = 0.5 + 0.5 * Math.sin(t * 0.045 + c.ph) * Math.sin(t * 0.017 + c.ph * 2.3); if (c.k > share || on < 0.3) continue;
+      const on = 0.5 + 0.5 * Math.sin(t * 0.045 + c.ph) * Math.sin(t * 0.017 + c.ph * 2.3); if (c.k > share || on < 0.22) continue;
       c.acc += dt * (1.6 + 2.2 * on); const g = 0.6 + 0.4 * Math.sin(t * 0.41 + c.ph);
-      while (c.acc > 1) { c.acc -= 1; const sh = night > 0.5 ? 0x4a4c52 : on > 0.8 ? 0x8e8c88 : 0xb4b2ae; fx.emit(c.x + (Math.random() - 0.5) * 0.25, c.y, c.z + (Math.random() - 0.5) * 0.25, wx * g * 0.9 + (Math.random() - 0.5) * 0.3, 0.75 + Math.random() * 0.35, wz * g * 0.9 + (Math.random() - 0.5) * 0.3, 5.5 + Math.random() * 2.5, 0.55 + Math.random() * 0.3, sh, 0.26 + 0.1 * on, 2.6, -0.04, 0.12); }
+      while (c.acc > 1) { c.acc -= 1; const sh = night > 0.5 ? 0x24262c : night > 0.2 ? 0x5a5a5e : on > 0.8 ? 0x8e8c88 : 0xb4b2ae; fx.emit(c.x + (Math.random() - 0.5) * 0.25, c.y, c.z + (Math.random() - 0.5) * 0.25, wx * g * 0.9 + (Math.random() - 0.5) * 0.3, 0.75 + Math.random() * 0.35, wz * g * 0.9 + (Math.random() - 0.5) * 0.3, 5.5 + Math.random() * 2.5, 0.55 + Math.random() * 0.3, sh, 0.26 + 0.1 * on, 2.6, -0.04, 0.12); }
     }
     if (home && home.waterFx) for (const w of home.waterFx) { if (!w.grp.visible || (w.x - cp.x) ** 2 + (w.z - cp.z) ** 2 > 120 * 120) continue; w.acc = (w.acc || 0) + dt * 24; while (w.acc > 1) { w.acc -= 1; const a = Math.random() * 6.283, s = 0.35 + Math.random() * 0.35; fx.emit(w.x, w.y, w.z, Math.cos(a) * s, 2.4 + Math.random() * 0.8, Math.sin(a) * s, 0.75, 0.16, 0xdff2ff, 0.55, 0.4, 9.8, 0); } }
   });
-  out.sync = sync; out.chimneys = CHIM;
+  out.sync = sync; out.chimneys = CHIM; out.ms = Math.round(performance.now() - t0); // qurish vaqti (sinov uchun)
   return out;
 }
