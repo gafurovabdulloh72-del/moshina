@@ -109,8 +109,8 @@ void main(){
   { vec3 m = uMoonDir; float cm = dot(d, m); const float r = 0.0125;
     if (cm > 0.9995) { vec3 t1 = normalize(cross(m, vec3(0.0, 1.0, 0.0))), t2 = cross(t1, m); vec2 l = vec2(dot(d, t1), dot(d, t2)) / r; float l2 = dot(l, l);
       if (l2 < 1.0) { vec3 n = t1 * l.x + t2 * l.y - m * sqrt(1.0 - l2); float lit = max(dot(n, uSunDir), 0.0); float alb = 0.55 + 0.45 * smoothstep(0.35, 0.7, texture(tNoise, l * 0.21 + 0.37).r) * (0.8 + 0.2 * texture(tNoise, l * 0.6).b);
-        vec3 mc = uMoonCol * alb * (lit + 0.025) * smoothstep(1.0, 0.92, l2); col = mix(col, sky + mc, hor * (env ? 0.0 : 1.0)); }
-      col += uMoonCol * (0.004 * exp(-(1.0 - cm) * 2500.0) + 0.0012 * exp(-(1.0 - cm) * 300.0)) * hor; } }
+        vec3 mc = uMoonCol * alb * (lit + 0.025) * smoothstep(1.0, 0.92, l2); col = mix(col, sky + mc, hor * (env ? 0.0 : 1.0)); } }
+    col += uMoonCol * (0.004 * exp(-(1.0 - cm) * 2500.0) + 0.0012 * exp(-(1.0 - cm) * 300.0)) * hor * step(0.0, cm); }
   // quyosh diski (chegarasi qorayib boradi) va atrofidagi nur
   { float cs = dot(d, uSunDir); float x = (1.0 - cs) / 3.6e-5;
     vec3 sun = uSunDisc * (smoothstep(1.08, 0.92, x) * (1.0 - 0.55 * (1.0 - sqrt(max(1.0 - x, 0.0)))) * (env ? 0.0 : 1.0) + 0.012 * exp(-x * 0.06) + 0.0012 * exp(-x * 0.006));
@@ -138,6 +138,7 @@ void main(){
 }`;
 
 const OCC = 256; // relyef soyasi xaritasi o'lchami
+const ENV_K = 0.8; // osmon yoritishi kuchi (quyosh va soya qarama-qarshiligi uchun)
 export class Sky {
   constructor(scene, opts = {}) {
     this.scene = scene;
@@ -191,7 +192,7 @@ export class Sky {
   // atmosfera bo'yicha ranglar (soat kam o'zgarsa qayta hisoblanmaydi)
   _atmo(S) {
     const c = this._cache || (this._cache = { s: new THREE.Vector3(9, 9, 9), zen: [0, 0, 0], hor: [0, 0, 0], amb: [0, 0, 0], sunT: [0, 0, 0], cloudT: [0, 0, 0] });
-    if (c.s.distanceToSquared(S) < 1e-7) return c;
+    if (c.s.distanceToSquared(S) < 2e-6) return c;
     c.s.copy(S);
     const sy = S.y, sx = Math.sqrt(Math.max(1 - sy * sy, 1e-4)), Sc = [sx, sy, 0], E = this.lutU.uE.value, hz = this.lutU.uHaze.value, ms = this.lutU.uMs.value, o = this._c;
     scatterJS([0, 1, 0], Sc, E, hz, ms, c.zen);
@@ -238,7 +239,7 @@ export class Sky {
     const fl = [0.045 * flo, 0.06 * flo, 0.15 * flo];
     this.du.uEnvFloor.value.setRGB(fl[0], fl[1], fl[2]);
     const g = this.du.uGround.value.setRGB(gAlb[0] * (sunIrr * this.sun.color.r + amb.r * 1.0), gAlb[1] * (sunIrr * this.sun.color.g + amb.g * 1.0), gAlb[2] * (sunIrr * this.sun.color.b + amb.b * 1.0));
-    this.hemi.color.setRGB(amb.r + fl[0], amb.g + fl[1], amb.b + fl[2]); this.hemi.groundColor.setRGB(g.r + fl[0], g.g + fl[1], g.b + fl[2]); this.hemi.intensity = Math.PI;
+    this.hemi.color.setRGB(amb.r + fl[0], amb.g + fl[1], amb.b + fl[2]); this.hemi.groundColor.setRGB(g.r + fl[0], g.g + fl[1], g.b + fl[2]); this.hemi.intensity = Math.PI * ENV_K; this.scene.environmentIntensity = ENV_K;
     // gumbaz uniformlari
     const E = this.lutU.uE.value; this.du.uSunDisc.value.setRGB(ST[0], ST[1], ST[2]).multiplyScalar(E * 4.0);
     const moonK = 0.9 * (0.4 + 0.6 * dark); this.du.uMoonCol.value.setRGB(0.95 * moonK, 0.96 * moonK, 1.0 * moonK);
@@ -247,7 +248,7 @@ export class Sky {
     if (sunEl > -0.06) { cl.copy(this.sunDir); LU.uCloudSun.value.setRGB(ct[0], ct[1], ct[2]).multiplyScalar(E * 0.36); }
     else { cl.copy(moonDir); LU.uCloudSun.value.setRGB(0.6, 0.7, 0.95).multiplyScalar(0.012 * moonUp); }
     { const l = amb.r * 0.2126 + amb.g * 0.7152 + amb.b * 0.0722; LU.uCloudAmb.value.setRGB(l, l, l).lerp(amb, 0.45).multiplyScalar(1.15); }
-    { const sr = (h / 24) * Math.PI * 2, ax = new THREE.Vector3(0.25, 0.9, 0.35).normalize(); this.du.uStarRot.value.setFromMatrix4(new THREE.Matrix4().makeRotationAxis(ax, sr)); }
+    { const ax = this._sax || (this._sax = new THREE.Vector3(0.25, 0.9, 0.35).normalize()), m4 = this._m4 || (this._m4 = new THREE.Matrix4()); this.du.uStarRot.value.setFromMatrix4(m4.makeRotationAxis(ax, (h / 24) * Math.PI * 2)); }
     // umumiy uniformlar
     LU.uSunDir.value.copy(this.sunDir); LU.uMoonDir.value.copy(moonDir); LU.uLightDir.value.copy(this.lightDir); LU.uNight.value = this.night; LU.uScotopic.value = LOOK.scotopic * dark;
     LU.uSunCol.value.copy(this.sun.color).multiplyScalar(this.sun.intensity);
@@ -271,7 +272,7 @@ export class Sky {
     if (full || this._occRow < 0) { if (this._occDir.angleTo(L) < 0.006 && !full) return; this._occNext.copy(L); this._occRow = 0; }
     const D = this._occNext, hl = Math.hypot(D.x, D.z) || 1e-6, dx = D.x / hl, dz = D.z / hl, tn = D.y / hl;
     const gh = T.grid.h, NV = T.NV, N = T.N, CELL = T.CELL, HALF = T.HALF, step = T.SIZE / OCC, data = this.occData;
-    const rows = full ? OCC : 5;
+    const rows = full ? OCC : 4;
     for (let n = 0; n < rows && this._occRow < OCC; n++, this._occRow++) {
       const j = this._occRow, z0 = -HALF + (j + 0.5) * step;
       for (let i = 0; i < OCC; i++) {

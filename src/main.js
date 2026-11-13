@@ -192,7 +192,7 @@ function update(dt) {
   g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt });
   g.sky.update(dt, g.camera, focus);
   g.terrain.update(g.camera); g.props.update(g.camera); g.detail.update(g.camera);
-  g.gfx.update(dt);
+  { let dh = Math.abs(g.hour - (g._envH == null ? -99 : g._envH)); if (dh > 12) dh = 24 - dh; const envF = dh > 0.1; if (envF) g._envH = g.hour; g.gfx.update(dt, envF); } // osmon yoritishi (PMREM) ~5 s da bir yangilanadi
   g.fx.update(dt, g.camera);
   const surf = car.wheels[2].surf, bio = T.biomeAt(focus.x, focus.z);
   let fire = 0; if (g.site.fires) for (const f of g.site.fires) { const d = Math.hypot(f.x - focus.x, f.z - focus.z); if (d < 30) fire = Math.max(fire, 1 - d / 30); }
