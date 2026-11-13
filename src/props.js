@@ -29,10 +29,13 @@ const vary = (c, x, z, type) => {
 
 // Manzillardagi (places/home) qo'lda qo'yilgan daraxtlar uchun navbat: buildProps'dan OLDIN chaqiriladi, daraxt nusxali tizimga (barg kartalari, LOD, shamol) qo'shiladi.
 // Kollayder qo'shilmaydi (manzil o'zinikini qo'yadi). kind: 0 keng bargli (pushti hex bo'lsa — olcha), 1 terak, 2 archa
+// Qaytaradi: true — navbatga olindi; false — buildProps allaqachon ishlagan (chaqiruvchi eski statik geometriyani chizsin)
 export const EXTRA_TREES = [];
+let extraDone = false;
 export function queueTree(x, y, z, s, hex, kind = 0, rot = (x * 12.9898 + z * 78.233) % 6.283) {
+  if (extraDone) return false;
   const type = kind === 1 ? 'cypress' : kind === 2 ? 'pine' : ((hex >> 16) & 255) > 200 && (hex & 255) > 150 ? 'blossom' : 'round';
-  EXTRA_TREES.push([type, x, y, z, s, rot, hex]);
+  EXTRA_TREES.push([type, x, y, z, s, rot, hex]); return true;
 }
 export function buildProps(scene, game) {
   const P = floraProtos(), LM = leafMaterial();
@@ -134,6 +137,7 @@ export function buildProps(scene, game) {
         break;
     }
   }
+  extraDone = true;
   for (const [type, x, y, z, s, rot, hex] of EXTRA_TREES) { // kollayder va g'ildirak do'ngchasisiz
     const ci = clamp(((x + T.HALF) / CS) | 0, 0, NCH - 1), cj = clamp(((z + T.HALF) / CS) | 0, 0, NCH - 1), c = chunks[cj * NCH + ci] || (chunks[cj * NCH + ci] = { ci, cj, items: {} });
     (c.items[type] || (c.items[type] = [])).push(x, y, z, s, rot, hex); cnt[type] = (cnt[type] || 0) + 1;
