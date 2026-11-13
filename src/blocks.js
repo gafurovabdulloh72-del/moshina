@@ -4,6 +4,11 @@ import { hexLin } from './util.js';
 // O'zaro ta'sir nuqtalari (skameyka, quduq, rasta): piyoda [E] bilan ishlatiladi
 export const SPOTS = [];
 const spot = (g, k) => SPOTS.push({ k, x: g.m[9], y: g.m[10], z: g.m[11], yaw: Math.atan2(g.m[2], g.m[8]) });
+// Tirik detallar uchun ro'yxatlar (details.js o'qiydi): mo'rilar (tutun), bayroqlar (hilpiraydigan mato)
+export const CHIMNEYS = [], FLAGS = [], LAMPS = [];
+// quruvchi matritsasi bo'yicha dunyo nuqtasi va joyga bog'liq barqaror tasodif (st.rng oqimiga tegmaydi)
+export const wpt = (g, x, y, z) => { const m = g.m; return [m[0] * x + m[1] * y + m[2] * z + m[9], m[3] * x + m[4] * y + m[5] * z + m[10], m[6] * x + m[7] * y + m[8] * z + m[11]]; };
+export const hashP = (x, z, k = 0) => { const v = Math.sin(x * 12.9898 + z * 78.233 + k * 37.719) * 43758.5453; return v - Math.floor(v); };
 export const PAL = {
   wall: [0xf3ead6, 0xefe2c4, 0xf7efe0, 0xe9d9b8, 0xf2dcc0], roof: [0xc8553a, 0xb84a34, 0xd06244, 0xa9462f], wood: 0x9a6a42, woodD: 0x6e4a30, woodL: 0xc79a66,
   stone: 0xb9b4a8, stoneD: 0x8f8a80, door: [0x2f7fb0, 0x3b8f6a, 0x8a5a36, 0xb84a34], win: 0xffd98a, lamp: 0xffe2a0,
@@ -20,11 +25,17 @@ export function house(g, gl, o) {
   if (o.roof === 'flat') { g.color(o.wall || PAL.wall[0]).box(0, ry + 0.25, 0, w + 0.3, 0.5, d + 0.3); g.color(PAL.clayD).box(0, ry + 0.52, 0, w - 0.4, 0.06, d - 0.4); }
   else if (o.roof === 'hip') g.hip(w, d, Math.min(w, d) * 0.36, ry, 0.55, 0.35);
   else { g.push().rotY(w >= d ? Math.PI / 2 : 0); g.gable(Math.min(w, d), Math.max(w, d), Math.min(w, d) * 0.42, ry, 0.5); g.pop(); }
-  // eshik (old tomon +z)
+  const hx = g.m[9], hz = g.m[11], hh = (k) => hashP(hx, hz, k);
+  // eshik (old tomon +z): kesaki, zinapoya, tutqich, ustida soyabon va chiroq
   g.color(o.door || PAL.door[0]).box(0, 0.4 + 1.05, d / 2 + 0.04, 1.1, 2.1, 0.1);
-  g.color(PAL.woodD).box(0, 0.4 + 2.2, d / 2 + 0.05, 1.4, 0.14, 0.14);
-  // derazalar
-  const win = (x, y, z, ry) => { g.push().translate(x, y, z).rotY(ry); g.color(PAL.woodD).box(0, 0, 0.03, 1.15, 1.3, 0.08); gl.push(); gl.m = g.m.slice(); gl.flip = g.flip; gl.color(PAL.win).box(0, 0, 0.06, 0.9, 1.05, 0.06); gl.pop(); g.color(PAL.woodD).box(0, 0, 0.1, 0.06, 1.05, 0.03); g.pop(); };
+  g.color(PAL.woodD).box(0, 0.4 + 2.2, d / 2 + 0.05, 1.4, 0.14, 0.14); g.box(-0.62, 0.4 + 1.08, d / 2 + 0.05, 0.12, 2.16, 0.12); g.box(0.62, 0.4 + 1.08, d / 2 + 0.05, 0.12, 2.16, 0.12);
+  g.color(0xd8c9a0).box(0.38, 0.4 + 1.0, d / 2 + 0.11, 0.05, 0.05, 0.06);
+  g.color(PAL.stoneD).box(0, 0.32, d / 2 + 0.55, 1.7, 0.2, 0.8);
+  if (hh(1) < 0.55) { g.color(o.roofC || PAL.roof[0]).box(0, 0.4 + 2.55, d / 2 + 0.45, 1.9, 0.08, 0.9); g.color(PAL.metalD).box(0, 0.4 + 2.42, d / 2 + 0.12, 0.12, 0.14, 0.1); gl.push(); gl.m = g.m.slice(); gl.flip = g.flip; gl.color(PAL.lamp).box(0, 0.4 + 2.3, d / 2 + 0.16, 0.14, 0.12, 0.1); gl.pop(); }
+  // derazalar: rom, tokcha, o'rta ustuncha; har oyna o'z raqami bilan (kechasi alohida yonadi)
+  const shut = hh(2) < 0.35 ? [0x3b6f8f, 0x4f7f4a, 0x6e4a30][(hh(3) * 3) | 0] : 0;
+  const win = (x, y, z, ry) => { g.push().translate(x, y, z).rotY(ry); g.color(PAL.woodD).box(0, 0, 0.03, 1.15, 1.3, 0.08); const q = wpt(g, 0, 0, 0); gl.push(); gl.m = g.m.slice(); gl.flip = g.flip; gl.mask(1 + 0.02 + 0.96 * hashP(q[0], q[2], 5)); gl.color(PAL.win).box(0, 0, 0.06, 0.9, 1.05, 0.06); gl.mask(0); gl.pop(); g.color(PAL.woodD).box(0, 0, 0.1, 0.06, 1.05, 0.03); g.box(0, 0.08, 0.1, 0.9, 0.05, 0.03);
+    g.color(PAL.stone).box(0, -0.7, 0.13, 1.35, 0.09, 0.26); if (shut) { g.color(shut); g.box(-0.82, 0, 0.07, 0.42, 1.25, 0.05); g.box(0.82, 0, 0.07, 0.42, 1.25, 0.05); } g.pop(); };
   for (let f = 0; f < fl; f++) {
     const y = 0.4 + f * fh + fh * 0.55;
     const nx = Math.max(1, Math.floor(w / 3.2));
@@ -39,7 +50,11 @@ export function house(g, gl, o) {
     g.color(o.roofC || PAL.roof[0]).box(0, 0.4 + H + 0.1, d / 2 + 1.2, w + 0.8, 0.14, 2.6);
     for (let i = 0; i <= 4; i++) { const x = (i / 4 - 0.5) * (w + 0.2); g.color(PAL.woodD).box(x, 0.4 + fh + (H - fh) / 2 + 0.3, d / 2 + 1.9, 0.14, H - fh - 0.6, 0.14); }
   }
-  if (o.chimney) g.color(PAL.stoneD).box(w * 0.28, ry + 1.2, -d * 0.2, 0.7, 2.2, 0.7);
+  if (o.chimney) { g.color(PAL.stoneD).box(w * 0.28, ry + 1.2, -d * 0.2, 0.7, 2.2, 0.7); g.color(0x5a5650).box(w * 0.28, ry + 2.36, -d * 0.2, 0.84, 0.12, 0.84); const c = wpt(g, w * 0.28, ry + 2.45, -d * 0.2); CHIMNEYS.push({ x: c[0], y: c[1], z: c[2], ph: hh(4) * 100 }); }
+  // tarnov quvuri (burchakda) va ba'zi tomlarda sun'iy yo'ldosh antennasi
+  g.color(PAL.metal).box(w / 2 + 0.06, 0.4 + H / 2, d / 2 + 0.06, 0.1, H, 0.1);
+  if (o.roof !== 'flat') g.box(0, ry - 0.02, d / 2 + 0.38, w + 0.9, 0.1, 0.12);
+  if (hh(6) < 0.32) { g.push().translate(-w / 2 + 0.7, ry - 0.55, d / 2 + 0.05).rotY(0.5); g.color(PAL.metalD).box(0, 0, 0.18, 0.06, 0.06, 0.36); g.push().translate(0, 0.05, 0.42).rotX(-1.0); g.color(0xe8e8e4).cyl(10, 0.36, 0.06, 0, 0.12, { shade: 0.15 }); g.color(PAL.metalD).box(0, 0.28, 0.0, 0.03, 0.4, 0.03); g.pop(); g.pop(); }
   return { hx: w / 2 + 0.3, hz: d / 2 + 0.3, top: ry };
 }
 
@@ -62,7 +77,7 @@ export function wall(g, x1, z1, x2, z2, h = 1.6, style = 'stone', thick = 0.5) {
 
 export function lampPost(g, gl, x, z, h = 4.2) {
   g.push().translate(x, 0, z); g.color(PAL.metalD).cyl(6, 0.09, 0.06, 0, h); g.box(0.35, h - 0.1, 0, 0.8, 0.07, 0.07); g.box(0.7, h - 0.22, 0, 0.3, 0.2, 0.3, { tx: 0.6, tz: 0.6 });
-  gl.push(); gl.m = g.m.slice(); gl.color(PAL.lamp).box(0.7, h - 0.38, 0, 0.22, 0.16, 0.22); gl.pop(); g.pop();
+  gl.push(); gl.m = g.m.slice(); gl.color(PAL.lamp).box(0.7, h - 0.38, 0, 0.22, 0.16, 0.22); gl.pop(); const q = wpt(g, 0.7, 0, 0); LAMPS.push({ x: q[0], z: q[2] }); g.pop();
 }
 
 export function tent(g, x, z, yaw, hex, s = 1) {
@@ -126,7 +141,8 @@ export function boat(g, x, y, z, yaw, hex = 0x2f7fd0) {
   g.push().translate(x, y, z).rotY(yaw); g.color(hex).box(0, 0.3, 0, 1.5, 0.6, 3.6, { tx: 1.25, tz: 1.12 }); g.color(0xf2ead8).box(0, 0.58, 0, 1.3, 0.08, 3.4, { tx: 1.25, tz: 1.1 });
   g.color(PAL.wood).box(0, 0.5, 0.4, 1.5, 0.08, 0.3); g.box(0, 0.5, -0.8, 1.4, 0.08, 0.3); g.pop();
 }
-export function flag(g, x, z, h, hex) { g.push().translate(x, 0, z); g.color(PAL.metalD).cyl(5, 0.05, 0.04, 0, h); g.color(hex).box(0.5, h - 0.4, 0, 1.0, 0.6, 0.04); g.pop(); }
+// Bayroq: ustun shu yerda, mato esa details.js da hilpiraydi (FLAGS ro'yxati)
+export function flag(g, x, z, h, hex) { g.push().translate(x, 0, z); g.color(PAL.metalD).cyl(5, 0.05, 0.04, 0, h); g.color(0xd8d8d0).blob(0.07, 0, { cy: h + 0.02 }); const p = wpt(g, 0, h - 0.1, 0); FLAGS.push({ x: p[0], y: p[1], z: p[2], hex, w: 1.0 + h * 0.03, h: 0.62 + h * 0.018 }); g.pop(); }
 export function arch(g, w, h, d, hex) { // darvoza arkasi: markazda, +z ga qaragan
   g.color(hex).box(-w / 2 - 0.5, h / 2, 0, 1.0, h, d); g.box(w / 2 + 0.5, h / 2, 0, 1.0, h, d); g.box(0, h + 0.5, 0, w + 2.0, 1.0, d);
   g.box(-w / 2 + 0.35, h - 0.35, 0, 0.7, 0.7, d * 0.9, { tx: 0.01 }); g.box(w / 2 - 0.35, h - 0.35, 0, 0.7, 0.7, d * 0.9, { tx: 0.01 });

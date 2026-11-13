@@ -7,6 +7,7 @@ import * as COL from './colliders.js';
 import * as BK from './blocks.js';
 import { ROAD_RAMPS, edgePoint } from './acts.js';
 import { buildHome } from './home.js';
+import { buildDetails, glowMat, withMask } from './details.js';
 const { PAL } = BK;
 
 class Site {
@@ -52,12 +53,12 @@ class Site {
   faceRoad(lx, lz) { const [x, z] = this.w(lx, lz); const nr = T.nearestRoad(x, z, 3); if (nr.edge < 0) return 0; const i = nr.i; const dx = T.roads.x[i] - x, dz = T.roads.z[i] - z; return Math.atan2(dx, dz) - this.yaw; }
   finish(scene) {
     const m = new THREE.Mesh(this.g.build(), MAT.flat); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; scene.add(m);
-    if (this.gl.count) { const q = new THREE.Mesh(this.gl.build(), MAT.glow); q.matrixAutoUpdate = false; scene.add(q); }
+    if (this.gl.count) { const q = new THREE.Mesh(withMask(this.gl.build()), glowMat()); q.matrixAutoUpdate = false; scene.add(q); }
   }
 }
 
 export function buildPlaces(scene, game) {
-  const out = { places: {}, lights: [], anim: [], smash: null, points: [], ramps: [] };
+  const out = { places: {}, lights: [], anim: [], smash: null, points: [], ramps: [], houses: [] };
   const P = T.placeBy;
   // --- sinadigan buyumlar ---
   const SM = {};
@@ -103,7 +104,7 @@ export function buildPlaces(scene, game) {
     st.light(lx + 1.5 * s, 4, lz + 1.5 * c, 0xfff0d0, 1.2);
     const [x, z] = st.w(lx + 5.5 * s, lz + 5.5 * c); return { x, z };
   };
-  const houseAt = (st, lx, lz, yaw, o) => { let r; st.put(lx, lz, yaw, (g, gl) => { r = BK.house(g, gl, o); }); st.box(lx, lz, r.hx, r.hz, yaw, r.top + 3); return r; };
+  const houseAt = (st, lx, lz, yaw, o) => { let r; const y = st.put(lx, lz, yaw, (g, gl) => { r = BK.house(g, gl, o); }); st.box(lx, lz, r.hx, r.hz, yaw, r.top + 3); const [x, z] = st.w(lx, lz); out.houses.push({ x, z, y: st.p.y + y, yaw: st.yaw + yaw, hx: r.hx, hz: r.hz }); return r; };
   const rnd = (st, a) => a[(st.rng() * a.length) | 0];
 
   // ===== 1. Bog'iston qishlog'i =====
@@ -167,7 +168,7 @@ export function buildPlaces(scene, game) {
     // aylanuvchi nur
     const beam = new THREE.Mesh(new THREE.ConeGeometry(16, 150, 12, 1, true).rotateX(-Math.PI / 2).translate(0, 0, 75), new THREE.MeshBasicMaterial({ color: 0xfff2c0, transparent: true, opacity: 0.11, side: THREE.DoubleSide, depthWrite: false, fog: false }));
     const [bx, bz] = st.w(0, -6); beam.position.set(bx, p.y + 28.6, bz); beam.rotation.order = 'YXZ'; scene.add(beam);
-    out.anim.push((dt, t, night) => { beam.visible = night > 0.4; beam.rotation.y = t * 0.5; beam.rotation.x = 0.06; });
+    out.anim.push((dt, t, night) => { const k = clamp((night - 0.3) / 0.35, 0, 1), o = k * k * (3 - 2 * k) * 0.11; beam.material.opacity = o; beam.visible = o > 0.002; beam.rotation.y = t * 0.5; beam.rotation.x = 0.06; });
     done(st);
   }
 
@@ -390,7 +391,8 @@ export function buildPlaces(scene, game) {
       for (let k = 0; k < 4; k++) { bl.push().rotZ(k * 1.5708); bl.color(PAL.woodD).box(0, 4.2, 0, 0.22, 8.4, 0.16); bl.color(0xf2ead8).box(0.75, 4.9, 0.02, 1.3, 6.6, 0.05); bl.pop(); }
       const m = new THREE.Mesh(bl.build(), MAT.flat); m.castShadow = true;
       const [x, z] = st.w(q[0] + Math.sin(yw) * 3.5, q[1] + Math.cos(yw) * 3.5); m.position.set(x, P.tegirmon.y + st.gy(q[0], q[1]) + 11.4, z); m.rotation.order = 'YXZ'; m.rotation.y = st.yaw + yw; scene.add(m);
-      const sp = 0.5 + i * 0.13; out.anim.push((dt, t) => { m.rotation.z = t * sp; });
+      // parraklar shamol zarbalariga qarab tezlashib-sekinlashadi
+      const sp = 0.5 + i * 0.13; let ang = i * 0.7; out.anim.push((dt, t) => { ang += dt * sp * (0.75 + 0.18 * Math.sin(t * 0.21 + i * 1.7) + 0.07 * Math.sin(t * 0.83 + i)); m.rotation.z = ang; });
     }
     const h = st.spot(22, 52, 9, 7); if (h) houseAt(st, h[0], h[1], st.faceRoad(h[0], h[1]), { w: 9, d: 7, floors: 1, roof: 'gable', chimney: true, wall: PAL.wall[0], roofC: PAL.roof[0] });
     for (let i = 0; i < 14; i++) { const q = st.spot(10, 58, 2.5, 4); if (q) smashL(st, 'hay', q[0], q[1], st.rng() * 3); }
@@ -454,5 +456,7 @@ export function buildPlaces(scene, game) {
     });
     const m = new THREE.Mesh(g.build(), MAT.flat); m.castShadow = true; m.receiveShadow = true; scene.add(m);
   }
+  // ===== Hayotiy detallar: yo'l belgilari, ustunlar, simlar, chiroqlar, hovli jihozlari, tutun, bayroqlar =====
+  out.details = buildDetails(scene, game, out);
   return out;
 }
