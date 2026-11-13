@@ -350,13 +350,12 @@ export function initGame(game) {
       } else if (e.type === 'land') {
         game.audio.sfx('land', clamp(e.v / 9, 0.3, 1)); game.cam.shake = Math.min(1, e.v * 0.05);
         const d = game.damage.hit(e.v * (game.damage.landK || 1), 0, -0.3, 0, 'land');
-        for (const w of car.wheels) fx.burst(4, w.cx, w.cy, w.cz, 3, 0.6, 1.2, dustColor(w.surf), 0.5, 0.5, 1, 2);
         if (act && act.def.type === 'frag') act.cargo = Math.max(0, act.cargo - Math.max(0, (e.v - 4) * 4));
       } else if (e.type === 'smash') {
         const ref = e.ref; if (ref) { site.smash.hide(ref); const cols = { crate: [0xc79a66, 0x9a6a42], barrel: [0xb8402e, 0x4a4e58], hay: [0xe2c460, 0xd0b050], cone: [0xf26a2a, 0xffffff], sign: [0xf2ead8, 0x6e4a30], fence: [0x9a6a42, 0x6e4a30], snowman: [0xf6f9ff, 0xf08a2a] }[ref.type]; fx.debris(ref.type === 'cone' ? 3 : 7, ref.x, ref.y, ref.z, cols, 6, ref.type === 'hay' ? 0.5 : 0.36, car.v[0], car.v[2]); }
         game.audio.sfx('smash'); st.stats.smashed++; addMoney(3); game.live.count('smash'); if (act && act.def.type === 'smash') act.count++;
         if (act && act.def.type === 'frag') act.cargo = Math.max(0, act.cargo - 4);
-      } else if (e.type === 'splash') { game.audio.sfx('splash'); fx.burst(26, p[0], T.waterY(p[0], p[2]) + 0.2, p[2], 7, 0.9, 1.1, 0xd8f0ff, 0.8, 1.4, 9, 1); }
+      } else if (e.type === 'splash') { game.audio.sfx('splash'); }
       else if (e.type === 'sunk') { game.damage.engine = Math.max(0, game.damage.engine - 12); game.damage.apply(); game.respawn('Suvga botdingiz! Dvigatelga suv kirdi.'); if (act && act.def.type !== 'race') game.endAct(false, 'sunk'); }
       else if (e.type === 'flip') game.toast("Mashina to'g'rilandi");
     }
@@ -368,19 +367,7 @@ export function initGame(game) {
   let dustT = 0, weatherT = 0; const drift = { s: 0, t: 0 }; let kmAcc = 0;
   function effects(dt) {
     const fx = game.fx, sp = car.speed;
-    dustT -= dt;
-    if (dustT <= 0) {
-      dustT = 0.03;
-      for (let i = 0; i < 4; i++) {
-        const w = car.wheels[i]; if (!w.on) { fx.skidEnd(i); continue; }
-        const hard = w.surf === 0 || w.surf === 8 || w.surf === 5 || w.surf === 7;
-        const amt = (hard ? 0.25 : 1) * (sp * 0.02 + w.slip * 0.9);
-        if (i >= 2 && Math.random() < amt && sp > 2) fx.emit(w.cx, w.cy + 0.15, w.cz, -car.v[0] * 0.12 + (Math.random() - 0.5) * 1.5, 0.6 + Math.random() * 1.2, -car.v[2] * 0.12 + (Math.random() - 0.5) * 1.5, 0.7 + Math.random() * 0.7, 0.55 + Math.random() * 0.5, dustColor(w.surf), w.surf === 3 ? 0.5 : 0.3, 2.2, -0.3, 1.2);
-        if (w.slip > 0.45 && hard && sp > 4) fx.skidMark(i, w.cx, w.cy + 0.04, w.cz, car.R[0], car.R[6], 0.14); else fx.skidEnd(i);
-        if (car.inWater > 0.05 && sp > 3 && Math.random() < 0.6) fx.emit(w.cx, T.waterY(w.cx, w.cz) + 0.1, w.cz, (Math.random() - 0.5) * 4, 2 + Math.random() * 3, (Math.random() - 0.5) * 4, 0.6, 0.8, 0xd8f0ff, 0.7, 1, 9, 0.5);
-      }
-      if (car.nitroOn) { const R = car.R, p = car.p; for (const sx of [-0.5, 0.5]) fx.emit(p[0] - R[2] * 2.1 + R[0] * sx, p[1] - 0.25, p[2] - R[8] * 2.1 + R[6] * sx, -car.v[0] * 0.05, 0.2, -car.v[2] * 0.05, 0.25, 0.7, Math.random() < 0.5 ? 0x60c0ff : 0xfff0a0, 0.9, 0.6, 0, 0); }
-    }
+    // g'ildirak changi, izlar, suv sachratqisi, nitro alangasi — fx.js o'zi (fx.vehicle) chizadi
     // ob-havo: qor, gulbarg, kuzgi barglar
     weatherT -= dt;
     if (weatherT <= 0) {

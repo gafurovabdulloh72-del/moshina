@@ -101,6 +101,7 @@ game.applyQuality = (mode) => {
   game.sky.setShadowQuality([1024, 2048, 2048][q]);
   game.props.far = [900, 1400, 1800][q]; game.props.hiD = [230, 310, 380][q]; game.detail.dens = [0.45, 0.8, 1][q];
   if (game.gfx) game.gfx.setQuality(q);
+  if (game.fx && game.fx.setQuality) game.fx.setQuality(q);
   game.resize && game.resize();
 };
 game.startPlay = () => {
