@@ -82,7 +82,8 @@ function sunTrans(S, alt, haze, out) { // balandlik alt dan quyosh tomon o'tkazu
 // --- Osmon gumbazi: jadvaldan osmon + quyosh diski + oy (faza bilan) + yulduzlar va Somon yo'li + bulutlar ---
 const SKY_VS = `varying vec3 vDir; varying float vEnv;
 void main(){ vDir = position; vec4 wp = modelMatrix * vec4(position, 1.0); vEnv = step(length(wp.xyz - cameraPosition), 300.0); gl_Position = projectionMatrix * viewMatrix * wp; gl_Position.z = gl_Position.w; }`;
-const SKY_FS = `varying vec3 vDir; varying float vEnv;
+const SKY_FS = `#define LK_NO_SCOTOPIC
+varying vec3 vDir; varying float vEnv;
 uniform vec3 uSunDisc; uniform vec3 uMoonCol; uniform vec3 uGround; uniform vec3 uEnvFloor; uniform float uStars; uniform mat3 uStarRot; uniform vec3 uCLDir;
 ${LOOK.glsl.sky}${LOOK.glsl.cloud}
 float h13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
@@ -106,10 +107,10 @@ void main(){
   }
   // oy: sharsimon yoritilgan disk (faza quyosh yo'nalishidan)
   { vec3 m = uMoonDir; float cm = dot(d, m); const float r = 0.0125;
-    if (cm > 0.995) { vec3 t1 = normalize(cross(m, vec3(0.0, 1.0, 0.0))), t2 = cross(t1, m); vec2 l = vec2(dot(d, t1), dot(d, t2)) / r; float l2 = dot(l, l);
+    if (cm > 0.9995) { vec3 t1 = normalize(cross(m, vec3(0.0, 1.0, 0.0))), t2 = cross(t1, m); vec2 l = vec2(dot(d, t1), dot(d, t2)) / r; float l2 = dot(l, l);
       if (l2 < 1.0) { vec3 n = t1 * l.x + t2 * l.y - m * sqrt(1.0 - l2); float lit = max(dot(n, uSunDir), 0.0); float alb = 0.55 + 0.45 * smoothstep(0.35, 0.7, texture(tNoise, l * 0.21 + 0.37).r) * (0.8 + 0.2 * texture(tNoise, l * 0.6).b);
         vec3 mc = uMoonCol * alb * (lit + 0.025) * smoothstep(1.0, 0.92, l2); col = mix(col, sky + mc, hor * (env ? 0.0 : 1.0)); }
-      col += uMoonCol * 0.0035 * exp(-(1.0 - cm) * 2500.0) * hor; } }
+      col += uMoonCol * (0.004 * exp(-(1.0 - cm) * 2500.0) + 0.0012 * exp(-(1.0 - cm) * 300.0)) * hor; } }
   // quyosh diski (chegarasi qorayib boradi) va atrofidagi nur
   { float cs = dot(d, uSunDir); float x = (1.0 - cs) / 3.6e-5;
     vec3 sun = uSunDisc * (smoothstep(1.08, 0.92, x) * (1.0 - 0.55 * (1.0 - sqrt(max(1.0 - x, 0.0)))) * (env ? 0.0 : 1.0) + 0.012 * exp(-x * 0.06) + 0.0012 * exp(-x * 0.006));
@@ -185,7 +186,6 @@ export class Sky {
     if (!size) { this.sun.castShadow = false; return; }
     this.sun.castShadow = true;
     if (sh.mapSize.x !== size) { sh.mapSize.set(size, size); if (sh.map) { sh.map.dispose(); sh.map = null; } }
-    LU.uQ.value = size >= 2048 ? 2 : 0;
   }
 
   // atmosfera bo'yicha ranglar (soat kam o'zgarsa qayta hisoblanmaydi)
@@ -235,7 +235,7 @@ export class Sky {
     // osmon yoritishi: Lambert materiallar uchun yarim shar chirog'i (Standard'lar atrof-muhit xaritasidan oladi)
     const gAlb = [0.16, 0.15, 0.1], sunIrr = this.sun.intensity * Math.max(this.lightDir.y, 0) / SUNK;
     const flo = dark * 0.55 + 0.03; // tunda o'ynash uchun minimal yorug'lik (oy nuri ostidagi ko'z moslashuvi)
-    const fl = [0.05 * flo, 0.075 * flo, 0.16 * flo];
+    const fl = [0.045 * flo, 0.06 * flo, 0.15 * flo];
     this.du.uEnvFloor.value.setRGB(fl[0], fl[1], fl[2]);
     const g = this.du.uGround.value.setRGB(gAlb[0] * (sunIrr * this.sun.color.r + amb.r * 1.0), gAlb[1] * (sunIrr * this.sun.color.g + amb.g * 1.0), gAlb[2] * (sunIrr * this.sun.color.b + amb.b * 1.0));
     this.hemi.color.setRGB(amb.r + fl[0], amb.g + fl[1], amb.b + fl[2]); this.hemi.groundColor.setRGB(g.r + fl[0], g.g + fl[1], g.b + fl[2]); this.hemi.intensity = Math.PI;
@@ -249,7 +249,7 @@ export class Sky {
     { const l = amb.r * 0.2126 + amb.g * 0.7152 + amb.b * 0.0722; LU.uCloudAmb.value.setRGB(l, l, l).lerp(amb, 0.45).multiplyScalar(1.15); }
     { const sr = (h / 24) * Math.PI * 2, ax = new THREE.Vector3(0.25, 0.9, 0.35).normalize(); this.du.uStarRot.value.setFromMatrix4(new THREE.Matrix4().makeRotationAxis(ax, sr)); }
     // umumiy uniformlar
-    LU.uSunDir.value.copy(this.sunDir); LU.uMoonDir.value.copy(moonDir); LU.uLightDir.value.copy(this.lightDir); LU.uNight.value = this.night;
+    LU.uSunDir.value.copy(this.sunDir); LU.uMoonDir.value.copy(moonDir); LU.uLightDir.value.copy(this.lightDir); LU.uNight.value = this.night; LU.uScotopic.value = LOOK.scotopic * dark;
     LU.uSunCol.value.copy(this.sun.color).multiplyScalar(this.sun.intensity);
     LU.uFog.value.set(1.7e-4 * haze * (1 + 0.6 * dark) + 2.2e-4 * dawn, 1 / lerp(900, 260, dawn), 0, 0.6);
     LU.uCloud.value.x = 0.42 + 0.1 * Math.sin(h * 0.37 + 1.3);
