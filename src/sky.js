@@ -121,7 +121,7 @@ void main(){
     float D = lkCloudD(p, det);
     if (D > 0.003) {
       vec3 L = uCLDir; vec2 s2 = L.xz; float sl = length(s2); s2 = sl > 1e-3 ? s2 / sl : vec2(1.0, 0.0);
-      float od = D * 1.1 + lkCloudD(p + s2 * 220.0, 0.0) * 0.9 + lkCloudD(p + s2 * 650.0, 0.0) * 0.6;
+      float od = D * 1.1 + lkCloudD(p + s2 * 220.0, -1.0) * 0.9 + lkCloudD(p + s2 * 650.0, -1.0) * 0.6;
       float mu = dot(d, L), tr = exp(-od * 0.65);
       float base = mix(1.0, 0.55 + 0.45 * exp(-D * 2.0), smoothstep(0.05, 0.5, d.y));
       vec3 lit = uCloudSun * (tr * (0.7 + 2.5 * hg(mu, 0.5)) * base + 3.0 * hg(mu, 0.85) * exp(-D * 3.0) * (1.0 - exp(-D * 6.0)));

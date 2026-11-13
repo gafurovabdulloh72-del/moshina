@@ -55,16 +55,16 @@ vec3 safarFogColor(vec3 dir){ vec3 c = safarSky(vec3(dir.x, max(dir.y, 0.0), dir
 vec3 safarFog(vec3 c, vec3 wp){ vec3 v = wp - cameraPosition; float f = safarFogAmount(wp); return mix(c, safarFogColor(v / max(length(v), 1e-3)), f); }
 #endif
 `;
-// bulut zichligi: p — dunyo xz (m); det — mayda detal ulushi 0..1
+// bulut zichligi: p — dunyo xz (m); det — mayda detal ulushi 0..1 (manfiy — eng arzon: 2 ta tekstura o'qish)
 const cloud = `#ifndef LK_CLOUD
 #define LK_CLOUD
 float lkCloudD(vec2 p, float det){ vec2 q = (p + uCloudOff) * uCloud.y, w = uCloudOff * uCloud.y;
-  float a = texture(tNoise, q * 0.31 + 0.11).r, b = texture(tNoise, q * 0.93 + w * 0.3 + 0.31).r, c = texture(tNoise, q * 2.4 - w * 0.25 + 0.57).r;
+  float a = texture(tNoise, q * 0.31 + 0.11).r, b = texture(tNoise, q * 0.93 + w * 0.3 + 0.31).r, c = det < 0.0 ? 0.6 : texture(tNoise, q * 2.4 - w * 0.25 + 0.57).r;
   float n = a * 0.42 + b * 0.38 + c * 0.2;
   if (det > 0.0) { float e = texture(tNoise, q * 1.9 + w * 0.5 + 0.77).b, f = texture(tNoise, q * 6.1 + w * 0.9 + 0.13).r; n += ((0.45 - e) * 0.11 + (f - 0.58) * 0.08) * det; }
   float th = mix(0.72, 0.5, uCloud.x); return smoothstep(th, th + 0.16, n); }
 float safarCloudShadow(vec3 wp){ vec3 s = uLightDir; if (s.y < 0.02 || uQ < 0.5) return 1.0; vec2 p = wp.xz + s.xz / s.y * (uCloud.z - wp.y);
-  return 1.0 - uCloud.w * smoothstep(0.02, 0.15, s.y) * smoothstep(0.05, 0.75, lkCloudD(p, 0.0)); }
+  return 1.0 - uCloud.w * smoothstep(0.02, 0.15, s.y) * smoothstep(0.05, 0.75, lkCloudD(p, uQ > 1.5 ? 0.0 : -1.0)); }
 #endif
 `;
 // to'g'ridan-to'g'ri quyosh nurini kamaytiruvchilar: bulut soyasi va relyef (tog') soyasi
