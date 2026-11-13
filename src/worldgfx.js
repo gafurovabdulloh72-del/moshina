@@ -136,7 +136,7 @@ void yerGround(vec3 wp, vec3 nW, float dist, vec4 b0, vec4 b1, vec4 ax){
     vec4 Rx = textureGrad(tYN, wp.zy * 0.11, yPx.zy * 0.11, yPy.zy * 0.11), Rz = textureGrad(tYN, wp.xy * 0.11 + 0.37, yPx.xy * 0.11, yPy.xy * 0.11);
     vec4 R = mix(Rz, Rx, wx);
     float sb = wp.y * 0.36 + R.r * 0.9 + M.r * 5.0; float band = sin(sb * 6.2832) * 0.5 + 0.5; band = mix(band, 0.5, smoothstep(0.15, 0.5, (abs(yPx.y) + abs(yPy.y)) * 0.36));
-    vec3 grey = mix(vec3(0.17, 0.165, 0.155), vec3(0.36, 0.345, 0.31), clamp((R.r - 0.58) * 2.2 + 0.5, 0.0, 1.0) * 0.75 + band * 0.25);
+    vec3 grey = mix(vec3(0.17, 0.165, 0.155), vec3(0.36, 0.345, 0.31), clamp((R.r - 0.58) * 2.2 + 0.5, 0.0, 1.0) * 0.9 + band * 0.1);
     grey = mix(grey, vec3(0.3, 0.31, 0.17), smoothstep(0.18, 0.04, R.b) * 0.5 * (1.0 - redness));
     vec3 red = mix(mix(vec3(0.3, 0.12, 0.06), vec3(0.46, 0.22, 0.11), band), vec3(0.5, 0.33, 0.2), smoothstep(0.82, 0.97, band) * 0.4) * (0.85 + 0.3 * R.r);
     vec3 rc = mix(grey, red, redness); rc = mix(rc, vec3(0.04, 0.037, 0.042) * (0.8 + 0.5 * R.r), b1.w);
@@ -155,14 +155,14 @@ void yerGround(vec3 wp, vec3 nW, float dist, vec4 b0, vec4 b1, vec4 ax){
   A = mix(A, A * vec3(0.5, 0.52, 0.56), wet * 0.85); rough = mix(rough, 0.32, wet * 0.9);
   // qor: balandlik chizig'i, tik joyda kamroq, yumshoq ko'kish soya, yaltirash
   float snow = smoothstep(${T.SNOW_LO.toFixed(1)}, ${T.SNOW_HI.toFixed(1)}, wp.y + (M.r - 0.55) * 42.0 + dN * 4.0) * (1.0 - 0.85 * smoothstep(0.62, 1.05, slope + dN * 0.2)) * (1.0 - b1.w); yS = snow;
-  ySp = 0.0;
-  if (snow > 0.001) { vec3 sc = mix(vec3(0.9, 0.92, 0.96), vec3(0.95, 0.96, 0.97), D.r) * (1.0 - 0.05 * smoothstep(0.0, 0.25, curv)); A = mix(A, sc, snow); H = mix(H, D.r * 0.05 + F.r * 0.01 * nearK, snow); rough = mix(rough, 0.72, snow);
+  ySp = 0.0; float yAOs = 0.0;
+  if (snow > 0.001) { vec3 sc = mix(vec3(0.91, 0.93, 0.96), vec3(0.95, 0.96, 0.97), D.r) * (1.0 - 0.03 * smoothstep(0.0, 0.25, curv)); A = mix(A, sc, snow); H = mix(H, D.r * 0.018 + F.r * 0.008 * nearK, snow); yAOs = snow; rough = mix(rough, 0.72, snow);
     ySp = snow * smoothstep(14.0, 4.0, dist) * step(0.5, uYQ) * smoothstep(0.985, 0.998, fract(F.a * 41.0 + dot(normalize(cameraPosition - wp), vec3(7.1, 5.3, 6.7)))); }
   // uzoqdan qaraganda bir xil tus bo'lmasin: yirik yorug'lik/rang o'zgarishi
   A *= mix(0.88 + 0.24 * m2 + (M.b - 0.44) * 0.12, 1.0, snow * 0.8);
   ySpec = mix(mix(0.35, 0.7, clamp(be + pb + rk + b0.w + b1.x, 0.0, 1.0)), 1.0, max(wet, snow * 0.6));
   yA = A; yR = rough; yH = H * mix(0.35, 1.0, midK); yNf = (Nf.rg * 2.0 - 1.0) * nearK * (0.18 + 0.25 * rk + 0.2 * be) + (Nf.ba * 2.0 - 1.0) * nearK * (pb * 0.5 + rs * 0.3);
-  yAO = 1.0 - clamp(curv * 1.6, 0.0, 0.3) + clamp(-curv, 0.0, 0.2) * 0.3;
+  yAO = mix(1.0 - clamp(curv * 1.6, 0.0, 0.3) + clamp(-curv, 0.0, 0.2) * 0.3, 1.0, yAOs * 0.6);
 }
 `;
 
