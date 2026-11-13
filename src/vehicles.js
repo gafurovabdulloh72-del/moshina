@@ -372,7 +372,7 @@ function lipSpoiler(c, painted) {
   ex.color(painted ? 0xffffff : 0x121316); ex.rbox(0, y + 0.03, z, W * 1.7, 0.035, 0.18, 0.015, 1, { tz: 0.7 });
   B.parts.extra = [ex, 'rear', 34, painted];
 }
-function splitter(c) { const { B, body, W, Y } = c; B.bF.color(0x111215).rbox(0, Y(0.04), body.endZ(0, Y(0.08), 1) + 0.02, W * 1.8, 0.025, 0.18, 0.01, 1); B.bF.color(0xffffff); }
+function splitter(c) { const { B, body, W, Y, o } = c, yy = Y(Math.max(0.1, (o.bot ? o.bot[0][1] : 0.25) + 0.04)); B.bF.color(0x111215).rbox(0, Y(0.04), body.endZ(0, yy, 1) - 0.06, W * 1.7, 0.025, 0.2, 0.01, 1); B.bF.color(0xffffff); }
 // Kapot havo olgichi
 function scoop(c) {
   const { B, body, o, hl } = c, g = B.hoodP || B.paint, z = (o.cowl + hl) / 2 - 0.08, y = body.topY(0, z);

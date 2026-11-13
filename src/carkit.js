@@ -340,18 +340,18 @@ export const tyreSide = (r, o) => (o.side || ({ sport: 0.24, slick: 0.26, off: 0
 export function wheelGeo(r, w, o = {}) { const g = new VB(260 + Math.round(r * 100), 0); wheelInto(g, r, w, o); return g.build(); }
 // G'ildirakni mavjud quruvchiga qo'shish (X o'qi atrofida, markaz 0) — zaxira g'ildirak uchun ham
 export function wheelInto(g, r, w, o = {}) {
-  const hw = w / 2, n = o.lite ? 18 : o.n || 26, kind = o.prof || 'road';
+  const hw = w / 2, n = o.lite ? 16 : o.n || 26, kind = o.prof || 'road';
   const sh = tyreSide(r, o), rr = r - sh;
   const TY = 0x16171a, RIM = o.rim == null ? 0xb8bcc4 : o.rim;
   // shina: munchoqdan yon devor, yelka, protektor (ariqchalar bilan), qarshi tomon
   g.mat(TY, 0.88, 0);
   const pr = [[rr + 0.01, -hw * 0.82, 1], [rr + sh * 0.18, -hw * 0.97], [rr + sh * 0.5, -hw], [rr + sh * 0.82, -hw * 0.97], [r - sh * 0.06, -hw * 0.9], [r - 0.004, -hw * 0.8, 1]];
-  if (kind === 'road' || kind === 'sport') { const gd = 0.009, gw = Math.min(0.012, w * 0.05); for (const c of [-0.42, 0, 0.42]) pr.push([r, c * hw - gw, 1], [r - gd, c * hw - gw * 0.7, 1], [r - gd, c * hw + gw * 0.7, 1], [r, c * hw + gw, 1]); }
+  if ((kind === 'road' || kind === 'sport') && !o.lite) { const gd = 0.009, gw = Math.min(0.012, w * 0.05); for (const c of [-0.42, 0, 0.42]) pr.push([r, c * hw - gw, 1], [r - gd, c * hw - gw * 0.7, 1], [r - gd, c * hw + gw * 0.7, 1], [r, c * hw + gw, 1]); }
   pr.push([r - 0.004, hw * 0.8, 1], [r - sh * 0.06, hw * 0.9], [rr + sh * 0.82, hw * 0.97], [rr + sh * 0.5, hw], [rr + sh * 0.18, hw * 0.97], [rr + 0.01, hw * 0.82]);
   g.lathe(pr, n, { k: (i) => 1 });
   // protektor bloklari (yo'lsizlik, traktor)
   if (kind === 'off' || kind === 'agri') {
-    g.color(0x121316).rm(0.92, 0); const nb = kind === 'agri' ? 18 : Math.round(r * 46), bh = kind === 'agri' ? 0.055 * (r / 0.8) : 0.02 + r * 0.025;
+    g.color(0x121316).rm(0.92, 0); const nb = kind === 'agri' ? 18 : Math.round(r * (o.lite ? 30 : 46)), bh = kind === 'agri' ? 0.055 * (r / 0.8) : 0.02 + r * 0.025;
     for (let i = 0; i < nb; i++) for (const sd of [-1, 1]) {
       const a = (i / nb) * Math.PI * 2 + (sd > 0 ? Math.PI / nb : 0);
       g.push().rotX(a);
@@ -367,7 +367,7 @@ export function wheelInto(g, r, w, o = {}) {
   const inner = style === 'steel' || style === 'disc' ? rr * 0.92 : rr * 0.8;
   g.lathe([[lip, face], [lip, face + 0.016, 1], [rr - 0.006, face + 0.024, 1], [inner, face - 0.004, 1], [inner * 0.97, face - 0.03, 1], [rr - 0.012, face - 0.035, 1], [rr - 0.012, -hw * 0.84]], n);
   // tormoz diski va gupchak (aylanadi)
-  if (style !== 'steel' && style !== 'disc') {
+  if (style !== 'steel' && style !== 'disc' && !o.lite) {
     g.mat(0x6e7178, 0.5, 0.85); const dr = rr * 0.86;
     g.lathe([[dr, hw * 0.05 - 0.022], [dr, hw * 0.05, 1], [dr * 0.42, hw * 0.05]], n);
     g.mat(0x3a3c42, 0.6, 0.7); g.lathe([[dr * 0.42, hw * 0.06], [r * 0.18, face - 0.06]], Math.max(10, n >> 1));
@@ -398,7 +398,7 @@ export function wheelInto(g, r, w, o = {}) {
   }
   // gayka boltlari va markaz qopqog'i
   g.mat(o.nut || 0x8c9098, 0.3, 0.9); const nn = o.nuts || 5, fz2 = style === 'steel' || style === 'disc' ? face + 0.005 : face - 0.0;
-  for (let i = 0; i < nn; i++) { const a = (i / nn) * Math.PI * 2 + 0.3; g.push().rotX(a); g.push().translate(fz2, hubR * 0.62, 0); g.prismX(6, hubR * 0.13, 0.03); g.pop(); g.pop(); }
+  for (let i = 0; i < (o.lite ? 0 : nn); i++) { const a = (i / nn) * Math.PI * 2 + 0.3; g.push().rotX(a); g.push().translate(fz2, hubR * 0.62, 0); g.prismX(6, hubR * 0.13, 0.03); g.pop(); g.pop(); }
   g.mat(o.cap || 0x2a2c32, 0.3, 0.6); g.push().translate(fz2 + 0.012, 0, 0); g.prismX(10, hubR * 0.38, 0.02); g.pop();
   return g;
 }
