@@ -3,19 +3,21 @@ import * as THREE from 'three';
 import * as T from './terrain.js';
 import * as COL from './colliders.js';
 import { clamp, angDiff } from './util.js';
-import { makeRig, poseRig, setHat, setTool } from './rig.js';
+import { makeRig, poseRig, setHat, setTool, warmSkin, rigEnv } from './rig.js';
 
 export class Player {
   constructor(game) {
     this.game = game; this.p = [0, 0, 0]; this.v = [0, 0, 0]; this.yaw = 0; this.speed = 0; this.onFoot = false; this.grounded = true; this.swim = false; this.sit = false;
     this.lock = 0; this.lockAnim = null; this.emote = null; this.stepT = 0; this.fwd = 0; this.nitroOn = false; this.R = new Float64Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
-    this.rig = makeRig({ shirt: 0xf0b83a, pants: 0x2f4a78, hair: 0x2a1d16 }); this.rig.root.visible = false; game.scene.add(this.rig.root);
+    this.rig = makeRig({ shirt: 0xf0b83a, pants: 0x2f4a78, hair: 0x2a1d16, skin: 0xdcae86, seed: 7, height: 1, build: 1, sleeve: 0.42, stache: false, player: true }); this.rig.root.visible = false; game.scene.add(this.rig.root);
+    rigEnv({ cam: game.camera, player: this.rig }); warmSkin(game.scene); // teri sheyderi yuklanishda tayyorlanadi
+    this.ctl = { vx: 0, vz: 0, vy: 0, grounded: true, swim: false, energy: 100, moveYaw: null, camYaw: 0 }; // animatsiya uchun harakat holati
     this.lamp = new THREE.SpotLight(0xfff2d8, 0, 40, 0.62, 0.6, 1.0); game.scene.add(this.lamp); game.scene.add(this.lamp.target);
     this.lampOn = false;
   }
   setHat(id) { setHat(this.rig, id); }
   // Harakatni vaqtincha band qilish (egilish, silkitish...) — tugagach fn chaqiriladi
-  act(anim, secs, fn, tool) { if (this.lock > 0) return false; this.lock = secs; this.lockAnim = anim; this.lockFn = fn || null; this.sit = false; this.emote = null; if (tool !== undefined) setTool(this.rig, tool); this._tool = tool; return true; }
+  act(anim, secs, fn, tool) { if (this.lock > 0) return false; this.lock = secs; this.lockAnim = anim; this.rig.actDur = secs; this.lockFn = fn || null; this.sit = false; this.emote = null; if (tool !== undefined) setTool(this.rig, tool); this._tool = tool; return true; }
   setEmote(anim, tool) { this.emote = this.emote === anim ? null : anim; this.sit = false; setTool(this.rig, this.emote ? tool || null : null); }
   place(x, z, yaw) { this.p[0] = x; this.p[2] = z; this.p[1] = T.ground(x, z, 1e9).y; this.yaw = yaw; this.v[0] = this.v[1] = this.v[2] = 0; this.grounded = true; }
   // Transport yonidan bo'sh joy topish
@@ -76,11 +78,12 @@ export class Player {
     // animatsiya
     let anim = 'idle';
     if (this.lockAnim) anim = this.lockAnim; else if (this.swim) anim = 'swim'; else if (!this.grounded) anim = 'jump'; else if (this.speed > 4.6) anim = 'run'; else if (this.speed > 0.4) anim = 'walk'; else if (this.sit) anim = 'sit'; else if (this.emote) anim = this.emote;
-    poseRig(rig, anim, dt, this.speed); this.anim = anim;
     rig.root.position.set(p[0], p[1], p[2]); rig.root.rotation.y = this.yaw;
+    const C = this.ctl; C.vx = v[0]; C.vz = v[2]; C.vy = v[1]; C.grounded = this.grounded; C.swim = this.swim; C.energy = st.energy; C.moveYaw = moving ? Math.atan2(mx, mz) : null; C.camYaw = camYaw;
+    poseRig(rig, anim, dt, this.speed, C); this.anim = anim;
     const c = Math.cos(this.yaw), s2 = Math.sin(this.yaw); this.R[0] = c; this.R[2] = s2; this.R[6] = -s2; this.R[8] = c;
     // qadam tovushi
-    if (this.grounded && this.speed > 1) { this.stepT -= dt * this.speed; if (this.stepT <= 0) { this.stepT = 2.3; g.audio.sfx('step', T.ground(nx, nz, 1e9).surf); } }
+    if (this.grounded && this.speed > 1 && rig.A.contact) g.audio.sfx('step', T.ground(nx, nz, 1e9).surf); // oyoq yerga tekkan zahoti
     const night = g.sky.night, Lm = this.lamp; Lm.intensity += ((this.lampOn && night > 0.2 ? 170 : 0) - Lm.intensity) * Math.min(1, dt * 8); Lm.position.set(p[0] + s2 * 0.3, p[1] + 1.4, p[2] + c * 0.3); Lm.target.position.set(p[0] + s2 * 7, p[1] + 0.1, p[2] + c * 7);
   }
 }
