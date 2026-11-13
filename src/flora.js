@@ -331,12 +331,12 @@ function spruce(seed, snow) {
   const Rmax = (y) => 2.6 * Math.pow(Math.max(0, 1 - (y - 1.2) / (Ht - 1.0)), 0.92) + 0.4;
   const nf = (p) => { const r = Math.hypot(p[0], p[2]); return nrm([p[0] / (r || 1), 1.1, p[2] / (r || 1)]); };
   const cf = (p) => { const t = cl01(Math.hypot(p[0], p[2]) / (Rmax(p[1]) + 0.15)); const k = (0.56 + 0.44 * sst(0.0, 0.9, t)) * (0.84 + 0.26 * (p[1] / Ht)); return [k * 0.96, k, k * 1.03]; };
-  // ichki to'ldiruvchi konuslar (shoxlar orasidagi bo'shliq — qalin igna massasi)
+  // ichki to'ldiruvchi konuslar (shoxlar orasidagi bo'shliq — qalin igna massasi): igna teksturali, alfa bilan teshikli
   for (const [y0, y1, rr] of [[1.4, 7.8, 0.38], [5.6, Ht - 1.4, 0.36]]) {
     const r0 = Rmax(y0) * rr, sides = 7;
     for (let s = 0; s < sides; s++) { const a = (s / sides) * 6.2832, b = ((s + 1) / sides) * 6.2832, P0 = [Math.sin(a) * r0, y0, Math.cos(a) * r0], P1 = [Math.sin(b) * r0, y0, Math.cos(b) * r0], T = [0, y1, 0];
-      const nn = (p) => nrm([p[0], 0.9, p[2]]), kk = (p) => { const k = (0.24 + 0.08 * h3(Math.round(p[0] * 9), Math.round(p[1] * 3), Math.round(p[2] * 9), 4)) * (0.8 + 0.3 * (p[1] / Ht)); return [k, k, k]; };
-      o.tri([P0, nn(P0), kk(P0), 1], [P1, nn(P1), kk(P1), 1], [T, [0, 1, 0], kk(T), 1]); }
+      const nn = (p) => nrm([p[0], 0.9, p[2]]), kk = (p) => { const k = 0.3 * (0.8 + 0.3 * (p[1] / Ht)); return [k, k, k]; };
+      const [a0, b0, a1, b1] = CELLUV(1); c.v(P0, nn(P0), kk(P0), 1, a0, b0); c.v(P1, nn(P1), kk(P1), 1, a0, b1); c.v(T, [0, 1, 0], kk(T), 1, a1, (b0 + b1) / 2); }
   }
   let wi = 0;
   for (let y = 1.5; y < Ht - 0.5; y += (y > Ht - 3.5 ? 0.5 : 0.78) + rng() * 0.12, wi++) {
