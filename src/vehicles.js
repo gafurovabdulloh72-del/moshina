@@ -120,7 +120,7 @@ function assemble(v, B) {
     const geo = geos[key] || (geos[key] = o.thin ? bikeWheelGeo(w.r, w.w, o) : wheelGeo(w.r, w.w, o));
     const pivot = new THREE.Group(), sq = new THREE.Group(), spin = new THREE.Group(), m = new THREE.Mesh(geo, M.trim);
     m.castShadow = true; m.receiveShadow = true; spin.add(m); sq.add(spin); pivot.add(sq); tilt.add(pivot); if (w.x < 0) sq.scale.x = -1;
-    if (!o.thin && !o.noCal && o.style !== 'steel' && o.style !== 'disc') { const ck = 'c' + key, c = new THREE.Mesh(geos[ck] || (geos[ck] = caliperGeo(w.r, w.w, o)), M.trim); if (w.x < 0) c.scale.x = -1; pivot.add(c); }
+    if (!LITE && !o.thin && !o.noCal && o.style !== 'steel' && o.style !== 'disc') { const ck = 'c' + key, c = new THREE.Mesh(geos[ck] || (geos[ck] = caliperGeo(w.r, w.w, o)), M.trim); if (w.x < 0) c.scale.x = -1; pivot.add(c); }
     wheels.push({ pivot, mesh: sq, spin, src: w.src, x: w.x, z: w.z, front: !!w.front, r: w.r });
   }
   const spot = new THREE.SpotLight(0xfff0d0, 0, 120, 0.62, 0.55, 1.0);

@@ -218,7 +218,7 @@ export function makeBody(D) {
   const roofY = D.roofY || Math.max(...D.top.map((p) => p[1])), hoodY = D.hoodY || D.top[1][1];
   const plan = D.planFn ? (z) => D.planFn(z) : (z) => { // rcF/rcR berilsa — o'sha uchi yumaloq burchakli to'g'ri to'rtburchak (quti shakli)
     const fr = z >= (D.zc || 0), rc = fr ? D.rcF : D.rcR; if (!rc) return superE(z);
-    const d = fr ? zf - z : z - zr; return d >= rc ? W0 : W0 - rc + Math.sqrt(Math.max(0, rc * rc - (rc - d) * (rc - d)));
+    const d = fr ? zf - z : z - zr; if (d < 1e-5) return 0; return d >= rc ? W0 : W0 - rc + Math.sqrt(Math.max(0, rc * rc - (rc - d) * (rc - d)));
   };
   const superE = (z) => {
     const zc = D.zc || 0, t = z >= zc ? (z - zc) / (zf - zc) : (zc - z) / (zc - zr), p = z >= zc ? pF : pR;
@@ -254,9 +254,9 @@ export function makeBody(D) {
   for (const w of D.wheels || []) for (const k of [-1, -0.7, -0.35, 0, 0.35, 0.7, 1]) need.push(w.z + k * w.ra);
   const Z = [...new Set(need.filter((z) => z >= zr && z <= zf).map((z) => +z.toFixed(4)))].sort((a, b) => a - b), st = D.step || 0.085, zs = [];
   for (let i = 0; i < Z.length - 1; i++) {
-    const a = Z[i], b = Z[i + 1], len = b - a, endA = Math.min(a - zr, zf - a), endB = Math.min(b - zr, zf - b);
-    const loc = (e) => st * (e < 0.3 ? 0.35 + (e / 0.3) * 0.65 : 1), n = Math.max(1, Math.ceil(len / Math.min(loc(endA), loc(endB))));
-    for (let k = 0; k < n; k++) zs.push(a + (len * k) / n);
+    const a = Z[i], b = Z[i + 1], len = b - a, loc = (z) => { const e = Math.min(z - zr, zf - z); return st * (e < 0.3 ? 0.35 + (Math.max(0, e) / 0.3) * 0.65 : 1); };
+    const P = [a]; let z = a; while (z < b - 1e-6) { z += loc(z); P.push(z); } // mahalliy qadam bilan yurish, keyin oraliqqa moslash
+    const k = len / (P[P.length - 1] - a); for (let q = 0; q < P.length - 1; q++) zs.push(a + (P[q] - a) * k);
   }
   zs.push(zf);
   // uchlarida qo'shimcha (yumaloqlanish uchun) stansiyalar
