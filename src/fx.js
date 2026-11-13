@@ -142,7 +142,7 @@ export class FX {
     // shina izlari: uzluksiz lentalar (har g'ildirakka bittadan), halqa bufer
     const SN = (this.SN = 2600);
     this.skPos = new Float32Array(SN * 18); this.skI = new Float32Array(SN * 24); this.skL = new Float32Array(SN * 6);
-    const sg = new THREE.BufferGeometry();
+    const sg = new THREE.BufferGeometry(); sg.setDrawRange(0, 0); this.skUsed = 0; // faqat yozilgan bo'laklar chiziladi
     this.skA = [['position', this.skPos, 3], ['aI', this.skI, 4], ['aL', this.skL, 1]].map(([n, arr, k]) => { const a = new THREE.BufferAttribute(arr, k); a.setUsage(THREE.DynamicDrawUsage); sg.setAttribute(n, a); return a; });
     this.skU = { uTime: { value: 0 }, uTint: { value: SK_TINT.map((t) => new THREE.Vector3(...t)) }, uLife: { value: SK_LIFE.slice() } };
     this.skid = new THREE.Mesh(sg, new THREE.ShaderMaterial({ vertexShader: SK_VS, fragmentShader: SK_FS, uniforms: this.skU, transparent: true, depthWrite: false, side: THREE.DoubleSide,
@@ -223,6 +223,7 @@ export class FX {
   }
   _flushSkid() {
     if (!this.skDirtyN) return;
+    this.skUsed = Math.min(this.SN, this.skUsed + this.skDirtyN); this.skid.geometry.setDrawRange(0, this.skUsed * 6);
     const n = Math.min(this.skDirtyN, this.SN), s0 = this.skDirty, parts = s0 + n <= this.SN ? [[s0, n]] : [[s0, this.SN - s0], [0, s0 + n - this.SN]];
     // diapazonlar three.js yuklagach o'zi tozalaydi; bir necha yangilanish bitta kadrga to'g'ri kelsa — hammasi yig'iladi
     for (const a of this.skA) { if (a.updateRanges.length > 48) { a.clearUpdateRanges(); a.addUpdateRange(0, a.array.length); } else for (const [s, c] of parts) a.addUpdateRange(s * 6 * a.itemSize, c * 6 * a.itemSize); a.needsUpdate = true; }
