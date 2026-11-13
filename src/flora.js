@@ -342,12 +342,12 @@ function spruce(seed, snow) {
       const nn = (p) => nrm([p[0], 0.9, p[2]]), kk = (p) => { const k = 0.46 * (0.85 + 0.25 * (p[1] / Ht)); return [k * 0.95, k, k]; };
       const [a0, b0, a1, b1] = CELLUV(1); c.v(P0, nn(P0), kk(P0), 1, a0, b0); c.v(P1, nn(P1), kk(P1), 1, a0, b1); c.v(T, [0, 1, 0], kk(T), 1, a1, (b0 + b1) / 2); }
   }
-  for (let y = 1.5; y < Ht - 0.7; y += (y > Ht - 3.8 ? 0.55 : 0.82) + rng() * 0.12) {
-    const f = (y - 1.5) / (Ht - 2), nb = f < 0.5 ? 7 : f < 0.8 ? 6 : 5, a0 = rng() * 6.28, L = Rmax(y) * (0.98 + rng() * 0.1);
+  for (let y = 1.5; y < Ht - 0.7; y += (y > Ht - 3.8 ? 0.66 : 1.0) + rng() * 0.12) {
+    const f = (y - 1.5) / (Ht - 2), nb = f < 0.5 ? 6 : f < 0.8 ? 5 : 4, a0 = rng() * 6.28, L = Rmax(y) * (0.98 + rng() * 0.1);
     for (let i = 0; i < nb; i++) {
       const az = a0 + (i / nb) * 6.28 + (rng() - 0.5) * 0.35, rise = -0.08 + f * 0.62 + (rng() - 0.5) * 0.14;
       const d = nrm([Math.cos(az), rise, Math.sin(az)]), base = [d[0] * 0.12, y + 0.3, d[2] * 0.12], mid = add(base, mul(d, L * 0.55)), d2 = nrm(add(d, [0, -0.62 + f * 0.45, 0])), tip = add(mid, mul(d2, L * 0.5));
-      const side = rot(nrm(cross(d, UP)), d, (rng() - 0.5) * 0.9), w = (6.2832 * L / nb) * 0.8;
+      const side = rot(nrm(cross(d, UP)), d, (rng() - 0.5) * 0.9), w = (6.2832 * L / nb) * 0.92;
       strip(c, base, mid, side, w * 0.22, w * 0.86, 1, nf, cf, 1, 0, 0.55); strip(c, mid, tip, rot(side, d2, (rng() - 0.5) * 0.4), w * 0.86, w, 1, nf, cf, 1, 0.55, 1);
       if (snow) { const up = nrm(cross(side, d)), lift = up[1] < 0 ? -0.09 : 0.09; strip(c, add(add(base, mul(d, L * 0.12)), mul(up, lift)), add(add(mid, mul(d2, L * 0.18)), mul(up, lift)), side, w * 0.15, w * 0.7, 4, () => [0, 1, 0], (p) => { const k = 0.8 + 0.2 * cl01(Math.hypot(p[0], p[2]) / Rmax(p[1])); return [k * 0.95, k * 0.97, k]; }, 0); }
     }
@@ -383,12 +383,12 @@ function spruceLo(snow) {
 }
 // Qayin: oq po'stloq — gorizontal qora yasmiqchalar (aniq chegarali, har to'rtburchak alohida), tagi kulrang-qora yorilgan; ingichka uzun tana, pastda kalta quruq shoxchalar, osilgan mayda barglar
 function birch(seed) {
-  const o = new FB(seed), c = new FB(seed + 1), rng = o.r, H = 8.6, cl = [], NR = 28;
+  const o = new FB(seed), c = new FB(seed + 1), rng = o.r, H = 8.6, cl = [], NR = 22;
   const tp = bend([0, -0.3, 0], [0.04, 1, 0.02], H + 0.3, 0, NR, rng, 0.025);
   const bc = (t, p) => { const y = p[1], k = 0.78 * (0.84 + 0.16 * sst(0, 1.2, y)); return [k, k * 0.975, k * 0.94]; };
   // yasmiqchalar: halqa (i) va yon (s) bo'yicha xesh; tagida (0.6 m gacha) yorilgan qoramtir po'stloq
-  const qk = (i, s) => { const y = (i / NR) * (H + 0.3) - 0.3; if (y < 0.55) return h3(i, s, 3, 8) < 0.7 ? 0.32 : 0.5; const r = h3(i, s, 7, 3), run = h3(i, (s + 1) % 6, 7, 3); return r < 0.11 || (r < 0.2 && run < 0.2) ? 0.3 + 0.15 * h3(i, s, 2, 1) : r > 0.88 ? 0.86 : 1; };
-  pipe(o, tp, tp.map((_, i) => 0.2 * (1 - 0.72 * i / (tp.length - 1))), 6, bc, 0, 0, qk);
+  const qk = (i, s) => { const y = (i / NR) * (H + 0.3) - 0.3; if (y < 0.55) return h3(i, s, 3, 8) < 0.7 ? 0.32 : 0.5; const r = h3(i, s, 7, 3), run = h3(i, (s + 1) % 5, 7, 3); return r < 0.11 || (r < 0.2 && run < 0.2) ? 0.3 + 0.15 * h3(i, s, 2, 1) : r > 0.88 ? 0.86 : 1; };
+  pipe(o, tp, tp.map((_, i) => 0.2 * (1 - 0.72 * i / (tp.length - 1))), 5, bc, 0, 0, qk);
   const at = (y) => tp[Math.min(tp.length - 1, Math.max(0, Math.round((y + 0.3) / (H + 0.3) * (tp.length - 1))))];
   for (let i = 0; i < 4; i++) { const y = 1.7 + i * 0.45 + rng() * 0.2, az = rng() * 6.28, d = nrm([Math.cos(az), 0.25 + rng() * 0.3, Math.sin(az)]); pipe(o, bend(at(y), d, 0.45 + rng() * 0.4, -0.05, 1, rng, 0.2), [0.035, 0.012], 3, () => [0.18, 0.16, 0.14]); }
   for (let i = 0; i < 7; i++) { const y = 3.4 + i * 0.75 + rng() * 0.3, az = rng() * 6.28, base = at(y);
