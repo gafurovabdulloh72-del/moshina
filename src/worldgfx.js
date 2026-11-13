@@ -152,7 +152,7 @@ void yerGround(vec3 wp, vec3 nW, float dist, vec4 b0, vec4 b1, vec4 ax){
   float wet = smoothstep(0.45, 0.02, aw + dN * 0.2 + fN * 0.06); yWet = wet;
   A = mix(A, A * vec3(0.5, 0.52, 0.56), wet * 0.85); rough = mix(rough, 0.32, wet * 0.9);
   // qor: balandlik chizig'i, tik joyda kamroq, yumshoq ko'kish soya, yaltirash
-  float snow = smoothstep(${T.SNOW_LO.toFixed(1)}, ${T.SNOW_HI.toFixed(1)}, wp.y + (M.r - 0.55) * 42.0 + dN * 4.0) * (1.0 - 0.85 * smoothstep(0.75, 1.15, slope + dN * 0.2)) * (1.0 - b1.w); yS = snow;
+  float snow = smoothstep(${T.SNOW_LO.toFixed(1)}, ${T.SNOW_HI.toFixed(1)}, wp.y + (M.r - 0.55) * 42.0 + dN * 4.0) * (1.0 - 0.85 * smoothstep(0.62, 1.05, slope + dN * 0.2)) * (1.0 - b1.w); yS = snow;
   ySp = 0.0;
   if (snow > 0.001) { vec3 sc = mix(vec3(0.9, 0.92, 0.96), vec3(0.95, 0.96, 0.97), D.r) * (1.0 - 0.05 * smoothstep(0.0, 0.25, curv)); A = mix(A, sc, snow); H = mix(H, D.r * 0.05 + F.r * 0.01 * nearK, snow); rough = mix(rough, 0.72, snow);
     ySp = snow * smoothstep(14.0, 4.0, dist) * step(0.5, uYQ) * smoothstep(0.985, 0.998, fract(F.a * 41.0 + dot(normalize(cameraPosition - wp), vec3(7.1, 5.3, 6.7)))); }
@@ -191,7 +191,7 @@ float yRoad(vec3 wp, vec3 nW, float dist, out vec3 rA, out float rR, out float r
     float asp = 1.0 - smoothstep(edge - 0.06, edge + 0.06, au);
     float lane = abs(au - hw * 0.5);                              // bo'lak o'rtasigacha
     float wheel = smoothstep(0.55, 0.25, abs(lane - 0.85)) * mk;  // g'ildirak izlari
-    vec3 ac = vec3(0.1, 0.097, 0.09) * (0.82 + 0.36 * L.r) * (0.9 + 0.2 * D.r);
+    vec3 ac = vec3(0.1, 0.095, 0.085) * (0.82 + 0.36 * L.r) * (0.9 + 0.2 * D.r);
     ac = mix(ac, vec3(0.19, 0.18, 0.165), smoothstep(0.62, 0.8, F.b) * 0.25 + (F.a - 0.5) * 0.7);   // ochiq tosh donlari
     ac = mix(ac, ac * 0.72, wheel * 0.55);                                                         // silliqlangan izlar
     ac = mix(ac, vec3(0.07, 0.068, 0.066), smoothstep(0.35, 0.05, lane) * 0.3);                    // moy tomchilari chizig'i
