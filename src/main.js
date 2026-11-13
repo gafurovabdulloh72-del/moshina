@@ -20,6 +20,7 @@ import { Player } from './player.js';
 import { initLiving } from './living.js';
 import { buildAds } from './ads.js';
 import { initGfx } from './gfx.js';
+import { bakeTextures } from './tex.js';
 import * as COLL from './colliders.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
@@ -32,6 +33,7 @@ async function boot() {
   const canvas = document.getElementById('c');
   const renderer = (game.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  game.tex = bakeTextures(renderer); // umumiy shovqin teksturalari (tex.js)
   const scene = (game.scene = new THREE.Scene());
   const camera = (game.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 1.2, 14000));
   const resize = () => { renderer.setPixelRatio(game.pr || 1); renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (game.fx) game.fx.uni.uScale.value = innerHeight * (game.pr || 1) * 0.9; if (game.gfx) game.gfx.resize(); };
