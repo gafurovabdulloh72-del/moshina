@@ -21,6 +21,7 @@ import { initLiving } from './living.js';
 import { buildAds } from './ads.js';
 import { initGfx } from './gfx.js';
 import { bakeTextures } from './tex.js';
+import { initLook, LOOK } from './look.js';
 import * as COLL from './colliders.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
@@ -38,6 +39,7 @@ async function boot() {
   const camera = (game.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 1.2, 14000));
   const resize = () => { renderer.setPixelRatio(game.pr || 1); renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (game.fx) game.fx.uni.uScale.value = innerHeight * (game.pr || 1) * 0.9; if (game.gfx) game.gfx.resize(); };
   game.resize = resize; addEventListener('resize', resize);
+  initLook(game); // umumiy uniformlar, atmosfera tumani, materiallar yamog'i (initMaterials'dan oldin)
 
   await step(0.05, 'Orol relyefi yaratilmoqda…');
   T.initWorld();
@@ -178,7 +180,7 @@ function update(dt) {
     g.life.update(dt, g.time, g.mode === 'play' && !(g.act && g.act.def.type === 'race'));
     if (g.mode === 'play') g.updateGame(dt); else car.events.length = 0;
   }
-  g.sky.setHour(g.hour);
+  LOOK.U.uQ.value = g.state.set.gfx; g.sky.setHour(g.hour);
   syncCar(alpha);
   const night = g.sky.night, focus = foot ? g.footPos.set(pl.p[0], pl.p[1], pl.p[2]) : g.carPos;
   { const k = 0.25 + 1.5 * night; MAT.glow.color.setRGB(k, k * (0.9 + 0.1 * night), k * (0.75 + 0.25 * (1 - night))); for (const a of g.site.anim) a(dt, g.time, night); }
