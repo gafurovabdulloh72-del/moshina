@@ -199,7 +199,7 @@ export function buildLife(scene, game) {
         if (tot < acc) { acc = tot; blk = o.car; byPlayer = o.player; }
       }
       // yo'l chetiga to'xtash nuqtasi
-      if (c.mode === 1 && c.route[c.ri] === c.stopSeg) { const a = c.a * (1 - (c.v / Math.max(0.6, v0)) ** 4) + idm(c, c.stopS - c.s, 0, 0.3, 0.6); if (a < acc) acc = a; }
+      if (c.mode === 1 && c.route[c.ri] === c.stopSeg) { const d = c.stopS - c.s, vt = Math.sqrt(2 * 1.3 * Math.max(0, d - 0.4)), a = clamp((vt - c.v) * 1.6, -4.5, c.a); if (a < acc) acc = a; } // bir tekis sekinlab to'xtash
       // o'zaro tiqilib qolish (chorrahada ikkalasi bir-birini kutsa) — bittasi yo'l beradi
       if (blk && blk.blk === c && c.v < 0.3 && blk.v < 0.3) { if ((c.mut += dt) > 2.5 && c.id < blk.id) { c.ign = blk; c.ignT = 4; } } else c.mut = 0;
       c.blk = blk; c.byPlayer = byPlayer;
@@ -215,7 +215,7 @@ export function buildLife(scene, game) {
       c.pullT -= dt;
       if (c.mode === 0 && c.pullT < 0 && !cur.conn && c.v > 6 && cur.L - c.s > 220 && pd > 70 && c.stun <= 0) {
         c.pullT = 20 + rnd() * 30; const s1 = c.s + 75; segAt(cur, s1, PQ);
-        const pLatT = cur.hw - 0.25 + c.halfW - cur.off, px = PQ.x + PQ.nx * pLatT, pz = PQ.z + PQ.nz * pLatT;
+        const pLatT = cur.hw - 0.7 + c.halfW - cur.off, px = PQ.x + PQ.nx * pLatT, pz = PQ.z + PQ.nz * pLatT;
         if (Math.abs(PQ.k) < 0.006 && spotFree(px, pz, Math.atan2(PQ.tx, PQ.tz), c.half, c.halfW, PQ.y, c)) { c.mode = 1; c.stopSeg = cur; c.stopS = s1; c.pullLat = pLatT; }
       }
       if (c.mode === 1) { if (c.stopSeg !== cur) c.mode = 0; else { if (c.stopS - c.s < 48) c.latT = c.pullLat; if (c.v < 0.05 && c.stopS - c.s < 2) { c.mode = 2; c.waitT = 8 + rnd() * 22; } } }
