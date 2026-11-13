@@ -167,6 +167,7 @@ export function buildProps(scene, game) {
     for (const type in c.items) {
       const a = c.items[type], n = a.length / 6, pr = P[type];
       const hi = new THREE.InstancedMesh(pr.hi, MAT.tree, n), lo = new THREE.InstancedMesh(pr.lo, MAT.tree, n), hc = pr.cards ? new THREE.InstancedMesh(pr.cards, LM, n) : null;
+      const md = pr.md ? new THREE.InstancedMesh(pr.md === 'lo' ? pr.lo : pr.md, MAT.tree, n) : null; // 0-darajada yaqin masofa varianti (kartasiz; soya tashlaydi)
       for (let k = 0; k < n; k++) {
         const o = k * 6, s = a[o + 3];
         dummy.position.set(a[o], a[o + 1], a[o + 2]); dummy.rotation.set(0, a[o + 4], 0); dummy.scale.set(s, s * (0.92 + ((k * 7919) % 100) / 620), s); dummy.updateMatrix();
@@ -174,27 +175,34 @@ export function buildProps(scene, game) {
       }
       lo.instanceMatrix = hi.instanceMatrix; lo.instanceColor = hi.instanceColor;
       hi.computeBoundingSphere(); lo.boundingSphere = hi.boundingSphere;
+      if (md) { md.instanceMatrix = hi.instanceMatrix; md.instanceColor = hi.instanceColor; md.castShadow = type !== 'bush' && type !== 'shrub'; md.receiveShadow = false; md.matrixAutoUpdate = false; md.visible = false; group.add(md); }
       if (hc) { hc.instanceMatrix = hi.instanceMatrix; hc.instanceColor = hi.instanceColor; hc.computeBoundingSphere(); if (hc.boundingSphere.radius > hi.boundingSphere.radius) hi.boundingSphere = lo.boundingSphere = hc.boundingSphere; else hc.boundingSphere = hi.boundingSphere; }
+      if (md) md.boundingSphere = hi.boundingSphere;
       hi.castShadow = type !== 'bush' && type !== 'shrub' && type !== 'stone'; hi.receiveShadow = false; lo.castShadow = false;
       hi.matrixAutoUpdate = false; lo.matrixAutoUpdate = false; hi.visible = false; lo.visible = false;
       group.add(hi); group.add(lo);
       if (hc) { hc.castShadow = hi.castShadow; hc.receiveShadow = false; hc.matrixAutoUpdate = false; hc.visible = false; group.add(hc); }
-      c.meshes.push(hi, hc, lo); (c.inst || (c.inst = {}))[type] = hi; if (type === 'stone') lo.userData.skip = true;
+      // [batafsil, barg kartalari, uzoq, 0-daraja yaqin varianti yoki null]
+      c.meshes.push(hi, hc, lo, md); (c.inst || (c.inst = {}))[type] = hi; if (type === 'stone') lo.userData.skip = true;
     }
     c.items = null;
     list.push(c);
   }
   scene.add(group);
 
+  // Sifat darajasi: game.state.set.gfx (applyQuality uni hiD dan oldin yozadi); api.lite = true/false bilan majburlash mumkin
+  const tier = () => (api.lite != null ? (api.lite ? 0 : 2) : game && game.state && game.state.set ? game.state.set.gfx : 2);
   const api = {
-    counts: cnt, chunks: list, far: 1500, hiD: 330,
+    counts: cnt, chunks: list, far: 1500, hiD: 330, lite: null,
     update(cam) {
-      // barg kartali daraxtlar eng past sifatda yaqinroq masofagacha (hiD * 0.62) batafsil chiziladi — 0-darajada kadr og'irlashmasin
-      const px = cam.position.x, pz = cam.position.z, cd = api.hiD < 260 ? api.hiD * 0.62 : api.hiD;
+      // 0-darajada barg kartalari (alfa-test, ortiqcha chizish) umuman chizilmaydi: yaqinda kartasiz o'rta variant (md), toshlarda det-1 — eski narxda
+      const px = cam.position.x, pz = cam.position.z, t0 = tier() === 0 ? 8 : 0;
       for (let i = 0; i < list.length; i++) {
         const c = list[i]; const d = Math.hypot(c.cx - px, c.cz - pz);
-        const st = (d < api.hiD ? 1 : d < api.far ? 2 : 0) + (d < cd ? 4 : 0);
-        if (st !== c.st) { c.st = st; const M = c.meshes, s1 = st & 3, sc = st & 4; for (let k = 0; k < M.length; k += 3) { const h = M[k + 1] ? (sc ? 1 : s1 ? 2 : 0) : s1; M[k].visible = h === 1; if (M[k + 1]) M[k + 1].visible = h === 1; M[k + 2].visible = h === 2 && !M[k + 2].userData.skip; } }
+        const st = (d < api.hiD ? 1 : d < api.far ? 2 : 0) + t0;
+        if (st !== c.st) { c.st = st; const M = c.meshes, s1 = st & 3, lite = st & 8;
+          for (let k = 0; k < M.length; k += 4) { const h = lite && s1 === 1 && M[k + 3] ? 3 : s1; // h: 1 batafsil (+kartalar), 2 uzoq, 3 o'rta
+            M[k].visible = h === 1; if (M[k + 1]) M[k + 1].visible = h === 1; M[k + 2].visible = h === 2 && !M[k + 2].userData.skip; if (M[k + 3]) M[k + 3].visible = h === 3; } }
       }
     },
   };
@@ -205,7 +213,8 @@ export function buildProps(scene, game) {
 export function buildDetail(scene) {
   const NN = 900, N = 2600, NF = 1400;
   const gm = grassMaterial();
-  const near = new THREE.InstancedMesh(grassPatch(5, 90, true), gm, NN), grass = new THREE.InstancedMesh(grassPatch(6, 40, false), gm, N), flowers = new THREE.InstancedMesh(flowerGeo(7), gm, NF);
+  const gSparse = grassPatch(6, 40, false), gLite = grassPatch(8, 16, false, 6); // gLite — 0-daraja uchun arzon yamoq (22 uchburchak, eski o't narxida); geometriya almashtirish sheyderni qayta kompilyatsiya qilmaydi
+  const near = new THREE.InstancedMesh(grassPatch(5, 90, true), gm, NN), grass = new THREE.InstancedMesh(gSparse, gm, N), flowers = new THREE.InstancedMesh(flowerGeo(7), gm, NF);
   for (const m of [near, grass, flowers]) { m.frustumCulled = false; m.receiveShadow = true; m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(m.instanceMatrix.count * 3).fill(1), 3); m.count = 0; scene.add(m); }
   const dummy = new THREE.Object3D(), col = new THREE.Color(), gc3 = [0, 0, 0];
   let lx = 1e9, lz = 1e9;
@@ -214,7 +223,7 @@ export function buildDetail(scene) {
   // o't tusi (sRGB): yer rangi bilan aralashtiriladi; [palitra, yer rangining ulushi, ehtimol]
   const GC = { [B.MEADOW]: [[0x6f8a3a, 0x7a9440, 0x657f36], 0.45, 1], [B.SAKURA]: [[0x7a9a48, 0x6e8e42, 0x86a450], 0.45, 1], [B.AUTUMN]: [[0xb09048, 0xa08040, 0xbc9c58], 0.45, 1], [B.TAIGA]: [[0x5a7a40, 0x52703a, 0x648446], 0.45, 1],
     [B.SAVANNA]: [[0xb4a45e, 0xa89656, 0xc0b06a], 0.4, 1], [B.DESERT]: [[0xa89a62, 0x9a8c5a, 0xb4a672], 0.15, 0.22], [B.CANYON]: [[0x9a8c58, 0x8c8052, 0xa69a66], 0.15, 0.14], [B.BEACH]: [[0x9a9a5e, 0x8e9058, 0xa6a46a], 0.1, 0.12] };
-  const FC = { [B.MEADOW]: [0xf0eee6, 0xe2c23c, 0xd28caa, 0xf4f2ea, 0x9878c0, 0xe8e4d8], [B.SAKURA]: [0xf4d4de, 0xf6f2f0, 0xeab4c6], [B.AUTUMN]: [0xece0b8, 0xd08a48], [B.TAIGA]: [0xf2f0ea, 0x94b0d8], [B.SAVANNA]: [0xe4d48e, 0xf0ece0] };
+  const LAV = [0x8a6cc4, 0x9c7cd0, 0x7e64b8], FC = { [B.MEADOW]: [0xf0eee6, 0xe2c23c, 0xd28caa, 0xf4f2ea, 0x9878c0, 0xe8e4d8], [B.SAKURA]: [0xf4d4de, 0xf6f2f0, 0xeab4c6], [B.AUTUMN]: [0xece0b8, 0xd08a48], [B.TAIGA]: [0xf2f0ea, 0x94b0d8], [B.SAVANNA]: [0xe4d48e, 0xf0ece0] };
   const PAL = {}; for (const b in GC) PAL[b] = GC[b][0].map((h) => { col.setHex(h); return [col.r, col.g, col.b]; });
   // yer rangi (T.grid.col, chiziqli) — ikki chiziqli interpolyatsiya
   const ground = (x, z) => { let fx = (x + T.HALF) / T.CELL, fz = (z + T.HALF) / T.CELL; fx = clamp(fx, 0, T.N - 0.001); fz = clamp(fz, 0, T.N - 0.001); const i = fx | 0, j = fz | 0, u = fx - i, v = fz - j, C = T.grid.col, k = (j * T.NV + i) * 3, k2 = k + T.NV * 3;
@@ -227,7 +236,8 @@ export function buildDetail(scene) {
       if (!force && Math.abs(cx - lx) < 4 && Math.abs(cz - lz) < 4) return;
       lx = cx; lz = cz;
       const dn = api.dens, R = dn < 0.5 ? 18 : dn < 0.9 ? 23 : RMAX, RN = dn < 0.5 ? 0 : dn < 0.9 ? 8 : 11, RD = R * CELL;
-      const i0 = Math.floor(cx / CELL), j0 = Math.floor(cz / CELL), R2 = RD * RD, fill = 0.8 + 0.15 * dn;
+      const i0 = Math.floor(cx / CELL), j0 = Math.floor(cz / CELL), R2 = RD * RD, fill = 0.8 + 0.15 * dn, fk = dn < 0.5 ? 0.35 : 0.5 + 0.5 * dn;
+      const gg = dn < 0.5 ? gLite : gSparse; if (grass.geometry !== gg) grass.geometry = gg;
       let nn = 0, ng = 0, nf = 0;
       for (let j = j0 - R; j <= j0 + R; j++) for (let i = i0 - R; i <= i0 + R; i++) {
         const h = hash2(i, j, 21);
@@ -251,9 +261,9 @@ export function buildDetail(scene) {
         if (useNear && nn < NN) { near.setMatrixAt(nn, dummy.matrix); near.setColorAt(nn, col); nn++; }
         else if (ng < N) { grass.setMatrixAt(ng, dummy.matrix); grass.setColorAt(ng, col); ng++; }
         // gullar (o'tga qo'shimcha, o'rnini egallamaydi)
-        const hf = hash2(i, j, 31), fc = lav ? [0x8a6cc4, 0x9c7cd0, 0x7e64b8] : FC[bio];
+        const hf = hash2(i, j, 31), fc = lav ? LAV : FC[bio];
         const fp = fc && !lav ? smoothstep(-0.1, 0.6, noise(x * 0.045 + 3.1, z * 0.045 - 7.7)) : 0; // gullar to'p-to'p (dog'lar) bo'lib o'sadi
-        if (fc && nf < NF && d < RD * 0.8 && (hf < (0.06 + 0.5 * fp) * (0.5 + 0.5 * dn) || (lav && hf < 0.55))) {
+        if (fc && nf < NF && d < RD * 0.8 && (hf < (0.06 + 0.5 * fp) * fk || (lav && hf < 0.55 * fk))) {
           for (let q = 0; q < (lav ? 3 : 1 + ((hf * 37) % 1 < fp ? 2 : 0)) && nf < NF; q++) {
             const fx = x + (hash2(i, j, 32 + q) - 0.5) * 1.3, fz = z + (hash2(i, j, 35 + q) - 0.5) * 1.3, fsc = (0.75 + hash2(i, j, 38 + q) * 0.6) * (0.3 + 0.7 * fade) * (lav ? 1.4 : 1);
             dummy.position.set(fx, T.gridHeight(fx, fz) - 0.02, fz); dummy.rotation.set((hash2(i, j, 41 + q) - 0.5) * 1.1, hf * 50 + q, (hash2(i, j, 44 + q) - 0.5) * 1.1); dummy.scale.set(fsc, fsc * (lav ? 1.5 : 1), fsc); dummy.updateMatrix();
