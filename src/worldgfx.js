@@ -10,7 +10,7 @@ const { N, NV, CELL, HALF } = T;
 const CH = 50, STEPS = [1, 2, 5];
 
 // --- Yer/yo'l/ko'prik materiallari uchun umumiy uniformlar (uYT — vaqt, uYQ — sifat 0/1/2) ---
-export const YER = { U: { tYN: { value: null }, tYM: { value: null }, uYT: WIND, uYQ: { value: 2 } }, terrain: null, road: null, wood: null, envK: 0.3 };
+export const YER = { U: { tYN: { value: null }, tYM: { value: null }, uYT: WIND, uYQ: { value: 2 } }, terrain: null, road: null, wood: null, envK: 0.3, qSet: false };
 
 // Har piksel yer turi: biom og'irliklari (aB0/aB1), suv sathi, yo'lgacha masofa, lavanda, egrilik (aAx) + qiyalik va balandlik
 const GLSL = `
@@ -87,8 +87,8 @@ void yerGround(vec3 wp, vec3 nW, float dist, vec4 b0, vec4 b1, vec4 ax){
   }
   // tayga: mox, igna to'shamasi, och liken
   if (b0.z > 0.003) {
-    vec3 c = mix(vec3(0.07, 0.115, 0.035), vec3(0.16, 0.105, 0.055), smoothstep(0.35, 0.7, D.r + curv * -0.8));
-    c = mix(c, vec3(0.32, 0.33, 0.24), smoothstep(0.14, 0.04, D.b) * 0.45);
+    vec3 c = mix(vec3(0.075, 0.12, 0.037), vec3(0.15, 0.105, 0.06), smoothstep(0.4, 0.75, D.r + curv * -0.8 + (M.r - 0.58)));
+    c = mix(c, vec3(0.3, 0.31, 0.22), smoothstep(0.14, 0.04, D.b + (D.r - 0.58) * 0.5) * 0.35);
     c *= 0.85 + 0.3 * F.r;
     A += c * b0.z; H += (smoothstep(0.4, 0.1, F.b) * 0.03 * nearK + D.b * 0.03) * b0.z; rough += 0.95 * b0.z;
   }
@@ -133,10 +133,10 @@ void yerGround(vec3 wp, vec3 nW, float dist, vec4 b0, vec4 b1, vec4 ax){
     vec3 an = abs(nW); float wx = an.x / (an.x + an.z + 1e-4);
     vec4 Rx = textureGrad(tYN, wp.zy * 0.11, yPx.zy * 0.11, yPy.zy * 0.11), Rz = textureGrad(tYN, wp.xy * 0.11 + 0.37, yPx.xy * 0.11, yPy.xy * 0.11);
     vec4 R = mix(Rz, Rx, wx);
-    float sb = wp.y * 0.36 + R.r * 1.6 + M.r * 5.0; float band = sin(sb * 6.2832) * 0.5 + 0.5; band = mix(band, 0.5, smoothstep(0.15, 0.5, fwidth(sb)));
+    float sb = wp.y * 0.36 + R.r * 0.9 + M.r * 5.0; float band = sin(sb * 6.2832) * 0.5 + 0.5; band = mix(band, 0.5, smoothstep(0.15, 0.5, fwidth(sb)));
     vec3 grey = mix(vec3(0.17, 0.165, 0.155), vec3(0.36, 0.345, 0.31), clamp((R.r - 0.58) * 2.2 + 0.5, 0.0, 1.0) * 0.75 + band * 0.25);
     grey = mix(grey, vec3(0.3, 0.31, 0.17), smoothstep(0.18, 0.04, R.b) * 0.5 * (1.0 - redness));
-    vec3 red = mix(mix(vec3(0.36, 0.14, 0.07), vec3(0.52, 0.27, 0.13), band), vec3(0.6, 0.42, 0.26), smoothstep(0.78, 0.95, band) * 0.6) * (0.8 + 0.4 * R.r);
+    vec3 red = mix(mix(vec3(0.3, 0.12, 0.06), vec3(0.46, 0.22, 0.11), band), vec3(0.5, 0.33, 0.2), smoothstep(0.82, 0.97, band) * 0.4) * (0.85 + 0.3 * R.r);
     vec3 rc = mix(grey, red, redness); rc = mix(rc, vec3(0.04, 0.037, 0.042) * (0.8 + 0.5 * R.r), b1.w);
     rc *= (1.0 - 0.55 * smoothstep(0.8, 0.95, R.g)) * (0.85 + 0.3 * smoothstep(0.3, 0.7, R.a));
     A = mix(A, rc, rk); H = mix(H, R.g * 0.35 + band * 0.08, rk); rough = mix(rough, 0.82, rk);
@@ -145,9 +145,11 @@ void yerGround(vec3 wp, vec3 nW, float dist, vec4 b0, vec4 b1, vec4 ax){
   float sea = 1.0 - step(1.5, wl);
   float be = smoothstep(4.4, 1.6, wp.y + dN * 0.7) * sea * (1.0 - b1.w);
   if (be > 0.001) { vec3 sc = mix(vec3(0.5, 0.41, 0.26), vec3(0.64, 0.54, 0.35), D.r * 0.6 + m * 0.4) * (0.92 + 0.12 * F.a); A = mix(A, sc, be); float rp = sin((dot(p, vec2(0.3, 0.95)) / 0.5 + D.r * 4.0) * 6.2832) * (1.0 - smoothstep(0.2, 0.6, fwidth(dot(p, vec2(0.3, 0.95)) / 0.5))); H = mix(H, rp * 0.008 + F.b * 0.01, be); rough = mix(rough, 0.9, be); }
-  float pb = smoothstep(1.6, 0.25, aw + dN * 0.5) * (1.0 - sea);
-  if (pb > 0.001) { float st = smoothstep(0.45, 0.15, F.b); vec3 pc = mix(vec3(0.2, 0.17, 0.12), vec3(0.36, 0.34, 0.3) * (0.7 + 0.6 * F.r), st * nearK + 0.35 * (1.0 - nearK)); A = mix(A, pc, pb); H = mix(H, st * 0.05 * nearK + D.b * 0.02, pb); rough = mix(rough, 0.85, pb); }
-  float wet = smoothstep(0.75, 0.05, aw + dN * 0.25 + fN * 0.08); yWet = wet;
+  float pb = smoothstep(0.6, 0.05, aw + dN * 0.3) * (1.0 - sea);
+  if (pb > 0.001) { float st = smoothstep(0.26, 0.1, F.b + (F.r - 0.58) * 0.9 + (D.r - 0.58) * 0.4), bg = smoothstep(0.22, 0.06, D.b + (D.g - 0.41) * 0.3);
+    vec3 pc = mix(vec3(0.17, 0.14, 0.1) * (0.8 + 0.4 * D.r), vec3(0.33, 0.31, 0.28) * (0.65 + 0.7 * F.a), st * nearK * 0.7 + 0.2 * (1.0 - nearK)); pc = mix(pc, vec3(0.3, 0.29, 0.26) * (0.8 + 0.4 * F.r), bg * 0.8);
+    A = mix(A, pc, pb); H = mix(H, st * 0.015 * nearK + bg * 0.06, pb); rough = mix(rough, 0.8, pb); }
+  float wet = smoothstep(0.45, 0.02, aw + dN * 0.2 + fN * 0.06); yWet = wet;
   A = mix(A, A * vec3(0.5, 0.52, 0.56), wet * 0.85); rough = mix(rough, 0.32, wet * 0.9);
   // qor: balandlik chizig'i, tik joyda kamroq, yumshoq ko'kish soya, yaltirash
   float snow = smoothstep(${T.SNOW_LO.toFixed(1)}, ${T.SNOW_HI.toFixed(1)}, wp.y + (M.r - 0.55) * 42.0 + dN * 4.0) * (1.0 - 0.85 * smoothstep(0.75, 1.15, slope + dN * 0.2)) * (1.0 - b1.w); yS = snow;
@@ -295,7 +297,7 @@ function yerMat(kind) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: kind !== 0, roughness: 0.9, metalness: 0, envMapIntensity: 0.2 });
   if (kind === 1) { m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; }
   // scene.environment ishlatilsa three envMapIntensity o'rniga scene.environmentIntensity oladi — shuning uchun osmon aksini o'zimiz beramiz (kuchi YER.envK)
-  m.onBeforeRender = function (r, scene) { if (scene.environment !== this.envMap) this.envMap = scene.environment; this.envMapIntensity = YER.envK; };
+  m.onBeforeRender = function (r, scene) { if (scene.environment !== this.envMap) this.envMap = scene.environment; this.envMapIntensity = YER.envK; if (!YER.qSet) YER.U.uYQ.value = r.getRenderTarget() ? 2 : 0; }; // sifat: setQuality() chaqirilmaguncha — kompozitorsiz (0-daraja) kadrda mayda detal o'chadi
   m.onBeforeCompile = (sh) => patch(sh, kind);
   m.customProgramCacheKey = () => 'yer' + kind;
   return m;
@@ -406,7 +408,7 @@ export function buildTerrain(scene) {
         if (lod !== c.lod) { c.lod = lod; c.mesh.geometry = c.geos[lod]; }
       }
     },
-    setQuality(q) { YER.U.uYQ.value = q; },
+    setQuality(q) { YER.qSet = true; YER.U.uYQ.value = q; },
   };
   return api;
 }
