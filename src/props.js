@@ -27,6 +27,13 @@ const vary = (c, x, z, type) => {
   c.r *= k * (1 + w); c.g *= k; c.b *= k * (1 - w * 1.2); return c;
 };
 
+// Manzillardagi (places/home) qo'lda qo'yilgan daraxtlar uchun navbat: buildProps'dan OLDIN chaqiriladi, daraxt nusxali tizimga (barg kartalari, LOD, shamol) qo'shiladi.
+// Kollayder qo'shilmaydi (manzil o'zinikini qo'yadi). kind: 0 keng bargli (pushti hex bo'lsa — olcha), 1 terak, 2 archa
+export const EXTRA_TREES = [];
+export function queueTree(x, y, z, s, hex, kind = 0, rot = (x * 12.9898 + z * 78.233) % 6.283) {
+  const type = kind === 1 ? 'cypress' : kind === 2 ? 'pine' : ((hex >> 16) & 255) > 200 && (hex & 255) > 150 ? 'blossom' : 'round';
+  EXTRA_TREES.push([type, x, y, z, s, rot, hex]);
+}
 export function buildProps(scene, game) {
   const P = floraProtos(), LM = leafMaterial();
   const CS = 200, NCH = T.SIZE / CS, STEP = 9.5;
@@ -127,6 +134,10 @@ export function buildProps(scene, game) {
         break;
     }
   }
+  for (const [type, x, y, z, s, rot, hex] of EXTRA_TREES) { // kollayder va g'ildirak do'ngchasisiz
+    const ci = clamp(((x + T.HALF) / CS) | 0, 0, NCH - 1), cj = clamp(((z + T.HALF) / CS) | 0, 0, NCH - 1), c = chunks[cj * NCH + ci] || (chunks[cj * NCH + ci] = { ci, cj, items: {} });
+    (c.items[type] || (c.items[type] = [])).push(x, y, z, s, rot, hex); cnt[type] = (cnt[type] || 0) + 1;
+  }
   const dummy = new THREE.Object3D(), color = new THREE.Color();
   // Yo'ldagi toshlar (piyoda olib tashlash mumkin)
   { const R = T.roads, avoid = ROAD_RAMPS.concat(RADARS).map(([k, f]) => edgePoint(k, f)), list = [];
@@ -226,8 +237,8 @@ export function buildDetail(scene) {
         const nr = T.nearestRoad(x, z, 1); if (nr.edge >= 0 && nr.d < nr.hw + 1.5) continue;
         const sf = T.ground(x, z, 1e9).surf; if (sf !== T.SURF.GRASS && sf !== T.SURF.SAND) continue;
         let cutHere = false; for (let k = 0; k < cuts.length; k++) { const q = cuts[k]; if ((q[0] - x) * (q[0] - x) + (q[1] - z) * (q[1] - z) < 2.2) { cutHere = true; break; } } if (cutHere) continue;
-        let inPl = false; for (let k = 0; k < PL.length; k++) { const q = PL[k]; if ((q[0] - x) * (q[0] - x) + (q[1] - z) * (q[1] - z) < q[2] && hash2(i, j, 27) >= q[3]) { inPl = true; break; } } if (inPl) continue;
-        const lav = bio === B.MEADOW && T.lavAt(x, z), d = Math.sqrt(d2), fade = 1 - smoothstep(0.55 * RD, RD, d), h4 = hash2(i, j, 24), s = 0.75 + h4 * 0.6;
+        let inPl = false, pf = 1; for (let k = 0; k < PL.length; k++) { const q = PL[k], dd = (q[0] - x) * (q[0] - x) + (q[1] - z) * (q[1] - z); if (dd < q[2] && hash2(i, j, 27) >= q[3]) { inPl = true; break; } if (q[3] === 0 && dd < q[2] + 600) pf = Math.min(pf, (Math.sqrt(dd) - Math.sqrt(q[2])) / 9); } if (inPl) continue; // joy chegarasida o'tlar asta-sekin pasayadi
+        const lav = bio === B.MEADOW && T.lavAt(x, z), d = Math.sqrt(d2), fade = (1 - smoothstep(0.55 * RD, RD, d)) * smoothstep(0, 1, pf), h4 = hash2(i, j, 24), s = 0.75 + h4 * 0.6;
         // rang: yer rangi va o't palitrasi aralashmasi, chetga yaqinlashgan sari faqat yer rangi
         const g = ground(x, z), pl = PAL[bio][(hash2(i, j, 26) * 3) | 0], gw = lerp(gcb[1], 1, 1 - fade) , vk = 0.9 + hash2(i, j, 28) * 0.22, gain = lerp(1.18, 1.0, 1 - fade);
         col.setRGB(lerp(pl[0], g[0], gw) * gain * vk, lerp(pl[1], g[1], gw) * gain * vk, lerp(pl[2], g[2], gw) * gain * vk);
@@ -237,10 +248,11 @@ export function buildDetail(scene) {
         else if (ng < N) { grass.setMatrixAt(ng, dummy.matrix); grass.setColorAt(ng, col); ng++; }
         // gullar (o'tga qo'shimcha, o'rnini egallamaydi)
         const hf = hash2(i, j, 31), fc = lav ? [0x8a6cc4, 0x9c7cd0, 0x7e64b8] : FC[bio];
-        if (fc && nf < NF && d < RD * 0.8 && (hf < 0.1 * (0.5 + 0.5 * dn) || (lav && hf < 0.55))) {
-          for (let q = 0; q < (lav ? 3 : 1 + (hf < 0.03 ? 2 : 0)) && nf < NF; q++) {
+        const fp = fc && !lav ? smoothstep(-0.1, 0.6, noise(x * 0.045 + 3.1, z * 0.045 - 7.7)) : 0; // gullar to'p-to'p (dog'lar) bo'lib o'sadi
+        if (fc && nf < NF && d < RD * 0.8 && (hf < (0.06 + 0.5 * fp) * (0.5 + 0.5 * dn) || (lav && hf < 0.55))) {
+          for (let q = 0; q < (lav ? 3 : 1 + ((hf * 37) % 1 < fp ? 2 : 0)) && nf < NF; q++) {
             const fx = x + (hash2(i, j, 32 + q) - 0.5) * 1.3, fz = z + (hash2(i, j, 35 + q) - 0.5) * 1.3, fsc = (0.75 + hash2(i, j, 38 + q) * 0.6) * (0.3 + 0.7 * fade) * (lav ? 1.4 : 1);
-            dummy.position.set(fx, T.gridHeight(fx, fz) - 0.02, fz); dummy.rotation.set((hash2(i, j, 41 + q) - 0.5) * 0.3, hf * 50 + q, (hash2(i, j, 44 + q) - 0.5) * 0.3); dummy.scale.set(fsc, fsc * (lav ? 1.5 : 1), fsc); dummy.updateMatrix();
+            dummy.position.set(fx, T.gridHeight(fx, fz) - 0.02, fz); dummy.rotation.set((hash2(i, j, 41 + q) - 0.5) * 1.1, hf * 50 + q, (hash2(i, j, 44 + q) - 0.5) * 1.1); dummy.scale.set(fsc, fsc * (lav ? 1.5 : 1), fsc); dummy.updateMatrix();
             flowers.setMatrixAt(nf, dummy.matrix); col.setHex(fc[(hash2(i, j, 25 + q) * fc.length) | 0]); flowers.setColorAt(nf, col); nf++;
           }
         }

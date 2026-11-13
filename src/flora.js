@@ -329,7 +329,7 @@ function spruce(seed, snow) {
   const o = new FB(seed), c = new FB(seed + 1), rng = o.r, bark = hexLin(0x4a3a2e), Ht = 11.8;
   pipe(o, [[0, -0.3, 0], [0, 4, 0], [0, Ht, 0]], [0.3, 0.2, 0.03], 5, barkCol(bark, 99));
   const Rmax = (y) => 2.7 * Math.pow(Math.max(0, 1 - (y - 1.2) / (Ht - 1.0)), 0.92) + 0.22;
-  const nf = (p) => { const r = Math.hypot(p[0], p[2]); return nrm([p[0] / (r || 1), 0.75, p[2] / (r || 1)]); };
+  const nf = (p) => { const r = Math.hypot(p[0], p[2]); return nrm([p[0] / (r || 1), 1.1, p[2] / (r || 1)]); };
   const cf = (p) => { const t = cl01(Math.hypot(p[0], p[2]) / (Rmax(p[1]) + 0.15)); const k = (0.56 + 0.44 * sst(0.0, 0.9, t)) * (0.84 + 0.26 * (p[1] / Ht)); return [k * 0.96, k, k * 1.03]; };
   // ichki to'ldiruvchi konuslar (shoxlar orasidagi bo'shliq — qalin igna massasi)
   for (const [y0, y1, rr] of [[1.4, 8.0, 0.4], [5.8, Ht - 0.2, 0.4]]) {
@@ -519,6 +519,12 @@ export function grassPatch(seed, blades, dense) {
       b.v(A, n0, col(0.42), 1); b.v(Bv, n1, col(0.42), 1); b.v(E, n0, col(1.08, 1), 1);
     }
   }
+  // pastki qavat: kalta, zich, qorong'iroq poyalar (yer yuzini "gilam" kabi yopadi)
+  for (let i = 0; i < (dense ? 44 : 22); i++) {
+    const x = (rng() - 0.5) * 1.6, z = (rng() - 0.5) * 1.6, h = 0.07 + rng() * 0.11, w = (dense ? 0.016 : 0.03) + rng() * 0.012, f = rng() * 6.28, ux = Math.cos(f) * w, uz = Math.sin(f) * w, lx = (rng() - 0.5) * 0.1, lz = (rng() - 0.5) * 0.1, r = rng();
+    const hue = r < 0.25 ? [1.1, 1.0, 0.7] : [1, 1, 1], n0 = nrm([lx, 1, lz]);
+    b.v([x - ux, 0, z - uz], n0, mul(hue, 0.42), 1); b.v([x + ux, 0, z + uz], n0, mul(hue, 0.42), 1); b.v([x + lx, h, z + lz], n0, mul(hue, 0.8), 1);
+  }
   if (dense) for (let i = 0; i < 5; i++) { // urug' boshoqlari (baland poyalar uchida)
     const x = (rng() - 0.5) * 1.3, z = (rng() - 0.5) * 1.3, h = 0.55 + rng() * 0.25, lx = (rng() - 0.5) * 0.25, lz = (rng() - 0.5) * 0.25, face = rng() * 6.28, ux = Math.cos(face) * 0.012, uz = Math.sin(face) * 0.012;
     const top = [x + lx, h, z + lz], mid = [x + lx * 0.4, h * 0.6, z + lz * 0.4], nU = [0, 1, 0], cS = [0.55, 0.6, 0.4];
@@ -535,7 +541,7 @@ export function flowerGeo(seed) {
   const st = (a, c) => [Math.cos(a) * 0.008, 0, Math.sin(a) * 0.008];
   for (const a of [0, 2.1, 4.2]) { const d = st(a), e = st(a + 2.1); b.tri([d, nrm([d[0], 0, d[2]]), g, 0], [e, nrm([e[0], 0, e[2]]), g, 0], [add(e, [0, H, 0]), nrm([e[0], 0, e[2]]), gT, 0]); b.tri([d, nrm([d[0], 0, d[2]]), g, 0], [add(e, [0, H, 0]), nrm([e[0], 0, e[2]]), gT, 0], [add(d, [0, H, 0]), nrm([d[0], 0, d[2]]), gT, 0]); }
   for (const a of [0.4, 3.3]) { const d = [Math.cos(a), 0, Math.sin(a)], s = [-d[2], 0, d[0]]; const p0 = [0, 0.06, 0], p1 = add(mul(d, 0.12), [0, 0.13, 0]); b.v(p0, UP, g, 0); b.v(add(mix3(p0, p1, 0.5), mul(s, 0.025)), UP, gT, 0); b.v(p1, UP, gT, 0); b.v(p0, UP, g, 0); b.v(p1, UP, gT, 0); b.v(add(mix3(p0, p1, 0.5), mul(s, -0.025)), UP, gT, 0); }
-  const n = 7, R0 = 0.06, c0 = [0, H + 0.01, 0];
+  const n = 7, R0 = 0.08, c0 = [0, H + 0.01, 0];
   for (let i = 0; i < n; i++) { const a = (i / n) * 6.2832, a1 = ((i + 0.5) / n) * 6.2832, a2 = ((i + 1) / n) * 6.2832, pm = [Math.cos(a1) * R0, H + 0.025, Math.sin(a1) * R0], pa = [Math.cos(a) * R0 * 0.35, H + 0.012, Math.sin(a) * R0 * 0.35], pb = [Math.cos(a2) * R0 * 0.35, H + 0.012, Math.sin(a2) * R0 * 0.35];
     b.v(c0, UP, [0.85, 0.85, 0.85], 1); b.v(pa, UP, [0.95, 0.95, 0.95], 1); b.v(pm, UP, [1, 1, 1], 1); b.v(c0, UP, [0.85, 0.85, 0.85], 1); b.v(pm, UP, [1, 1, 1], 1); b.v(pb, UP, [0.95, 0.95, 0.95], 1); }
   for (let i = 0; i < 4; i++) { const a = (i / 4) * 6.2832, a2 = ((i + 1) / 4) * 6.2832; b.v([0, H + 0.04, 0], UP, [0.72, 0.5, 0.06], 0); b.v([Math.cos(a) * 0.016, H + 0.028, Math.sin(a) * 0.016], UP, [0.62, 0.42, 0.05], 0); b.v([Math.cos(a2) * 0.016, H + 0.028, Math.sin(a2) * 0.016], UP, [0.62, 0.42, 0.05], 0); }
