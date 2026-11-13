@@ -404,11 +404,11 @@ function palm(seed) {
   let x = 0, y = -0.3; for (let i = 0; i <= 7; i++) { pts.push([x, y, 0]); rad.push(0.27 - i * 0.012); const lean = 0.05 + i * 0.045; x += Math.sin(lean) * 1.07; y += Math.cos(lean) * 1.07; }
   pipe(o, pts, rad, 7, (t, p) => { const ring = 0.75 + 0.25 * Math.abs(Math.sin(p[1] * 7)); const k = ring * (0.6 + 0.4 * sst(0, 1.5, p[1])); return [0.5 * k, 0.4 * k, 0.29 * k]; });
   const top = pts[pts.length - 1];
-  for (let i = 0; i < 11; i++) {
-    const az = (i / 11) * 6.28 + rng() * 0.3, d0 = nrm([Math.cos(az), 0.55 - (i % 3) * 0.25, Math.sin(az)]), side = nrm(cross(d0, UP)), L = 3.3 + rng() * 0.6;
+  for (let i = 0; i < 14; i++) {
+    const az = (i / 14) * 6.28 + rng() * 0.3, d0 = nrm([Math.cos(az), 0.55 - (i % 3) * 0.25, Math.sin(az)]), side = nrm(cross(d0, UP)), L = 3.3 + rng() * 0.6;
     let p = top, d = d0; const segs = 3;
     for (let s = 0; s < segs; s++) {
-      const q = add(p, mul(d, L / segs)), w0 = 0.55 * Math.sin((s / segs) * 2.6 + 0.35) + 0.08, w1 = 0.55 * Math.sin(((s + 1) / segs) * 2.6 + 0.35) + 0.04, sd = rot(side, d, -0.35);
+      const q = add(p, mul(d, L / segs)), w0 = 0.7 * Math.sin((s / segs) * 2.6 + 0.35) + 0.08, w1 = 0.7 * Math.sin(((s + 1) / segs) * 2.6 + 0.35) + 0.04, sd = rot(side, d, -0.35);
       const nf = (pp) => nrm(add(nrm(sub(pp, top)), [0, 0.8, 0])), cf = (pp) => { const k = 0.55 + 0.45 * cl01(len(sub(pp, top)) / L); return [k, k, k]; };
       strip(c, p, q, sd, w0, w1, 5, nf, cf, 1, s / segs, (s + 1) / segs);
       p = q; d = nrm(add(d, [0, -0.42, 0]));
@@ -437,13 +437,13 @@ function cactus(seed) {
 function deadTree(seed) {
   const o = new FB(seed), rng = o.r;
   const grow = (p, d, L, r, lvl) => {
-    const pts = bend(p, d, L, 0.1, lvl > 1 ? 3 : 2, rng, 0.35);
-    pipe(o, pts, pts.map((_, i) => r * (1 - 0.55 * i / (pts.length - 1))), lvl > 1 ? 6 : lvl > 0 ? 4 : 3, (t, q) => { const k = (0.55 + 0.4 * sst(-0.3, 1.2, q[1])) * (0.85 + 0.15 * Math.sin(q[1] * 9 + t * 4)); return [k, k, k]; }, 1);
+    const pts = bend(p, d, L, 0.1, lvl > 1 ? 3 : 1, rng, 0.35);
+    pipe(o, pts, pts.map((_, i) => r * (1 - 0.55 * i / (pts.length - 1))), lvl > 2 ? 6 : lvl > 1 ? 4 : 3, (t, q) => { const k = (0.55 + 0.4 * sst(-0.3, 1.2, q[1])) * (0.85 + 0.15 * Math.sin(q[1] * 9 + t * 4)); return [k, k, k]; }, 1);
     if (lvl <= 0) return;
-    const e = pts[pts.length - 1], n = lvl > 1 ? 3 : 2;
+    const e = pts[pts.length - 1], n = lvl > 2 ? 3 : 2;
     for (let i = 0; i < n; i++) { const az = rng() * 6.28, nd = nrm(add(d, [Math.cos(az) * 0.9, 0.2, Math.sin(az) * 0.9])); grow(i === 0 ? e : pts[Math.max(1, pts.length - 2)], nd, L * (0.55 + rng() * 0.15), r * 0.45, lvl - 1); }
   };
-  grow([0, -0.3, 0], [0.06, 1, 0.03], 2.6, 0.28, 2);
+  grow([0, -0.3, 0], [0.06, 1, 0.03], 2.4, 0.28, 3);
   return { hi: o.build(), cards: null };
 }
 // Buta: bir nechta qorong'i yadro + barg kartalari
@@ -457,12 +457,13 @@ function bushGen(seed, cell, dry) {
 // Tosh: shovqin bilan buzilgan sfera + tekis kesilgan yuzlar (yorilgan, yemirilgan shakl), silliq normallar; tagi qorong'i, chuqurlar soyada, tepasi changli
 function rockGen(seed, det, sx, sy, sz, cy, cuts, amp) {
   const o = new FB(seed), rng = o.r, planes = [];
-  for (let i = 0; i < cuts; i++) planes.push([nrm([rng() * 2 - 1, rng() * 1.6 - 0.4, rng() * 2 - 1]), 0.62 + rng() * 0.22]);
+  for (let i = 0; i < cuts; i++) planes.push([nrm([rng() * 2 - 1, rng() * 1.8 - 0.5, rng() * 2 - 1]), 0.5 + rng() * 0.28]);
   const s = (seed * 7) | 0;
   sphere(o, { det, c: [0, cy, 0], r: [sx, sy, sz], smooth: true,
-    disp: (u) => 1 + amp * fbm3(u, 1.6, s, 3) + amp * 0.35 * vn3(u[0] * 6, u[1] * 6, u[2] * 6, s + 5),
-    post: (p) => { for (const [n, d] of planes) { const e = dot([p[0] / sx, p[1] / sy, p[2] / sz], n) - d; if (e > 0) p = sub(p, [n[0] * e * sx, n[1] * e * sy, n[2] * e * sz]); } if (p[1] < -cy - 0.05) p[1] = -cy - 0.05 + (p[1] + cy + 0.05) * 0.15; return p; },
-    col: (p, u, d, n) => { const y = p[1]; let k = (0.52 + 0.48 * sst(-0.05, 0.45, y)) * (0.78 + 0.5 * (d - 1) / amp * 0.5 + 0.22); k *= 0.88 + 0.16 * Math.max(0, n[1]); const lich = vn3(p[0] * 3, p[1] * 3, p[2] * 3, s + 9) > 0.35 ? 1 : 0; return lich ? [k * 1.02, k * 1.05, k * 0.9] : [k, k, k * 1.01]; }, m: 1 });
+    disp: (u) => 1 + amp * fbm3(u, 2.1, s, 3) + amp * 0.3 * vn3(u[0] * 7, u[1] * 7, u[2] * 7, s + 5),
+    post: (p) => { let k = 0; for (const [n, d] of planes) { const e = dot([p[0] / sx, p[1] / sy, p[2] / sz], n) - d; if (e > 0) { p = sub(p, [n[0] * e * sx, n[1] * e * sy, n[2] * e * sz]); k = Math.max(k, Math.min(1, e * 6)); } } if (p[1] < -cy - 0.05) p[1] = -cy - 0.05 + (p[1] + cy + 0.05) * 0.15; return p; },
+    col: (p, u, d, n) => { const y = p[1], q = sub(p, [0, cy, 0]); let k = (0.5 + 0.5 * sst(-0.05, 0.5, y)) * (0.84 + 0.55 * (d - 1)); k *= 0.86 + 0.18 * Math.max(0, n[1]); k *= 0.93 + 0.07 * Math.sin(y * 11 + 3 * vn3(q[0] * 2, q[1] * 2, q[2] * 2, s + 2)); k *= 1 + 0.08 * vn3(q[0] * 5, q[1] * 5, q[2] * 5, s + 7);
+      const lich = vn3(q[0] * 3, q[1] * 3, q[2] * 3, s + 9) > 0.3 && n[1] > -0.2 ? 1 : 0; return lich ? [k * 1.03, k * 1.06, k * 0.86] : [k, k * 0.99, k * 0.98]; }, m: 1 });
   return o.build();
 }
 
@@ -484,9 +485,9 @@ export function floraProtos() {
   put('dead', deadTree(91), (() => { const o = new FB(92); pipe(o, [[0, -0.3, 0], [0.1, 2.2, 0], [0.2, 4.2, 0]], [0.26, 0.18, 0.08], 4, () => [0.75, 0.75, 0.75], 1); pipe(o, [[0.1, 2.3, 0], [1.4, 3.6, 0.2]], [0.1, 0.04], 3, () => [0.75, 0.75, 0.75], 1); return o.build(); })(), 0.3, 4);
   put('bush', bushGen(101, 0, false), lowCrown(102, null, 0, 0, [{ c: [0, 0.45, 0], r: [1.15, 0.8, 1.15] }], { k: 0.72 }), 0, 1);
   put('shrub', bushGen(111, 6, true), lowCrown(112, null, 0, 0, [{ c: [0, 0.4, 0], r: [1.0, 0.62, 1.0] }], { k: 0.62 }), 0, 1);
-  P.rock = { hi: rockGen(121, 2, 1.0, 0.68, 0.95, 0.3, 3, 0.2), cards: null, lo: rockGen(121, 1, 1.0, 0.68, 0.95, 0.3, 3, 0.2), colR: 0.85, colH: 1 };
-  { const a = new FB(1); const g1 = rockGen(131, 2, 0.8, 1.15, 0.85, 0.5, 4, 0.22), g2 = rockGen(132, 1, 0.62, 0.42, 0.55, 0.1, 2, 0.2); P.rock2 = { hi: mergeGeo([g1, g2], [[0, 0, 0], [0.8, 0, 0.4]]), cards: null, lo: rockGen(131, 1, 0.8, 1.15, 0.85, 0.5, 4, 0.22), colR: 0.8, colH: 1.6 }; void a; }
-  P.stone = { hi: rockGen(141, 1, 1.0, 0.44, 0.9, 0.0, 2, 0.18), cards: null, lo: rockGen(141, 0, 1.0, 0.44, 0.9, 0.0, 2, 0.18), colR: 0, colH: 0.4 };
+  P.rock = { hi: rockGen(121, 2, 1.0, 0.68, 0.95, 0.3, 7, 0.3), cards: null, lo: rockGen(121, 1, 1.0, 0.68, 0.95, 0.3, 7, 0.3), colR: 0.85, colH: 1 };
+  { const a = new FB(1); const g1 = rockGen(131, 2, 0.8, 1.15, 0.85, 0.5, 8, 0.3), g2 = rockGen(132, 1, 0.62, 0.42, 0.55, 0.1, 5, 0.26); P.rock2 = { hi: mergeGeo([g1, g2], [[0, 0, 0], [0.8, 0, 0.4]]), cards: null, lo: rockGen(131, 1, 0.8, 1.15, 0.85, 0.5, 8, 0.3), colR: 0.8, colH: 1.6 }; void a; }
+  P.stone = { hi: rockGen(141, 1, 1.0, 0.44, 0.9, 0.0, 5, 0.24), cards: null, lo: rockGen(141, 0, 1.0, 0.44, 0.9, 0.0, 5, 0.24), colR: 0, colH: 0.4 };
   return P;
 }
 // Bir nechta geometriyani siljitib qo'shish (bir xil atributlar)

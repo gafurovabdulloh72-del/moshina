@@ -174,11 +174,12 @@ export function buildProps(scene, game) {
   const api = {
     counts: cnt, chunks: list, far: 1500, hiD: 330,
     update(cam) {
-      const px = cam.position.x, pz = cam.position.z;
+      // barg kartali daraxtlar eng past sifatda yaqinroq masofagacha (hiD * 0.62) batafsil chiziladi — 0-darajada kadr og'irlashmasin
+      const px = cam.position.x, pz = cam.position.z, cd = api.hiD < 260 ? api.hiD * 0.62 : api.hiD;
       for (let i = 0; i < list.length; i++) {
         const c = list[i]; const d = Math.hypot(c.cx - px, c.cz - pz);
-        const st = d < api.hiD ? 1 : d < api.far ? 2 : 0;
-        if (st !== c.st) { c.st = st; const M = c.meshes; for (let k = 0; k < M.length; k += 3) { M[k].visible = st === 1; if (M[k + 1]) M[k + 1].visible = st === 1; M[k + 2].visible = st === 2 && !M[k + 2].userData.skip; } }
+        const st = (d < api.hiD ? 1 : d < api.far ? 2 : 0) + (d < cd ? 4 : 0);
+        if (st !== c.st) { c.st = st; const M = c.meshes, s1 = st & 3, sc = st & 4; for (let k = 0; k < M.length; k += 3) { const h = M[k + 1] ? (sc ? 1 : s1 ? 2 : 0) : s1; M[k].visible = h === 1; if (M[k + 1]) M[k + 1].visible = h === 1; M[k + 2].visible = h === 2 && !M[k + 2].userData.skip; } }
       }
     },
   };
