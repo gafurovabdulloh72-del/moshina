@@ -40,7 +40,12 @@ console.log('built', out, (html.length / 1024).toFixed(0) + ' KB');
 if (!dev) {
   const vdir = path.join(root, 'dist/vercel');
   fs.mkdirSync(vdir, { recursive: true });
-  fs.writeFileSync(path.join(vdir, 'index.html'), html);
+  // Ulashish rasmi: WhatsApp va Facebook hujjatlari og:image da to'liq manzilni (https://…) talab qiladi; Telegram va X ham nisbiy "/og.jpg" ni tushunmasligi mumkin.
+  // Sayt manzili ma'lum bo'lsa (siteOrigin) sayt nusxasida og:image to'liq yoziladi, manzil aniq asosiy bo'lsa og:url ham qo'shiladi. Noma'lum bo'lsa sahifa dist/SAFAR.html bilan bir xil qoladi.
+  const OG = '<meta property="og:image" content="/og.jpg">', web = siteOrigin();
+  if (!html.includes(OG)) throw new Error(`src/index.html da ${OG} satri topilmadi (tools/build.mjs aynan shu satrni almashtiradi)`);
+  fs.writeFileSync(path.join(vdir, 'index.html'), web ? html.replace(OG, () => (web.main ? `<meta property="og:url" content="${web.origin}/">\n` : '') + `<meta property="og:image" content="${web.origin}/og.jpg">`) : html);
+  if (web) console.log('og', web.origin + '/og.jpg');
   // Sayt sozlamalari bitta joyda — ildizdagi vercel.json. Paket ichiga yig'ish buyruqlarisiz nusxasi tushadi.
   const { buildCommand, installCommand, outputDirectory, framework, ...site } = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
   fs.writeFileSync(path.join(vdir, 'vercel.json'), JSON.stringify(site, null, 2));
@@ -64,6 +69,16 @@ if (!dev) {
   const zipPath = path.join(root, 'dist/SAFAR-vercel.zip');
   fs.writeFileSync(zipPath, zipFiles(['index.html', 'vercel.json', 'og.jpg', 'OQING.txt'].map((name) => ({ name, data: fs.readFileSync(path.join(vdir, name)) }))));
   console.log('zip', zipPath, (fs.statSync(zipPath).size / 1024).toFixed(0) + ' KB');
+}
+
+// Sayt manzili: { origin: "https://domen", main } yoki null (noma'lum). Avval package.json dagi "homepage" (o'z domeni ulanganda shu yerga yoziladi),
+// bo'lmasa Vercel yig'ish paytida o'zi beradigan VERCEL_PROJECT_PRODUCTION_URL (loyihaning eng qisqa domeni, "https://" siz keladi).
+// main — manzil aniq asosiy: "homepage" yoki Vercel'ning o'z *.vercel.app domeni. og:url faqat shunda yoziladi, chunki Vercel bergan o'z domeni boshqasiga yo'naltirilgan bo'lishi mumkin.
+function siteOrigin() {
+  const pin = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).homepage, raw = String(pin || process.env.VERCEL_PROJECT_PRODUCTION_URL || '').trim();
+  const m = /^(https?:\/\/)?([a-z0-9-]+(?:\.[a-z0-9-]+)+)\/?$/i.exec(raw);
+  if (raw && !m) console.warn(`DIQQAT: sayt manzili tushunarsiz ("${raw}") — og:image nisbiy qoldi`);
+  return m ? { origin: (m[1] || 'https://').toLowerCase() + m[2].toLowerCase(), main: !!pin || /\.vercel\.app$/i.test(m[2]) } : null;
 }
 
 // Kichik ZIP yozuvchi (tashqi dastur kerak emas): har fayl deflate bilan siqiladi.

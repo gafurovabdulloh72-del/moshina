@@ -53,6 +53,15 @@ STEPS='[["","G.sim(2)"],["rasm_nomi","G.advance(0.3)"]]' node tools/shot.mjs too
 - Ekransiz Chrome dasturiy render qiladi (sekin): `NO_TEST=1` rejimida o'yin vaqti haqiqiy vaqtdan orqada qoladi — kutishlarni saxiy qo'ying yoki sinov rejimida `G.sim()` ishlating.
 - `adapt()` (moslashuvchan grafika) kadr vaqtiga tayanadi; uni o'zgartirsangiz `npm run test:adapt` o'tishi shart.
 - `dist/` va `shots/` git'da yo'q.
+- **Ulashish rasmi.** `tools/build.mjs` sayt nusxasida `src/index.html` dagi `<meta property="og:image" content="/og.jpg">` satrini aynan shu ko'rinishda topib, to'liq manzilga almashtiradi (Vercel'da domen o'zi keladi; o'z domeni ulansa — `package.json` → `homepage`, README 6-bo'lim). Bu satrni o'zgartirmang. `assets/og.jpg` 1200×630 bo'lib qolsin (`og:image:width/height` shunga yozilgan).
+
+## Git va Vercel
+
+- Repo: `gafurovabdulloh72-del/moshina` (**ochiq** qolsin: Vercel'ning bepul tarifida yopiq repodagi Claude commitlari bloklanadi).
+- Vercel Git orqali ulanadi: `vercel.json` → `npm install --omit=dev` → `node tools/build.mjs` → `dist/vercel/`. Sozlamalar faqat `vercel.json` da, Vercel panelidagi maydonlarga tegilmaydi.
+- **`main` — jonli sayt.** Boshqa tarmoqlar (`claude/...`) sinov havolasini oladi; u Vercel hisobiga kirishni so'raydi — begonalarga yuborilmaydi. `main` ga faqat egasi rozi bo'lsa qo'shiladi.
+- Bulut sessiyasidan vercel.com va *.vercel.app ochilmaydi: joylangan saytni bu yerdan tekshirib bo'lmaydi — egasidan havola va rasm so'rang.
+- Sinov havolasida Vercel asboblar paneli `c` tugmasini egallashi mumkin (o'yinda kamera tugmasi) — o'yinni asosiy manzilda baholang.
 
 ## Egasi bilan ishlash
 

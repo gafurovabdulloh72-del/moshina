@@ -309,7 +309,7 @@ Geympad: RT/LT — gaz/tormoz, chap stik — rul, A — qo'l tormozi, X — nitr
 ```
 src/          o'yin kodi (ES modullar) + index.html + style.css
 tools/        yig'ish va sinov skriptlari
-assets/og.jpg havola ulashilganda ko'rinadigan rasm (yig'ishda dist/vercel/ ga ko'chiriladi)
+assets/og.jpg havola ulashilganda ko'rinadigan rasm, 1200×630 (yig'ishda dist/vercel/ ga ko'chiriladi)
 docs/img/     shu hujjatdagi rasmlar
 vercel.json   Vercel sozlamalari (Git orqali joylash uchun)
 dist/         yig'ish natijasi (git'da yo'q)
@@ -440,7 +440,7 @@ Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuter
 
 ```bash
 node tools/shot.mjs tools/s_run.js            # STEPS='[["nom","JS ifoda"],…]' — ixtiyoriy qadamlar va skrinshot
-NO_TEST=1 node tools/shot.mjs tools/s_og.js   # og.jpg uchun menyu rasmi (shots/og.jpg → assets/og.jpg ga qo'lda ko'chiriladi)
+NO_TEST=1 node tools/shot.mjs tools/s_og.js --w 1200 --h 630   # og.jpg uchun menyu rasmi, 1200×630 (shots/og.jpg → assets/og.jpg ga qo'lda ko'chiriladi)
 node tools/sheet.mjs out.jpg 2 900 a.jpg b.jpg c.jpg d.jpg   # skrinshotlarni bitta varaqqa yig'ish
 node tools/map.mjs                            # xarita rasmi (shots/map.jpg) va yo'l statistikasi
 node tools/probe.mjs -380,1920                # nuqtadagi balandlik va hudud
@@ -459,6 +459,11 @@ Muhit o'zgaruvchilari: `NO_TEST=1` (oddiy rejim), `CHROME_PATH` (Chrome joyi), `
 **B. Tashlab joylash (terminalsiz).** `npm run build` dan keyin `dist/SAFAR-vercel.zip` ni brauzerda [vercel.com/drop](https://vercel.com/drop) sahifasiga tashlang, loyiha nomini yozing, Deploy ni bosing. Vercel hisobi kerak. Eslatma: har bir tashlash alohida loyiha (alohida manzil) ochadi — doimiy manzil uchun A usuli.
 
 Sayt statik: `index.html` (butun o'yin), `og.jpg`, `vercel.json`.
+
+**Ulashish rasmi.** Havola Telegram, WhatsApp, Facebook yoki X'da ulashilganda `og.jpg` chiqishi uchun sahifadagi `og:image` to'liq manzil (`https://…/og.jpg`) bo'lishi kerak — nisbiy `/og.jpg` bilan rasm chiqmasligi mumkin. A usulida buni yig'ish skripti o'zi qiladi: Vercel yig'ish paytida loyiha domenini `VERCEL_PROJECT_PRODUCTION_URL` o'zgaruvchisida beradi, `tools/build.mjs` esa sayt nusxasida (`dist/vercel/index.html`) `og:image` ni to'liq manzilga aylantiradi va domen Vercel'ning o'ziniki (`*.vercel.app`) bo'lsa `og:url` ham qo'shadi. `dist/SAFAR.html` bundan o'zgarmaydi. Kompyuterda yig'ilganda (B usuli) manzil noma'lum, shuning uchun `og:image` nisbiy qoladi.
+
+- **O'z domeni ulansa:** `package.json` ga `"homepage": "https://domen"` yozing — u Vercel bergan manzildan ustun turadi, `og:url` ham shu manzil bilan chiqadi va kompyuterda yig'ilgan zip'ga ham tushadi. Sababi: Vercel eng qisqa domenni beradi, u esa boshqa domenga yo'naltirilgan bo'lishi mumkin (masalan, `domen.uz` → `www.domen.uz`) — `homepage` ga asosiy domenni yozing.
+- **Eski ko'rinish:** Telegram havola ko'rinishini eslab qoladi. Rasm yoki matn o'zgargach, Telegram'da havolani @WebpageBot ga yuboring — ko'rinish yangilanadi.
 
 ---
 
@@ -537,7 +542,8 @@ Sinovlar ekransiz brauzerda (dasturiy render) o'tgan. Quyidagilar **haqiqiy quri
 - ovoz va musiqa — quloq bilan;
 - rul va driftning "his"i;
 - haqiqiy telefondagi sensorli boshqaruv (sodda: tugmalar bor, kamerani barmoq bilan aylantirish yo'q);
-- Vercel'ga joylashning o'zi (A ham, B ham).
+- Vercel'ga joylashning o'zi (A ham, B ham);
+- havola ulashilganda rasm va matnning Telegram, WhatsApp, Facebook'da chiqishi (sayt joylangach tekshiriladi).
 
 Ma'lum cheklovlar:
 
