@@ -97,7 +97,8 @@ void main(){
   float band = sin(depth / uFoamD * 9.0 - t * 1.3 + n1 * 6.0) * 0.5 + 0.5;
   float foam = sz * sz * smoothstep(0.55, 0.95, band * 0.5 + n2 * 0.55 + sz * 0.3) + smoothstep(0.1, 0.0, depth) * smoothstep(0.3, 0.75, n2) * 0.7;
 #if KIND == 0
-  foam += smoothstep(0.6, 0.2, jac) * smoothstep(0.45, 0.85, uRough) * smoothstep(0.3, 0.6, n2 * n1 * 1.8) * smoothstep(1.5, 6.0, depth);
+  // oq yollar (to'lqinli dengizda): cho'qqi siqilishi (yaqinda) + siljuvchi shovqin dog'lari (uzoqda ham)
+  foam += smoothstep(0.66, 0.86, n1 * 0.55 + n2 * 0.55 + (1.0 - jac) * 0.9) * smoothstep(0.5, 0.95, uRough) * smoothstep(1.5, 6.0, depth) * 0.9;
 #endif
   foam = clamp(foam * uFoamK, 0.0, 1.0);
   vec3 foamCol = (uAmb * 0.75 + uSunCol * 0.55 * max(dot(Nm, uSunDir), 0.0)) * 0.85;
@@ -232,7 +233,7 @@ export function initGfx(game) {
     uniforms: Object.assign({ fogColor: { value: new THREE.Color() }, fogNear: { value: 1 }, fogFar: { value: 2000 }, fogDensity: { value: 0.00025 },
       uDeep: { value: new THREE.Color().setRGB(...o.deep) }, uShallow: { value: new THREE.Color().setRGB(...o.shallow) }, uAmp: { value: o.amp }, uAbs: { value: new THREE.Vector3(...o.abs) }, uBed: { value: new THREE.Color().setRGB(...o.bed) }, uShore: { value: new THREE.Color().setRGB(...(o.shore || [0, 0, 0])) }, uFoamK: { value: o.foam }, uFoamD: { value: o.foamD },
       uNrmK: { value: o.nrm }, uNS: { value: o.ns }, uDeepD: { value: o.deepD }, uCaus: { value: o.caus } }, U) });
-  const seaMat = waterMat(0, { deep: [0.002, 0.016, 0.042], shallow: [0.025, 0.2, 0.18], amp: 1, abs: [0.32, 0.07, 0.045], bed: [0.5, 0.42, 0.28], foam: 1, foamD: 1.5, nrm: 0.3, ns: 1, deepD: 16, caus: 0.5 });
+  const seaMat = waterMat(0, { deep: [0.002, 0.016, 0.042], shallow: [0.025, 0.2, 0.18], amp: 1, abs: [0.36, 0.09, 0.065], bed: [0.46, 0.4, 0.28], foam: 1, foamD: 1.5, nrm: 0.3, ns: 1, deepD: 16, caus: 0.5 });
   const freshMat = waterMat(1, { deep: [0.004, 0.022, 0.028], shallow: [0.035, 0.13, 0.085], amp: 0.05, abs: [0.45, 0.18, 0.3], bed: [0.22, 0.19, 0.12], shore: [0.05, 0.07, 0.04], foam: 0.45, foamD: 0.5, nrm: 0.22, ns: 1.7, deepD: 8, caus: 0.35 });
   const riverMat = waterMat(2, { deep: [0.015, 0.045, 0.04], shallow: [0.05, 0.12, 0.08], amp: 0, abs: [0.9, 0.5, 0.7], bed: [0.28, 0.24, 0.15], shore: [0.06, 0.07, 0.04], foam: 0.35, foamD: 0.3, nrm: 0.35, ns: 1, deepD: 1.2, caus: 0.2 });
   // dengiz: kamera ortidan yuruvchi qutbli to'r — markazda zich (0.8 m), uzoqda siyrak (15 km gacha, ufqgacha yetadi)
