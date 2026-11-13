@@ -1,0 +1,28 @@
+{
+  "name": "safar",
+  "version": "2.0.0",
+  "private": true,
+  "description": "SAFAR — brauzerda ishlaydigan 3D sayohat o'yini (Three.js, bitta HTML fayl)",
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "build:dev": "node tools/build.mjs --dev",
+    "test": "node tools/veh_test.mjs && node tools/steer_test.mjs",
+    "test:roads": "node tools/sim.mjs",
+    "test:smoke": "node tools/shot.mjs tools/s_smoke.js",
+    "test:real": "NO_TEST=1 node tools/shot.mjs tools/s_real.js",
+    "test:hud": "NO_TEST=1 node tools/shot.mjs tools/s_hud.js",
+    "test:adapt": "node tools/shot.mjs tools/s_adapt.js",
+    "test:save": "node tools/shot.mjs tools/s_save.js",
+    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.65.0",
+    "sharp": "^0.35.5"
+  }
+}

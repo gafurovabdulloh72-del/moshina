@@ -1,0 +1,11 @@
+# o'rnatiladigan kutubxonalar
+node_modules/
+
+# yig'ish natijasi (npm run build qayta yaratadi)
+dist/
+
+# sinov skrinshotlari
+shots/
+
+*.log
+.DS_Store
