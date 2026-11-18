@@ -92,7 +92,8 @@ async function boot() {
 // true — o'yin o'zi (sinov tariqasida) o'zgartiryapti: joriy aniqlik saqlanadi, taqiqlar tozalanmaydi
 game.applyQuality = (mode) => {
   const set = game.state.set, q = set.gfx, dpr = Math.min(devicePixelRatio || 1, 2), auto = mode === true;
-  game.prCap = [Math.min(dpr, 1), Math.min(dpr, 1.25), Math.min(dpr, 1.75)][q]; game.pr = auto ? Math.min(game.pr || game.prCap, game.prCap) : game.prCap;
+  // eng yuqori sifatda ekrandan ko'proq piksel (silliqroq qirralar); sekinlashsa adapt() o'zi pasaytiradi
+  game.prCap = [Math.min(dpr, 1), Math.min(dpr, 1.5), Math.min(2, Math.max(1, dpr) * 1.5)][q]; game.pr = auto ? Math.min(game.pr || game.prCap, game.prCap) : game.prCap;
   qT = 0; ftAvg = 16; ftSum = 0; ftN = 0; ftT = 0; goodN = 0; calmN = 0; upAge = 99; prCeil = Infinity; ceilT = 0; desc = null; settle = 2;
   if (!auto) {
     ceilN = 0; lockT = 0; lockN = 0; qLock = false; qTry = null; upTry = null; upTries = 0;
