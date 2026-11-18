@@ -291,7 +291,7 @@ export function initInterior(game) {
   const NEWS = ['Orolda yangi yo\'l ochildi', 'Bog\'istonda olma hosili mo\'l', 'Karvonsaroyda bozor kuni', 'Ko\'zgu ko\'lda baliq ko\'paydi', 'Aerodromda poyga musobaqasi'];
   const drawTV = (t) => {
     const x = tvX, W = 256, Hh = 144, ch = IN.tvCh % 3;
-    if (ch === 0) { x.fillStyle = '#1d3a6a'; x.fillRect(0, 0, W, Hh); x.fillStyle = '#e2572f'; x.fillRect(0, 108, W, 36); x.fillStyle = '#fff'; x.font = 'bold 15px sans-serif'; x.fillText('ORAL YANGILIKLARI', 10, 24);
+    if (ch === 0) { x.fillStyle = '#1d3a6a'; x.fillRect(0, 0, W, Hh); x.fillStyle = '#e2572f'; x.fillRect(0, 108, W, 36); x.fillStyle = '#fff'; x.font = 'bold 15px sans-serif'; x.fillText('OROL YANGILIKLARI', 10, 24);
       x.fillStyle = '#f2d8b0'; x.beginPath(); x.arc(70, 72, 20, 0, 6.3); x.fill(); x.fillStyle = '#2a2c33'; x.fillRect(48, 92, 44, 16); x.fillStyle = '#7cc4e8'; x.fillRect(130, 40, 110, 62);
       x.fillStyle = '#fff'; x.font = 'bold 13px sans-serif'; const s = NEWS[Math.floor(t / 4) % NEWS.length] + '  •  '; const off = (t * 40) % (s.length * 7.5); x.fillText(s + s, 8 - off, 130); }
     else if (ch === 1) { x.fillStyle = '#9fe0ff'; x.fillRect(0, 0, W, Hh); x.fillStyle = '#6ac45a'; x.fillRect(0, 104, W, 40); x.fillStyle = '#ffe14a'; x.beginPath(); x.arc(220, 26, 16, 0, 6.3); x.fill();
