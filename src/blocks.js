@@ -138,9 +138,20 @@ export const PEOPLE = [];
 export function person(g, x, z, yaw, shirt = 0x2f7fd0, pants = 0x3a3f4c) {
   const q = wpt(g, x, 0, z); PEOPLE.push({ x: q[0], y: q[1], z: q[2], yaw: Math.atan2(g.m[2], g.m[8]) + yaw, shirt, pants });
 }
+// Qayiq: uchli tumshuq, egilgan bortlar, ichida o'rindiqlar, eshkak va kichik motor (ikki tomonlama yuzalar — ichi ham ko'rinadi)
 export function boat(g, x, y, z, yaw, hex = 0x2f7fd0) {
-  g.push().translate(x, y, z).rotY(yaw); g.color(hex).box(0, 0.3, 0, 1.5, 0.6, 3.6, { tx: 1.25, tz: 1.12 }); g.color(0xf2ead8).box(0, 0.58, 0, 1.3, 0.08, 3.4, { tx: 1.25, tz: 1.1 });
-  g.color(PAL.wood).box(0, 0.5, 0.4, 1.5, 0.08, 0.3); g.box(0, 0.5, -0.8, 1.4, 0.08, 0.3); g.pop();
+  g.push().translate(x, y, z).rotY(yaw);
+  const S = [[-2.7, 1.0, 0.62, 0.95, 0.12], [-1.2, 1.15, 0.7, 0.92, 0.05], [0.6, 1.1, 0.6, 0.95, 0.05], [2.0, 0.75, 0.25, 1.05, 0.15], [3.1, 0.02, 0.0, 1.25, 0.45]];
+  const dq = (a, b, c, d) => { g.quad(a, b, c, d); g.quad(d, c, b, a); };
+  g.color(hex); for (let k = 0; k < S.length - 1; k++) { const [z0, t0, b0, y0, k0] = S[k], [z1, t1, b1, y1, k1] = S[k + 1];
+    for (const sd of [-1, 1]) dq([sd * t0, y0, z0], [sd * t1, y1, z1], [sd * b1, k1, z1], [sd * b0, k0, z0]); }
+  g.color(0x2a2c33); for (let k = 0; k < S.length - 1; k++) { const [z0, , b0, , k0] = S[k], [z1, , b1, , k1] = S[k + 1]; dq([-b0, k0, z0], [-b1, k1, z1], [b1, k1, z1], [b0, k0, z0]); }
+  g.color(hex); dq([-1.0, 0.95, -2.7], [1.0, 0.95, -2.7], [0.62, 0.12, -2.7], [-0.62, 0.12, -2.7]);
+  g.color(0xf2ead8); for (let k = 0; k < S.length - 1; k++) { const [z0, t0, , y0] = S[k], [z1, t1, , y1] = S[k + 1]; for (const sd of [-1, 1]) g.box(sd * (t0 + t1) / 2, (y0 + y1) / 2 + 0.03, (z0 + z1) / 2, 0.1, 0.08, Math.hypot(z1 - z0, t1 - t0) + 0.05, { oz: 0 }); }
+  g.color(0xb8905e).box(0, 0.32, -0.4, 1.3, 0.05, 3.6); g.color(PAL.wood); g.box(0, 0.62, -1.9, 1.75, 0.07, 0.4); g.box(0, 0.62, 0.3, 2.0, 0.07, 0.36);
+  g.color(PAL.woodL); g.push().translate(0.75, 0.75, -0.3).rotY(0.12).rotZ(0.1); g.box(0, 0, 0, 0.06, 0.06, 3.2); g.box(0, 0, 1.55, 0.05, 0.22, 0.5); g.pop();
+  g.color(0x30343c).box(0, 1.0, -2.95, 0.42, 0.5, 0.42); g.color(0x8a909c).box(0, 0.5, -3.0, 0.1, 0.8, 0.12); g.color(PAL.red).box(0, 1.28, -2.95, 0.44, 0.06, 0.44);
+  g.pop();
 }
 // Bayroq: ustun shu yerda, mato esa details.js da hilpiraydi (FLAGS ro'yxati)
 export function flag(g, x, z, h, hex) { g.push().translate(x, 0, z); g.color(PAL.metalD).cyl(5, 0.05, 0.04, 0, h); g.color(0xd8d8d0).blob(0.07, 0, { cy: h + 0.02 }); const p = wpt(g, 0, h - 0.1, 0); FLAGS.push({ x: p[0], y: p[1], z: p[2], hex, w: 1.0 + h * 0.03, h: 0.62 + h * 0.018 }); g.pop(); }

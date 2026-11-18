@@ -162,14 +162,20 @@ export function buildPlaces(scene, game) {
       g.color(PAL.door[0]).box(0, 2.3, 4.72, 1.3, 2.2, 0.2);
     });
     st.circ(0, -6, 5.3, 30); st.light(0, 6, 2, 0xfff0c0, 1.2);
+    // mayoq tosh qoya ustida: atrofida yirik qoya bo'laklari (eshik tomoni ochiq)
+    for (let i = 0; i < 14; i++) { const a = 0.55 + (i / 14) * (6.283 - 1.1) + (st.rng() - 0.5) * 0.25, d = 6.2 + st.rng() * 4.5, s = 1.6 + st.rng() * 2.4, x = Math.sin(a) * d, z = -6 + Math.cos(a) * d;
+      st.put(x, z, st.rng() * 6, (g) => { g.color(rnd(st, [0x8f8a80, 0x9d988c, 0x7e7a72])).blob(s, 1, { cy: s * 0.2, sy: 0.75, jitter: 0.22, shade: 0.14 }); }, -0.4); if (s > 2.4) st.circ(x, z, s * 0.75, s * 0.9); }
     houseAt(st, -16, 6, 1.2, { w: 7, d: 6, floors: 1, roof: 'gable', chimney: true, wall: PAL.wall[0], roofC: PAL.roof[1] });
     addBoard(st, 14);
     for (let i = 0; i < 5; i++) { const q = st.spot(10, 36, 2, 3); if (q) smashL(st, i % 2 ? 'crate' : 'barrel', q[0], q[1], st.rng() * 3); }
     st.put(12, -14, 0.4, (g) => { BK.bench(g, 0, 0, 0); BK.person(g, 2, 1, -0.5, 0xf0b83a); });
     // aylanuvchi nur
-    const beam = new THREE.Mesh(new THREE.ConeGeometry(16, 150, 12, 1, true).rotateX(-Math.PI / 2).translate(0, 0, 75), new THREE.MeshBasicMaterial({ color: 0xfff2c0, transparent: true, opacity: 0.11, side: THREE.DoubleSide, depthWrite: false, fog: false }));
+    // nur: qo'shiluvchi iliq yorug'lik, chiroqdan uzoqlashgan sari so'nadi (alphaMap — uzunasiga gradient), ichida torroq yorqin o'zak
+    const bTex = (() => { const cv = document.createElement('canvas'); cv.width = 4; cv.height = 128; const cx = cv.getContext('2d'), gr = cx.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, '#fff'); gr.addColorStop(0.25, '#9a9a9a'); gr.addColorStop(0.7, '#2a2a2a'); gr.addColorStop(1, '#000'); cx.fillStyle = gr; cx.fillRect(0, 0, 4, 128); return new THREE.CanvasTexture(cv); })();
+    const bMat = (c) => new THREE.MeshBasicMaterial({ color: c, alphaMap: bTex, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
+    const beam = new THREE.Group(); for (const [r, c] of [[15, 0xffd890], [6, 0xffe8b8]]) beam.add(new THREE.Mesh(new THREE.ConeGeometry(r, 150, 16, 1, true).rotateX(-Math.PI / 2).translate(0, 0, 75), bMat(c)));
     const [bx, bz] = st.w(0, -6); beam.position.set(bx, p.y + 28.6, bz); beam.rotation.order = 'YXZ'; scene.add(beam);
-    out.anim.push((dt, t, night) => { const k = clamp((night - 0.3) / 0.35, 0, 1), o = k * k * (3 - 2 * k) * 0.11; beam.material.opacity = o; beam.visible = o > 0.002; beam.rotation.y = t * 0.5; beam.rotation.x = 0.06; });
+    out.anim.push((dt, t, night) => { const k = clamp((night - 0.3) / 0.35, 0, 1), o = k * k * (3 - 2 * k); beam.children[0].material.opacity = o * 0.22; beam.children[1].material.opacity = o * 0.3; beam.visible = o > 0.01; beam.rotation.y = t * 0.5; beam.rotation.x = 0.06; });
     done(st);
   }
 
@@ -185,7 +191,7 @@ export function buildPlaces(scene, game) {
     for (let i = 0; i < L / 8; i++) for (const sx of [-3.1, 3.1]) st.g.box(sx, 0.5, i * 8 + 4, 0.12, 0.12, 8);
     st.g.pop();
     { const [x, z] = st.w(0, zs + L / 2); T.addPatch(x, z, st.yaw, L, 6.4, y0, y0, T.SURF.WOOD); for (const sx of [-3.1, 3.1]) st.seg(sx, zs + 14, sx, zs + L, 1.4, 0.15); st.seg(-3.1, zs + L, 3.1, zs + L, 1.4, 0.15); }
-    for (const [bx, bz, by, c] of [[-7, 104, 0.5, 0x2f7fd0], [7.5, 120, -0.4, 0xd8392b], [-8, 138, 0.3, 0xf0b83a], [8, 92, 0.2, 0x3f9a58]]) st.g.push(), BK.boat(st.g, bx, -p.y - 0.15, bz, by, c), st.g.pop();
+    for (const [bx, bz, by, c] of [[-7, 104, 0.5, 0x2f7fd0], [7.5, 120, -0.4, 0xd8392b], [-8, 138, 0.3, 0xf0b83a], [8, 92, 0.2, 0x3f9a58]]) (out.boats = out.boats || []).push(st.w(bx, bz)), st.g.push(), BK.boat(st.g, bx, -p.y - 0.15, bz, by, c), st.g.pop();
     st.light(0, 4, 60, 0xffd9a0, 1); st.light(0, 4, 145, 0xffd9a0, 0.8);
     const gp = st.spot(24, 58, 9, 7) || [-40, -20]; const gar = garageAt(st, gp[0], gp[1], st.faceRoad(gp[0], gp[1]));
     for (let i = 0; i < 7; i++) { const q = st.spot(18, 66, 8, 6); if (q) houseAt(st, q[0], q[1], st.faceRoad(q[0], q[1]), { w: 6.5 + st.rng() * 2, d: 5.5 + st.rng(), floors: st.rng() < 0.3 ? 2 : 1, roof: 'gable', wall: rnd(st, [0xe9f1f4, 0xd8ecf2, 0xf6efe0, 0xcfe3ea]), roofC: rnd(st, [0x3a78a8, 0x2f6a98, 0xc8553a]), door: rnd(st, PAL.door), chimney: st.rng() < 0.4 }); }
