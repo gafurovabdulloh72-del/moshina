@@ -20,7 +20,7 @@ import { Player } from './player.js';
 import { initLiving } from './living.js';
 import { buildAds } from './ads.js';
 import { initGfx } from './gfx.js';
-import { bakeTextures } from './tex.js';
+import { bakeTextures, rebakeTextures } from './tex.js';
 import * as COLL from './colliders.js';
 import { runKeys } from './controls.js';
 
@@ -37,7 +37,10 @@ async function boot() {
   game.tex = bakeTextures(renderer); // umumiy shovqin teksturalari (tex.js)
   const scene = (game.scene = new THREE.Scene());
   const camera = (game.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 1.2, 14000));
-  const resize = () => { renderer.setPixelRatio(game.pr || 1); renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (game.fx) game.fx.uni.uScale.value = innerHeight * (game.pr || 1) * 0.9; if (game.gfx) game.gfx.resize(); };
+  const resize = () => { renderer.setPixelRatio(game.pr || 1); renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (game.fx) game.fx.uni.uScale.value = innerHeight * (game.pr || 1) * 0.9; if (game.gfx) game.gfx.resize();
+    // kanvas o'lchami o'rnatilganda (hatto o'sha o'lchamga) uning tasviri tozalanadi — darhol qayta chizamiz, aks holda keyingi kadr
+    // kechiksa (sheyder kompilyatsiyasi, og'ir kadr) ekran qora bo'lib turadi
+    if (game.ready && !game.ctxLost) game.gfx.render(); };
   game.resize = resize; addEventListener('resize', resize);
 
   await step(0.05, 'Orol relyefi yaratilmoqda…');
@@ -77,6 +80,10 @@ async function boot() {
   if (st.foot && !st.fresh) { game.live.dismount(true); game.player.place(st.foot[0], st.foot[1], st.foot[2]); }
   game.ui = new UI(game);
   game.applyQuality('boot'); resize();
+  game.gfx.precompile(); // barcha sheyderlar yuklash paytida tayyorlanadi
+  // videokarta konteksti yo'qolsa (drayver qayta ishga tushdi va h.k.) — kutamiz va qaytganda hammasini qayta tiklaymiz
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); game.ctxLost = true; console.warn('WebGL konteksti yo\'qoldi'); });
+  canvas.addEventListener('webglcontextrestored', () => { game.ctxLost = false; game.tex = rebakeTextures(renderer); game.gfx.envRefresh(); resize(); console.warn('WebGL konteksti tiklandi'); });
   game.sky.setHour(game.hour);
   await step(1, 'Tayyor!');
   const ld = document.getElementById('load'); if (ld) ld.remove();
@@ -183,6 +190,7 @@ function frame(t) {
   const dt = Math.min(0.05, raw);
   if (!game.ready || game.paused) return;
   update(dt);
+  if (game.ctxLost) return;
   game.gfx.render();
   adapt(raw);
 }
@@ -241,7 +249,7 @@ function adapt(raw) {
     desc = null;
     if (ftAvg < 20.5 && pr < cap) { if (++goodN >= 2) { game.pr = Math.min(cap, pr + 0.1); goodN = 0; upAge = 0; } } else goodN = 0;
   }
-  if (game.pr !== pr) { game.resize(); game.gfx.render(); }
+  if (game.pr !== pr) game.resize();
 
   // Aniqlik eng pastga tushib qolgan (yoki u foyda bermayapti) va hali ham sekin — sifat pog'onasini sinab ko'ramiz
   if (!qLock && set.gfx > 0 && qT > 10 && play && game.pr === pr && ((pr <= 0.75 && ftAvg > 20.5) || (lockT > 0 && ftAvg > 30))) {
