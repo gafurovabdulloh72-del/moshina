@@ -7,6 +7,7 @@ import { ITEMS, SHOP, TOOLS } from './living.js';
 import { HOME_LEVELS, DECOR } from './home.js';
 import { HAT_LIST } from './rig.js';
 import { clamp } from './util.js';
+import { barItems, codeOf } from './controls.js';
 
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const stars = (n, max = 3) => `<span class="stars">${'★'.repeat(n)}<i>${'★'.repeat(max - n)}</i></span>`;
@@ -20,7 +21,7 @@ export class UI {
   constructor(game) {
     this.g = game; this.root = document.getElementById('ui'); this.screenName = null; this.cache = {}; this.gtab = 0;
     this.buildMap(); this.buildHud();
-    this.photo = el('div', '', '📷 Surat rejimi — interfeysni qaytarish: <kbd>P</kbd>'); this.photo.id = 'photo'; this.photo.style.display = 'none'; this.root.appendChild(this.photo);
+    this.photo = el('div', '', '📷 Surat rejimi — interfeysni qaytarish: <kbd>P</kbd> yoki shu yerni bosing'); this.photo.id = 'photo'; this.photo.style.display = 'none'; this.photo.onpointerdown = () => this.setHud(true); this.root.appendChild(this.photo);
     this.screen = el('div'); this.screen.id = 'screen'; this.root.appendChild(this.screen);
     this.screen.addEventListener('mousedown', (e) => { if (e.target === this.screen && this.screenName !== 'menu' && this.screenName !== 'result' && this.screenName !== 'confirm') this.close(); });
   }
@@ -50,12 +51,15 @@ export class UI {
   buildHud() {
     const hud = (this.hud = el('div')); hud.id = 'hud'; this.root.appendChild(hud);
     const tl = el('div', 'tl'); tl.innerHTML = `<div class="chip">💰 <b id="h-money">0</b> <small>so'm</small></div><div class="chip">★ <b id="h-stars">0</b></div><div class="chip">❤ <b id="h-karma">0</b></div><div class="chip" id="h-lvl"></div>`; hud.appendChild(tl);
-    const tr = el('div', 'tr'); tr.innerHTML = `<div class="clock" id="h-clock"></div><div class="hint" id="h-hint"></div>`; hud.appendChild(tr);
+    const tr = el('div', 'tr'); tr.innerHTML = `<div class="clock" id="h-clock"></div><div class="keys2" id="h-top"></div>`; hud.appendChild(tr);
     this.actP = el('div', 'tc panel'); this.actP.style.display = 'none'; hud.appendChild(this.actP);
     const bl = el('div', 'bl'); bl.innerHTML = `<canvas id="mini" width="424" height="424"></canvas><div class="loc"><span id="h-loc"></span><small id="h-reg"></small></div>`; hud.appendChild(bl);
     const br = el('div', 'br'); br.innerHTML = `<div class="dmg panel" id="h-dmgp"><canvas id="h-dmg" width="128" height="184"></canvas><span id="h-hp">100%</span></div><div class="speedo panel" id="h-spd" style="position:relative"><div class="g" id="h-gear">1</div><div class="v" id="h-speed">0</div><div class="u">KM/SOAT</div><div class="bar rpm"><i id="h-rpm"></i></div><div class="bar nitro" id="h-nb"><i id="h-nitro"></i></div><div class="vn" id="h-vn"></div></div>
       <div class="foot panel" id="h-foot" style="display:none"><div class="fl">⚡ Kuch</div><div class="bar"><i id="h-en"></i></div><div class="fl">🍽 To'qlik</div><div class="bar"><i id="h-sat" style="background:var(--ac)"></i></div><div class="inv" id="h-inv"></div></div>`; hud.appendChild(br);
-    this.prompt = el('div', 'bc panel'); this.prompt.style.display = 'none'; hud.appendChild(this.prompt);
+    // pastki markaz: vaziyatga qarab katta tugma (masalan [E] Hosilni yig'ish) va uning ostida amal tugmalari qatori
+    const bc = el('div', 'bcol'); hud.appendChild(bc);
+    this.prompt = el('div', 'bc panel'); this.prompt.style.display = 'none'; bc.appendChild(this.prompt);
+    this.abar = el('div', 'abar'); this.abar.id = 'h-bar'; bc.appendChild(this.abar);
     this.driftEl = el('div'); this.driftEl.id = 'drift'; hud.appendChild(this.driftEl);
     this.toasts = el('div'); this.toasts.id = 'toasts'; hud.appendChild(this.toasts);
     this.bannerEl = el('div'); this.bannerEl.id = 'banner'; hud.appendChild(this.bannerEl);
@@ -63,16 +67,28 @@ export class UI {
     for (const id of ['speedfx', 'flash', 'fade']) { const e = el('div'); e.id = id; hud.appendChild(e); this[id] = e; }
     this.mini = document.getElementById('mini').getContext('2d'); this.dmgC = document.getElementById('h-dmg').getContext('2d');
     this.$ = (id) => this.cache[id] || (this.cache[id] = document.getElementById(id));
-    // sensorli tugmalar
+    // Ekrandagi tugmalar klaviaturaning o'zini bosadi: bosilganda tugma kodi kiritishga qo'shiladi, qo'yib yuborilganda olinadi —
+    // shuning uchun tugma va klavisha AYNAN bir xil ishlaydi (controls.js jadvali)
+    const inp = this.g.input, held = new Map();
+    const vDown = (e) => { const b = e.target.closest('[data-code]'); if (!b || e.button > 0) return; e.preventDefault(); e.stopPropagation(); const c = b.dataset.code; if (!c) return; inp.keys.add(c); inp.pressed.add(c); held.set(e.pointerId, [c, b]); b.classList.add('act'); this.g.audio.init(); };
+    const vUp = (e) => { const h = held.get(e.pointerId); if (!h) return; held.delete(e.pointerId); if (![...held.values()].some((q) => q[0] === h[0])) inp.keys.delete(h[0]); h[1].classList.remove('act'); };
+    for (const box of [this.abar, this.prompt, this.$('h-top')]) box.addEventListener('pointerdown', vDown);
+    addEventListener('pointerup', vUp); addEventListener('pointercancel', vUp);
+    // sensorli ekran: chapda virtual joystik (yurish / rul, gaz va tormoz), o'ngda pedallar (transportda)
     const tc = (this.touch = el('div')); tc.id = 'touch'; this.root.appendChild(tc);
-    const tb = (txt, style, on, off) => { const b = el('div', 'tb', txt); b.style.cssText = style; const dn = (e) => { e.preventDefault(); b.classList.add('act'); on(); }, up = (e) => { e.preventDefault(); b.classList.remove('act'); off(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); tc.appendChild(b); };
-    const t = this.g.input.touch, pr = (k) => () => this.g.input.pressed.add(k);
-    tb('◀', 'left:22px;bottom:250px', () => (t.steer = 1), () => (t.steer = 0)); tb('▶', 'left:112px;bottom:250px', () => (t.steer = -1), () => (t.steer = 0));
-    tb('▲', 'right:22px;bottom:230px', () => (t.gas = 1), () => (t.gas = 0)); tb('▼', 'right:112px;bottom:230px', () => (t.brake = 1), () => (t.brake = 0));
-    tb('N₂', 'right:22px;bottom:320px;width:60px;height:60px;font-size:17px', () => (t.nitro = true), () => (t.nitro = false)); tb('P', 'right:124px;bottom:320px;width:60px;height:60px;font-size:17px', () => (t.hand = true), () => (t.hand = false));
-    tb('E', 'left:50%;margin-left:-37px;bottom:150px', pr('KeyE'), () => {}); tb('F', 'left:50%;margin-left:50px;bottom:150px;width:60px;height:60px;font-size:18px', pr('KeyF'), () => {}); tb('B', 'left:50%;margin-left:-110px;bottom:150px;width:60px;height:60px;font-size:18px', pr('KeyB'), () => {});
-    tb('☰', 'right:16px;top:70px;width:52px;height:52px', pr('Escape'), () => {});
-    addEventListener('touchstart', () => { tc.classList.add('on'); hud.classList.add('touch'); }, { once: true, passive: true });
+    const t = inp.touch;
+    const tb = (txt, cls, style, on, off) => { const b = el('div', 'tb ' + cls, txt); b.style.cssText = style; const dn = (e) => { e.preventDefault(); b.classList.add('act'); on(); }, up = (e) => { e.preventDefault(); b.classList.remove('act'); off(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); tc.appendChild(b); };
+    tb('▲', 'pedal', 'right:22px', () => (t.gas = 1), () => (t.gas = 0)); tb('▼', 'pedal', 'right:112px', () => (t.brake = 1), () => (t.brake = 0));
+    const joy = el('div', 'joy'), knob = el('i'); joy.appendChild(knob); tc.appendChild(joy);
+    let jid = null, jx = 0, jy = 0;
+    const jmove = (e) => { const r = joy.getBoundingClientRect(), R = r.width / 2; let dx = e.clientX - r.left - R, dy = e.clientY - r.top - R; const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
+      knob.style.transform = `translate(${dx}px,${dy}px)`; const k = Math.hypot(dx, dy) / R < 0.18 ? 0 : 1; t.jx = (dx / R) * k; t.jy = (dy / R) * k; };
+    joy.addEventListener('pointerdown', (e) => { e.preventDefault(); jid = e.pointerId; joy.setPointerCapture(jid); joy.classList.add('act'); jmove(e); });
+    joy.addEventListener('pointermove', (e) => { if (e.pointerId === jid) jmove(e); });
+    const jend = (e) => { if (e.pointerId !== jid) return; jid = null; t.jx = t.jy = 0; knob.style.transform = ''; joy.classList.remove('act'); };
+    joy.addEventListener('pointerup', jend); joy.addEventListener('pointercancel', jend);
+    this.touchOn = () => { tc.classList.add('on'); hud.classList.add('touch'); };
+    addEventListener('touchstart', this.touchOn, { once: true, passive: true });
   }
   // Interfeysni yashirish (surat rejimi) — hech qachon "yo'qolib qolmaydi": yozuv turadi va 20 soniyadan keyin o'zi qaytadi
   setHud(on) { const g = this.g; g.hudOn = on; this.hud.classList.toggle('hide', !on); this.photo.style.display = on ? 'none' : ''; clearTimeout(this._ht); if (!on) this._ht = setTimeout(() => { this.setHud(true); this.toast('Interfeys qaytarildi'); }, 20000); }
@@ -84,8 +100,7 @@ export class UI {
     const kmh = Math.round(Math.abs(car.speed) * 3.6);
     this.set('h-money', som(st.money)); this.set('h-stars', g.totalStars() + '/' + g.maxStars); this.set('h-karma', Math.floor(st.karma));
     const lv = g.level(); if (this._lv !== lv) { if (this._lv && lv > this._lv) { this.banner('Yangi daraja!', g.levelName(), 'gold'); g.audio.sfx('win'); } this._lv = lv; this.$('h-lvl').innerHTML = `<small>${lv}-daraja</small> ${g.levelName()}`; }
-    if (this._foot !== foot) { this._foot = foot; this.$('h-spd').style.display = this.$('h-dmgp').style.display = foot ? 'none' : ''; this.$('h-foot').style.display = foot ? '' : 'none';
-      this.$('h-hint').innerHTML = foot ? '<kbd>F</kbd> transportga chiqish · <kbd>V</kbd> chaqirish<br><kbd>Q</kbd> o\'t yulish · <kbd>G</kbd> gul ekish · <kbd>Y</kbd> yeyish<br><kbd>B</kbd> harakatlar · <kbd>I</kbd> sumka · <kbd>Shift</kbd> yugurish' : '<kbd>F</kbd> tushish · <kbd>M</kbd> xarita · <kbd>I</kbd> sumka · <kbd>C</kbd> kamera<br><kbd>R</kbd> yo\'lga qaytish · <kbd>Tab</kbd> pasport · <kbd>Esc</kbd> menyu'; }
+    if (this._foot !== foot) { this._foot = foot; this.$('h-spd').style.display = this.$('h-dmgp').style.display = foot ? 'none' : ''; this.$('h-foot').style.display = foot ? '' : 'none'; this.touch.classList.toggle('foot', foot); }
     if (foot) { this.$('h-en').style.width = Math.round(st.energy) + '%'; this.$('h-sat').style.width = Math.round(st.sat) + '%'; const iv = st.inv, s = `🌱${iv.seed} 🍎${iv.fruit + iv.berry} 🌾${iv.hay} 🪵${iv.wood}`; this.set('h-inv', s); }
     else { this.set('h-speed', kmh); this.set('h-gear', car.reverse ? 'R' : car.bike && g.carModel.v.eng === 0 ? '·' : car.gear); this.set('h-vn', g.carModel.v.name);
       this.$('h-rpm').style.width = Math.round(car.rpm * 100) + '%'; this.$('h-nitro').style.width = Math.round(g.nitro * 100) + '%'; this.$('h-nb').className = 'bar nitro' + (car.nitroOn ? ' on' : ''); this.drawDmg(); }
@@ -109,8 +124,16 @@ export class UI {
     else if (np && !a) pr = np.kind === 'board' ? "<kbd>E</kbd> E'lonlar taxtasi" : '<kbd>E</kbd> Ustaxona va transport saloni';
     else if (np && a && np.kind === 'garage') pr = '<kbd>E</kbd> Ustaxona';
     else pr = g.live.prompt || '';
-    if (this._pr !== pr) { this._pr = pr; this.prompt.innerHTML = pr; this.prompt.style.display = pr ? '' : 'none'; }
+    // katta tugma: yozuv [X] bilan boshlansa — bosiladi (shu klavisha kodi), aks holda faqat ma'lumot
+    const pk = (/^<kbd>([^<]+)<\/kbd>/.exec(pr) || [])[1], pcode = pk ? codeOf(pk) : null;
+    if (this._pr !== pr) { this._pr = pr; this.prompt.innerHTML = pr; this.prompt.style.display = pr ? '' : 'none'; this.prompt.dataset.code = pcode || ''; this.prompt.classList.toggle('go', !!pcode); }
+    this.drawBar(this.abar, barItems(g).filter((b) => b.key !== pk), '_bk'); this.drawBar(this.$('h-top'), barItems(g, true), '_tk');
     this.drawMini();
+  }
+  // tugmalar qatorini chizish (faqat tarkib o'zgarganda)
+  drawBar(box, items, key) {
+    const sig = items.map((b) => b.code + b.text).join('|'); if (this[key] === sig) return; this[key] = sig;
+    box.innerHTML = items.map((b) => `<button tabindex="-1" class="ab${b.hold ? ' hold' : ''}" data-code="${b.code}" title="${b.text} (${b.key})"><kbd>${b.key}</kbd><span>${b.text}</span></button>`).join('');
   }
   drawDmg() {
     const d = this.g.damage, key = `${Math.round(d.zone.front / 4)},${Math.round(d.zone.rear / 4)},${Math.round(d.zone.left / 4)},${Math.round(d.zone.right / 4)},${Math.round(d.engine / 4)},${d.tires.join('')}`;

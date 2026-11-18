@@ -37,7 +37,7 @@ export class Player {
     let mx = 0, mz = 0, run = false, jump = false;
     if (this.lock > 0) { this.lock -= dt; if (this.lock <= 0) { const fn = this.lockFn; this.lockFn = null; this.lockAnim = null; if (this._tool !== undefined) { setTool(rig, null); this._tool = undefined; } if (fn) fn(); } }
     else if (inp) {
-      const f = (inp.down('KeyW', 'ArrowUp') ? 1 : 0) - (inp.down('KeyS', 'ArrowDown') ? 1 : 0) + (inp.touch.gas ? 1 : 0) - (inp.touch.brake ? 1 : 0), s = (inp.down('KeyA', 'ArrowLeft') ? 1 : 0) - (inp.down('KeyD', 'ArrowRight') ? 1 : 0) + (inp.touch.steer || 0);
+      const f = (inp.down('KeyW', 'ArrowUp') ? 1 : 0) - (inp.down('KeyS', 'ArrowDown') ? 1 : 0) + (inp.touch.gas ? 1 : 0) - (inp.touch.brake ? 1 : 0) - (inp.touch.jy || 0), s = (inp.down('KeyA', 'ArrowLeft') ? 1 : 0) - (inp.down('KeyD', 'ArrowRight') ? 1 : 0) + (inp.touch.steer || 0) - (inp.touch.jx || 0);
       if (f || s) { const fx = Math.sin(camYaw), fz = Math.cos(camYaw); mx = fx * f + fz * s; mz = fz * f - fx * s; const l = Math.hypot(mx, mz); mx /= l; mz /= l; this.sit = false; this.emote = null; setTool(rig, null); }
       run = inp.down('ShiftLeft', 'ShiftRight') || inp.touch.nitro; jump = inp.hit('Space') || inp.touch.hand;
     }

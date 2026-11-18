@@ -3,7 +3,7 @@ export class Input {
   constructor() {
     this.keys = new Set();
     this.pressed = new Set(); // shu kadrda bosilganlar
-    this.touch = { steer: 0, gas: 0, brake: 0, hand: false, nitro: false };
+    this.touch = { steer: 0, gas: 0, brake: 0, hand: false, nitro: false, jx: 0, jy: 0 }; // jx/jy — virtual joystik (o'ngga/pastga musbat)
     this.mouse = { dx: 0, dy: 0, wheel: 0, down: false };
     this.state = { throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false };
     this.enabled = true;
@@ -46,6 +46,7 @@ export class Input {
     }
     if (t.gas) thr = Math.max(thr, t.gas); if (t.brake) brk = Math.max(brk, t.brake);
     if (t.steer) st = t.steer; if (t.hand) hb = true; if (t.nitro) ni = true;
+    if (t.jx) st = -t.jx; if (t.jy < 0) thr = Math.max(thr, -t.jy); if (t.jy > 0) brk = Math.max(brk, t.jy);
     if (!this.enabled) { thr = 0; brk = 0; st = 0; hb = false; ni = false; }
     s.throttle = thr; s.brake = brk; s.steer = st; s.handbrake = hb; s.nitro = ni;
     return s;
