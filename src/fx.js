@@ -103,7 +103,7 @@ const _c = new THREE.Color();
 const C_WATER = [0.82, 0.88, 0.92], C_FOAM = [0.9, 0.93, 0.95], C_SNOW = [0.88, 0.92, 0.97], C_HOT = [0.5, 0.8, 2.4], C_RAIN = [0.75, 0.8, 0.86], C_MIST = [0.85, 0.88, 0.9], C_SPK1 = [2.4, 1.9, 1.2], C_SPK2 = [2.2, 1.25, 0.35];
 const E_GRASS = [0.3, 0.25, 0.17], E_ROAD = [0.42, 0.39, 0.35], E_ROCK = [0.46, 0.43, 0.39], SIDES2 = [-1, 1], SIDES1 = [0];
 // chang va donalar miqdori sirt bo'yicha (SURF tartibida): yo'l, o't, qum, qor, tosh, taxta, suv, muz, asfalt
-const KD = [0.25, 0.4, 1.0, 0.8, 0.7, 0, 0, 0.15, 0], KG = [0.1, 0.3, 0.9, 0.8, 0.45, 0, 0, 0.2, 0];
+const KD = [0, 0.12, 0.5, 0.4, 0.3, 0, 0, 0, 0], KG = [0, 0.2, 0.7, 0.6, 0.35, 0, 0, 0.15, 0]; // yo'l/asfaltda chang yo'q; yo'lsizlikda ham me'yorida (ko'rishga xalaqit bermasin)
 const rnd = Math.random, rs = (k) => (rnd() - 0.5) * k;
 
 export class FX {
@@ -285,7 +285,7 @@ export class FX {
         this.groundCol(x, z, gc);
         if (s === S.SNOW || s === S.ICE) { dc[0] = 0.86; dc[1] = 0.9; dc[2] = 0.96; }
         else { const e = s === S.GRASS ? E_GRASS : s === S.ROAD ? E_ROAD : s === S.ROCK ? E_ROCK : gc, m = s === S.SAND ? 0 : s === S.ROCK ? 0.3 : 0.55; for (let k = 0; k < 3; k++) dc[k] = (gc[k] * (1 - m) + e[k] * m) * 1.15 + 0.025; }
-        const rate = kd * ((rear ? 1 : 0.35) * Math.max(0, sp - 2) * 1.1 + slide * 4);
+        const rate = kd * ((rear ? 1 : 0) * Math.min(Math.max(0, sp - 3) * 0.5, 9) + Math.min(slide, 6) * 2);
         for (let n = this._n(sl + 2, rate, dt); n > 0; n--) {
           const ss = 0.55 + rnd() * 0.5;
           this.emit(x + rs(0.4) - Fx * 0.3, y + 0.25 + rnd() * 0.2, z + rs(0.4) - Fz * 0.3, v[0] * 0.22 + rs(1.6), 0.4 + rnd() * 0.9, v[2] * 0.22 + rs(1.6), 1.8 + rnd() * 1.8, ss * big, dc, (s === S.SAND || s === S.SNOW ? 0.34 : 0.26) * (0.7 + rnd() * 0.5), 3 + rnd() * 2, -0.12, 1.3, K.SMOKE);

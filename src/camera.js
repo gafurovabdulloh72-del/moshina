@@ -12,7 +12,7 @@ const MODES = [
 ];
 const FOOT = { dist: 4.4, h: 1.75, look: 1.58, side: 0.72 };
 // sirt bo'yicha yo'l titrashi (SURF tartibida): yo'l, o't, qum, qor, tosh/shag'al, taxta, suv, muz, asfalt
-const ROUGH = [0.32, 0.85, 0.7, 0.6, 1.3, 1.0, 0.35, 0.08, 0.14];
+const ROUGH = [0.25, 0.4, 0.4, 0.35, 0.7, 0.6, 0.3, 0.05, 0.1];
 // silliq tasodifiy tebranish (bir nechta o'zaro karrali bo'lmagan sinuslar yig'indisi): -1..1, takrorlanmaydi, sakramaydi
 const wob = (t, s) => Math.sin(t * 1.13 + s) * 0.5 + Math.sin(t * 2.71 + s * 1.7) * 0.3 + Math.sin(t * 4.37 + s * 2.9) * 0.2;
 // ikkinchi tartibli prujina (x — siljish, v — tezlik): w — chastota (rad/s), z — so'nish, f — tashqi tezlanish; mayda qadamlar bilan barqaror
@@ -58,7 +58,8 @@ export class ChaseCam {
       const o = list[i]; if (o.kind) continue; // sinadigan narsalar (quti, to'siq) kamerani to'smaydi
       let t = 2;
       if (o.t === 0) {
-        if (o.ref && o.ref.tree) { // daraxt: tanasi emas, shox-shabbasi — faqat kamera uchiga yaqin qismda (o'rmonda kamera tinimsiz sakramasin)
+        if (o.ref && o.ref.tree) continue; // daraxt shox-shabbasi kamerani to'smaydi — bog'da kamera sakrab-silkinmasin
+        if (false) { // daraxt: tanasi emas, shox-shabbasi — faqat kamera uchiga yaqin qismda (o'rmonda kamera tinimsiz sakramasin)
           const h = o.y1 - o.y0, cr = h * 0.2 + rad; t = rayCircle(ax, az, dx, dz, o.x, o.z, cr); if (t < 0.55 || t > 1) continue;
           const y = ay + (by - ay) * t; if (y < o.y0 + 1 + h * 0.25 || y > o.y1) continue; if (t < tHit) tHit = t; continue;
         }
@@ -120,8 +121,8 @@ export class ChaseCam {
     // yo'l titrashi: tezlik × sirt g'adir-budurligi + osma siqilishining tezligi (haqiqiy chuqur/do'nglar)
     let cv = 0, rough = 0;
     if (tgt.wheels && !foot) { const W = tgt.wheels; let n = 0; for (let i = 0; i < 4; i++) { const w = W[i]; cv += Math.abs(w.comp - this.comp[i]); this.comp[i] = w.comp; if (w.on) { rough += ROUGH[w.surf] || 0.4; n++; } } cv /= dt * 4; rough = n ? rough / n : 0; }
-    const vibT = foot ? 0 : Math.min(0.07, spd * 0.0012 * rough + Math.min(1.5, cv) * 0.02) * mo;
-    this.vib += (vibT - this.vib) * Math.min(1, dt * 8);
+    const vibT = foot ? 0 : Math.min(0.03, spd * 0.0006 * rough + Math.min(1.5, cv) * 0.006) * mo; // yengil titrash: bog' va dalada ham ko'zni charchatmasin
+    this.vib += (vibT - this.vib) * Math.min(1, dt * 3);
     const tt = this.t, vibY = this.vib * wob(tt * 9.1, 1.3), vibX = this.vib * 0.5 * wob(tt * 7.3, 4.1), vibP = this.vib * 0.25 * wob(tt * 8.2, 2.2);
 
     if (opts.zoom) { // durbin: ko'z balandligidan qaraladi
