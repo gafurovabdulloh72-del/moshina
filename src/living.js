@@ -254,11 +254,12 @@ export function initLiving(game) {
     // skameyka, quduq, rasta, gulxan, chodir
     for (const s of BK.SPOTS) { const d = Math.hypot(s.x - px, s.z - pz); if (d > 2.6 || Math.abs(s.y - p[1]) > 3) continue;
       if (s.k === 'bench') offer(d + 0.4, "<kbd>E</kbd> O'tirib dam olish", () => { pl.p[0] = s.x + Math.sin(s.yaw) * 0.25; pl.p[2] = s.z + Math.cos(s.yaw) * 0.25; pl.yaw = s.yaw; pl.v[0] = pl.v[2] = 0; pl.sit = true; pl.emote = null; });
-      else if (s.k === 'well') offer(d + 0.4, '<kbd>E</kbd> Quduqdan suv ichish', () => { if ((L.wellT || 0) > game.time) return toast('Hozirgina ichdingiz'); L.wellT = game.time + 25; pl.act('bend', 0.9, () => { st.sat = Math.min(100, st.sat + 12); st.energy = Math.min(st.sat, st.energy + 25); sfx('splash', 0.3); toast('Muzdek suv! 💧 Kuch tiklandi', 'good'); }); });
+      else if (s.k === 'well') offer(d + 0.4, '<kbd>E</kbd> Quduqdan suv ichish', () => { if ((L.wellT || 0) > game.time) return toast('Hozirgina ichdingiz'); L.wellT = game.time + 25; pl.act('bend', 0.9, () => { st.sat = Math.min(100, st.sat + 12); st.thirst = 100; st.energy = Math.min(st.sat, st.energy + 25); sfx('splash', 0.3); toast('Muzdek suv! 💧 Kuch tiklandi', 'good'); }); });
       else if (s.k === 'stall') offer(d + 0.4, '<kbd>E</kbd> Bozor (sotish va xarid)', () => game.ui.open('shop')); }
     const cook = (d) => { const id = ['bigfish', 'fish', 'mush', 'egg'].find((q) => st.inv[q] > 0); offer(d + 0.3, id ? `<kbd>E</kbd> ${ITEMS[id][0]} pishirib yeyish` : 'Gulxan — baliq, qo\'ziqorin yoki tuxum pishiriladi', () => { if (!id) return toast('Pishiradigan narsa yo\'q'); pl.act('bend', 1.6, () => { st.inv[id]--; const v = { bigfish: 85, fish: 55, mush: 34, egg: 30 }[id]; st.sat = Math.min(100, st.sat + v); st.energy = st.sat; L.count('cook'); L.count('eat'); sfx('eat'); toast(`Mazali! 🍽 To'qlik +${v}%`, 'good'); }); }); };
     for (const f of site.fires) { const d = Math.hypot(f.x - px, f.z - pz); if (d < 2.8) cook(d); }
     if (tent) { const d = Math.hypot(tent.x - px, tent.z - pz); if (d < 3.2) offer(d, '<kbd>E</kbd> Chodirda dam olish', () => game.ui.open('rest')); }
+    if (L.extra) L.extra(offer, px, pz, p); // kundalik hayot (hayot.js): uy/do'kon ichi, kanistr, o'rnidan turish
     // baliq ovi
     if (!best) { const w = waterAhead(); if (w && !pl.swim) return st.tools.rod ? { text: '<kbd>E</kbd> Baliq ovlash 🎣', fn: () => startFish(w) } : null; }
     return best;
@@ -283,6 +284,7 @@ export function initLiving(game) {
     else if (o.role === 'flower') { if (st.inv.flower < 3) return toast(`Guldasta uchun 3 ta yovvoyi gul kerak (sizda ${st.inv.flower})`, 'bad'); st.inv.flower -= 3; thank(o, 95); }
     else if (o.role === 'lost') { if (L.quest) return toast('Avval boshqa odamning buyumini topib bering'); for (let t = 0; t < 40; t++) { const a = rnd() * 6.283, d = 45 + rnd() * 70, x = o.x + Math.cos(a) * d, z = o.z + Math.sin(a) * d; if (!freeSpot(x, z, 0.5)) continue; const y = T.gridHeight(x, z); L.quest = { npc: o, x, y, z, got: false }; setI(questIM, 0, x, y, z, a); questIM.count = 1; questIM.instanceMatrix.needsUpdate = true; beam.position.set(x, y + 20, z); beam.visible = true; o.role = 'wait'; sfx('check'); return toast(`${o.name}: «Shu atrofda tushib qolgan…» Ko'k nurni qidiring`, 'gold'); } toast('…'); }
     else if (o.role === 'wait') { if (L.quest && L.quest.got && L.quest.npc === o) { L.quest = null; thank(o, 150, 3); } else toast(`${o.name}: «Topdingizmi? Ko'k nur tushgan joyda bo'lsa kerak»`); }
+    else if (L.chat) L.chat(o); // suhbat oynasi (hayot.js)
     else { o.waveT = 1.2; L.count('talk'); sfx('click'); if (rnd() < 0.18) { give('seed'); toast(`${o.name}: «Mana, sizga urug'» 🌱 +1`, 'good'); } else toast(`${o.name}: «${TIPS[(o.tip++ + npcs.indexOf(o)) % TIPS.length]}»`); }
   };
   L.useE = () => { if (pl.onFoot) { if (ctx && pl.lock <= 0) ctx.fn(); return; }

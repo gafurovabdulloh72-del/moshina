@@ -56,6 +56,10 @@ export class Sound {
       case 'smash': this.burst(t, 0.2, 'bandpass', 1500, 1.2, 0.35); this.tone(180, t, 0.1, 'square', 0.1, null, 0.002, 0.5); break;
       case 'land': this.burst(t, 0.2, 'lowpass', 500, 0.6, 0.5 * k); this.tone(60, t, 0.2, 'sine', 0.5 * k, null, 0.002, 0.5); break;
       case 'splash': this.burst(t, 0.7, 'bandpass', 1300, 0.8, 0.5, 0.4); break;
+      case 'pour': this.burst(t, 1.1, 'bandpass', 1700, 1.4, 0.22, 0.9); this.burst(t + 0.15, 0.9, 'bandpass', 2300, 2, 0.12, 0.8); break; // suv/yoqilg'i quyilishi
+      case 'sizzle': this.burst(t, 1.4, 'highpass', 4200, 0.6, 0.12, 1.2); break; // qozonda jizillash
+      case 'alarm': for (let i = 0; i < 6; i++) this.tone(i % 2 ? 1760 : 1568, t + i * 0.14, 0.1, 'square', 0.07); break; // budilnik
+      case 'sip': this.burst(t, 0.12, 'lowpass', 900, 1.2, 0.25); this.burst(t + 0.3, 0.12, 'lowpass', 800, 1.2, 0.22); break;
       case 'horn': this.tone(392, t, 0.45, 'square', 0.1); this.tone(494, t, 0.45, 'square', 0.1); break;
       case 'repair': for (let i = 0; i < 4; i++) this.burst(t + i * 0.12, 0.06, 'bandpass', 2600, 4, 0.25); this.tone(784, t + 0.5, 0.3, 'triangle', 0.15); break;
       case 'buy': this.tone(784, t, 0.1, 'triangle', 0.15); this.tone(1175, t + 0.08, 0.1, 'triangle', 0.15); this.tone(1568, t + 0.16, 0.3, 'triangle', 0.15); break;

@@ -222,6 +222,11 @@ const TOOLS = {
   pick: (g) => { g.color(0x9a6a42); g.push().rotX(1.2); g.cyl(5, 0.024, 0.024, -0.2, 0.75); g.pop(); g.color(0x6a6e78); g.push().rotX(1.2).translate(0, 0.75, 0); g.box(0, 0, 0, 0.05, 0.06, 0.62, { tz: 0.2 }); g.pop(); },
   dutor: (g) => { g.color(0xb98a5c); g.blob(0.105, 1, { sy: 1.35, sz: 0.62, cy: -0.07 }); g.color(0xe2cfa8).blob(0.085, 0, { sy: 1.25, sz: 0.2, cy: -0.07, cz: 0.05 }); g.color(0x6e4a30).cyl(6, 0.017, 0.013, 0.02, 1.0); g.color(0x5a3a26).box(0, 1.02, 0, 0.035, 0.09, 0.03); for (const y of [0.25, 0.4, 0.55, 0.7]) g.color(0x2a1f18).cyl(6, 0.0185, 0.0185, y, y + 0.006); }, // dutor: nok shaklidagi kosa, uzun dasta, pardalar
   net: (g) => { g.color(0x9a6a42); g.push().rotX(1.3); g.cyl(5, 0.015, 0.015, 0, 1.0); g.pop(); },
+  // uy hayoti: stakan, cho'mich, gazeta, shisha
+  cup: (g) => { g.color(0xdfeef5).cyl(8, 0.034, 0.04, -0.05, 0.06, { cap: true }); g.color(0x5aa8e0).cyl(8, 0.03, 0.036, -0.04, 0.03, { cap: true }); },
+  spoon: (g) => { g.color(0x9a6a42); g.push().rotX(1.35); g.cyl(5, 0.012, 0.01, -0.05, 0.36); g.pop(); g.color(0xb9bec8).push().rotX(1.35).translate(0, 0.38, 0).blob(0.04, 0, { sy: 0.45 }).pop(); },
+  paper: (g) => { g.color(0xf2efe4).box(0.13, 0.02, 0.06, 0.3, 0.24, 0.01); g.color(0x3a3d46).box(0.13, 0.1, 0.066, 0.24, 0.035, 0.004); for (let i = 0; i < 4; i++) g.color(0x8a8d96).box(0.13, 0.05 - i * 0.035, 0.066, 0.24, 0.012, 0.004); },
+  bottle: (g) => { g.color(0x7fc8f0).cyl(8, 0.032, 0.032, -0.08, 0.1, { cap: true }); g.cyl(8, 0.03, 0.012, 0.1, 0.15); g.color(0x2f7fd0).cyl(6, 0.014, 0.014, 0.15, 0.18, { cap: true }); g.color(0xf2f2ee).cyl(8, 0.034, 0.034, -0.02, 0.05); },
 };
 // Asbob o'qi (qo'l koordinatasida): ikkinchi qo'l shu chiziq bo'ylab ushlaydi — [yo'nalish burchagi rotX, ikkinchi qo'l masofasi]
 export const TOOL_GRIP = { rod: [1.15, -0.2], shovel: [1.9, -0.32], pick: [1.2, -0.16], net: [1.3, 0.3] };

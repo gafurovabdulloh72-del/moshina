@@ -207,3 +207,8 @@ input[type=range]{width:200px;accent-color:var(--ac)}
 #chat input{width:100%;font:inherit;font-weight:600;color:var(--tx);background:rgba(13,17,29,.9);border:1px solid var(--ac);border-radius:11px;padding:9px 12px;outline:none;-webkit-user-select:text;user-select:text}
 #chat .emo{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}#chat .emo button{background:rgba(13,17,29,.85);border:1px solid var(--bd);padding:4px 8px;font-size:18px;border-radius:9px}
 @media(max-height:560px){#chat{bottom:16px;left:auto;right:16px}}
+/* kundalik hayot: NPC suhbati va yoqilg'i ko'rsatkichi */
+#dlg{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:min(560px,92vw);display:flex;gap:14px;align-items:flex-start;padding:14px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5);border-color:rgba(255,200,58,.5);pointer-events:none}
+#dlg .dp{font-size:38px;line-height:1;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.1);flex:none}
+#dlg .dt{flex:1;min-width:0}#dlg b{color:var(--ac);font-size:16px}#dlg small{color:var(--mut);font-weight:700;margin-left:4px}#dlg p{margin:6px 0 6px;font-size:16px;font-weight:600;line-height:1.35}#dlg i{font-style:normal;font-size:12px;color:var(--mut);font-weight:700}
+.fuelg{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;font-weight:800}.fuelg .bar{flex:1;margin:0}.fuelg b{min-width:24px;text-align:right;color:var(--tx);font-variant-numeric:tabular-nums}
