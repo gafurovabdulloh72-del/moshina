@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { clamp, smoothstep, lerp } from './util.js';
-import { LOOK } from './look.js';
+import { LOOK, syncFogOut } from './look.js';
 import * as T from './terrain.js';
 
 export const DAY_START = 5.4, DAY_END = 19.3;
@@ -81,14 +81,15 @@ function sunTrans(S, alt, haze, out) { // balandlik alt dan quyosh tomon o'tkazu
 
 // --- Osmon gumbazi: jadvaldan osmon + quyosh diski + oy (faza bilan) + yulduzlar va Somon yo'li + bulutlar ---
 const SKY_VS = `varying vec3 vDir; varying float vEnv;
-void main(){ vDir = position; vec4 wp = modelMatrix * vec4(position, 1.0); vEnv = step(length(wp.xyz - cameraPosition), 300.0); gl_Position = projectionMatrix * viewMatrix * wp; gl_Position.z = gl_Position.w; }`;
+void main(){ vDir = position; vec4 wp = modelMatrix * vec4(position, 1.0); vEnv = step(length(wp.xyz - cameraPosition), 300.0); gl_Position = projectionMatrix * viewMatrix * wp; gl_Position.z = gl_Position.w * 0.9999995; }`;
 const SKY_FS = `#define LK_NO_SCOTOPIC
+#define LK_CLOUD_GRAD
 varying vec3 vDir; varying float vEnv;
 uniform vec3 uSunDisc; uniform vec3 uMoonCol; uniform vec3 uGround; uniform vec3 uEnvFloor; uniform float uStars; uniform mat3 uStarRot; uniform vec3 uCLDir;
 ${LOOK.glsl.sky}${LOOK.glsl.cloud}
 float h13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
 vec3 h33(vec3 p){ p = fract(p * vec3(0.1031, 0.1030, 0.0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
-float hg(float mu, float g){ float g2 = g * g; return 0.0795775 * (1.0 - g2) / pow(1.0 + g2 - 2.0 * g * mu, 1.5); }
+float hg(float mu, float g){ float g2 = g * g, x = 1.0 + g2 - 2.0 * g * mu; return 0.0795775 * (1.0 - g2) / (x * sqrt(x)); }
 void main(){
   vec3 d = normalize(vDir); bool env = vEnv > 0.5;
   vec3 sky = safarSky(d), col = sky;
@@ -101,8 +102,8 @@ void main(){
       float m = fract(h * 731.7); m = 0.08 + 0.92 * m * m * m * m; st = m * exp(-dot(q, q) / (r * r)) * (0.05 / (r * r));
       st *= 0.75 + 0.25 * sin(uTimeL * (2.0 + 6.0 * fract(h * 53.1)) + h * 91.0); sc = mix(vec3(1.0, 0.8, 0.62), vec3(0.75, 0.85, 1.0), fract(h * 17.3)); }
     float mw = exp(-pow(dot(sd, normalize(vec3(0.31, 0.62, 0.72))), 2.0) * 22.0);
-    float dust = texture(tNoise, sd.xz * 0.9 + sd.y * 0.31).r * 0.6 + texture(tNoise, sd.xy * 2.3 + 0.4).r * 0.4;
-    vec3 milky = vec3(0.8, 0.85, 1.0) * mw * smoothstep(0.35, 0.75, dust) * 0.012;
+    float dust = uQ > 0.5 ? smoothstep(0.35, 0.75, texture(tNoise, sd.xz * 0.9 + sd.y * 0.31).r * 0.6 + texture(tNoise, sd.xy * 2.3 + 0.4).r * 0.4) : 0.45;
+    vec3 milky = vec3(0.8, 0.85, 1.0) * mw * dust * 0.012;
     col += (sc * st * 0.9 + milky) * uStars * hor;
   }
   // oy: sharsimon yoritilgan disk (faza quyosh yo'nalishidan)
@@ -110,18 +111,26 @@ void main(){
     if (cm > 0.9995) { vec3 t1 = normalize(cross(m, vec3(0.0, 1.0, 0.0))), t2 = cross(t1, m); vec2 l = vec2(dot(d, t1), dot(d, t2)) / r; float l2 = dot(l, l);
       if (l2 < 1.0) { vec3 n = t1 * l.x + t2 * l.y - m * sqrt(1.0 - l2); float lit = max(dot(n, uSunDir), 0.0); float alb = 0.55 + 0.45 * smoothstep(0.35, 0.7, texture(tNoise, l * 0.21 + 0.37).r) * (0.8 + 0.2 * texture(tNoise, l * 0.6).b);
         vec3 mc = uMoonCol * alb * (lit + 0.025) * smoothstep(1.0, 0.92, l2); col = mix(col, sky + mc, hor * (env ? 0.0 : 1.0)); } }
-    col += uMoonCol * (0.004 * exp(-(1.0 - cm) * 2500.0) + 0.0012 * exp(-(1.0 - cm) * 300.0)) * hor * step(0.0, cm); }
+    if (cm > 0.97) col += uMoonCol * (0.004 * exp(-(1.0 - cm) * 2500.0) + 0.0012 * exp(-(1.0 - cm) * 300.0)) * hor; }
   // quyosh diski (chegarasi qorayib boradi) va atrofidagi nur
   { float cs = dot(d, uSunDir); float x = (1.0 - cs) / 3.6e-5;
-    vec3 sun = uSunDisc * (smoothstep(1.08, 0.92, x) * (1.0 - 0.55 * (1.0 - sqrt(max(1.0 - x, 0.0)))) * (env ? 0.0 : 1.0) + 0.012 * exp(-x * 0.06) + 0.0012 * exp(-x * 0.006));
-    col += sun * hor; }
+    if (cs > 0.9) { vec3 sun = uSunDisc * (smoothstep(1.08, 0.92, x) * (1.0 - 0.55 * (1.0 - sqrt(max(1.0 - x, 0.0)))) * (env ? 0.0 : 1.0) + 0.012 * exp(-x * 0.06) + 0.0012 * exp(-x * 0.006));
+    col += sun * hor; } }
   // bulutlar: bir qatlam (uCloud.z balandlikda), yon tomondan yoritilish, o'z-o'ziga soya, quyosh tomonda kumush hoshiya
+  // piksel izini izotrop qilamiz (anizotrop filtr qiya qarashda bulutni radial cho'zib yuboradi)
+  float t = (uCloud.z - uViewPos.y) / max(d.y, 0.012); vec2 p = uViewPos.xz + d.xz * t;
+  if (uQ > 0.5) { vec2 gx = dFdx(p), gy = dFdy(p); float fl = sqrt(length(gx) * length(gy)) * uCloud.y; lkGX = vec2(fl, 0.0); lkGY = vec2(0.0, fl); }
   if (d.y > 0.0) {
-    float t = (uCloud.z - uViewPos.y) / max(d.y, 0.012); vec2 p = uViewPos.xz + d.xz * t; float det = smoothstep(45000.0, 9000.0, t) * (uQ > 0.5 ? 1.0 : 0.6);
+    bool cheap = uQ < 0.5 || env; // 0-daraja va atrof-muhit xaritasi: eng arzon bulut (2 ta o'qish, o'z-o'ziga soyasiz)
+    float det = cheap ? -1.0 : smoothstep(60000.0, 9000.0, t) * smoothstep(0.07, 0.01, lkGX.x * 2.4);
     float D = lkCloudD(p, det);
-    if (D > 0.003) {
+    if (D > 0.003 && uQ < 0.5) { // 0-daraja (atrof-muhit o'tishida ham): oddiy yoritish (tekstura va exp'siz)
+      float mu = dot(d, uCLDir), ft = t / (t + 26000.0);
+      vec3 cc = uCloudSun * ((0.55 - 0.25 * D) * (0.8 + 0.6 * mu * mu * mu * mu)) + uCloudAmb * (1.05 - 0.45 * D);
+      col = mix(col, mix(cc, sky, ft), smoothstep(0.0, 0.42, D) * (1.0 - ft * ft));
+    } else if (D > 0.003) {
       vec3 L = uCLDir; vec2 s2 = L.xz; float sl = length(s2); s2 = sl > 1e-3 ? s2 / sl : vec2(1.0, 0.0);
-      float od = D * 1.1 + lkCloudD(p + s2 * 220.0, -1.0) * 0.9 + lkCloudD(p + s2 * 650.0, -1.0) * 0.6;
+      float od = cheap ? D * 2.2 + 0.25 : D * 1.1 + lkCloudD(p + s2 * 220.0, -1.0) * 0.9 + lkCloudD(p + s2 * 650.0, -1.0) * 0.6;
       float mu = dot(d, L), tr = exp(-od * 0.65);
       float base = mix(1.0, 0.55 + 0.45 * exp(-D * 2.0), smoothstep(0.05, 0.5, d.y));
       vec3 lit = uCloudSun * (tr * (0.7 + 2.5 * hg(mu, 0.5)) * base + 3.0 * hg(mu, 0.85) * exp(-D * 3.0) * (1.0 - exp(-D * 6.0)));
@@ -137,7 +146,28 @@ void main(){
   #include <colorspace_fragment>
 }`;
 
-const OCC = 256; // relyef soyasi xaritasi o'lchami
+// 0-daraja uchun alohida arzon gumbaz (yuklashda emas, darajaga qarab ko'rinadi — material/define o'zgarmaydi): analitik osmon, oddiy oy va quyosh, 2 o'qishli bulut
+const SKY0_FS = `#define LK_NO_SCOTOPIC
+varying vec3 vDir; varying float vEnv;
+uniform vec3 uSunDisc; uniform vec3 uMoonCol; uniform float uStars; uniform mat3 uStarRot; uniform vec3 uCLDir;
+${LOOK.glsl.sky}${LOOK.glsl.cloud}
+float h13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+void main(){
+  vec3 d = normalize(vDir); vec3 sky = lkSkyCheap(d), col = sky; float hor = smoothstep(-0.01, 0.03, d.y);
+  if (uStars > 0.002 && d.y > -0.03) { vec3 sd = uStarRot * d; vec3 p = sd * 240.0, c = floor(p); float h = h13(c);
+    if (h > 0.9935) { vec3 q = fract(p) - 0.5; float m = fract(h * 731.7); col += vec3(0.9) * (0.08 + 0.92 * m * m * m * m) * smoothstep(0.16, 0.0, dot(q, q)) * 0.6 * uStars * hor; } }
+  { float cm = dot(d, uMoonDir); if (cm > 0.97) col += uMoonCol * (smoothstep(0.99990, 0.99993, cm) * 0.6 + 0.0012 * exp(-(1.0 - cm) * 300.0)) * hor; }
+  { float cs = dot(d, uSunDir); if (cs > 0.9) { float x = (1.0 - cs) / 3.6e-5; col += uSunDisc * (smoothstep(1.08, 0.92, x) * 0.8 + 0.012 * exp(-x * 0.06) + 0.0012 * exp(-x * 0.006)) * hor; } }
+  if (d.y > 0.0) { float t = (uCloud.z - uViewPos.y) / max(d.y, 0.012); float D = lkCloudD(uViewPos.xz + d.xz * t, -1.0);
+    if (D > 0.003) { float mu = dot(d, uCLDir), ft = t / (t + 26000.0);
+      vec3 cc = uCloudSun * ((0.55 - 0.25 * D) * (0.8 + 0.6 * mu * mu * mu * mu)) + uCloudAmb * (1.05 - 0.45 * D);
+      col = mix(col, mix(cc, sky, ft), smoothstep(0.0, 0.42, D) * (1.0 - ft * ft)); } }
+  gl_FragColor = vec4(col, 1.0);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}`;
+
+const OCC = 256, G_ALB = [0.16, 0.15, 0.1]; // relyef soyasi xaritasi o'lchami
 const ENV_K = 0.8; // osmon yoritishi kuchi (quyosh va soya qarama-qarshiligi uchun)
 export class Sky {
   constructor(scene, opts = {}) {
@@ -150,9 +180,11 @@ export class Sky {
     this.fogColor = new THREE.Color();
     this.uniforms = { uTop: { value: new THREE.Color() }, uHor: { value: new THREE.Color() } }; // boshqa modullar o'qiydi (zenit va ufq rangi)
     this.du = { uSunDisc: { value: new THREE.Color() }, uMoonCol: { value: new THREE.Color() }, uGround: { value: new THREE.Color() }, uEnvFloor: { value: new THREE.Color() }, uStars: { value: 0 }, uStarRot: { value: new THREE.Matrix3() }, uCLDir: { value: new THREE.Vector3(0, 1, 0) } };
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), new THREE.ShaderMaterial({ vertexShader: SKY_VS, fragmentShader: SKY_FS, uniforms: this.du, side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false }));
-    dome.scale.setScalar(1000); dome.renderOrder = -100; dome.frustumCulled = false;
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), new THREE.ShaderMaterial({ vertexShader: SKY_VS, fragmentShader: SKY_FS, uniforms: this.du, side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false }));
+    dome.scale.setScalar(1000); dome.renderOrder = 1e6; dome.frustumCulled = false; // shaffof bo'lmaganlardan keyin: chuqurlik sinovi faqat ochiq osmon piksellarini qoldiradi
     this.dome = dome; scene.add(dome);
+    const dome0 = new THREE.Mesh(dome.geometry, new THREE.ShaderMaterial({ vertexShader: SKY_VS, fragmentShader: SKY0_FS, uniforms: this.du, side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false }));
+    dome0.scale.setScalar(1000); dome0.renderOrder = 1e6; dome0.frustumCulled = false; dome0.visible = false; this.dome0 = dome0; scene.add(dome0);
 
     // osmon jadvali (LUT): soat o'zgarganda videokartada qayta hisoblanadi
     this.lutU = { uS: { value: new THREE.Vector3(0, 1, 0) }, uE: { value: 10 }, uHaze: { value: 1 }, uMs: { value: 0 }, uNightZ: { value: new THREE.Color() }, uNightH: { value: new THREE.Color() } };
@@ -174,11 +206,11 @@ export class Sky {
     scene.fog = new THREE.Fog(0xc6e2f6, 260, 5600); // USE_FOG yoqilgan bo'lsin; rang/masofa look.js tumanida ishlatilmaydi
 
     // relyef quyosh soyasi xaritasi (tog'lar uzun soya tashlaydi)
-    this.occData = new Float32Array(OCC * OCC); this.occHalf = new Uint16Array(OCC * OCC).fill(THREE.DataUtils.toHalfFloat(-2000));
+    this.occData = new Float32Array(OCC * OCC); this.occHalf = new Uint16Array(OCC * OCC).fill(THREE.DataUtils.toHalfFloat(-2000)); this.occStage = new Uint16Array(OCC * OCC);
     this.occTex = new THREE.DataTexture(this.occHalf, OCC, OCC, THREE.RedFormat, THREE.HalfFloatType); this.occTex.magFilter = this.occTex.minFilter = THREE.LinearFilter; this.occTex.needsUpdate = true;
     LU.tSunOcc.value = this.occTex; LU.uOccMap.value.set(1 / T.SIZE, 0.5, 0, 0);
     this._occDir = new THREE.Vector3(0, -1, 0); this._occRow = -1; this._occNext = new THREE.Vector3();
-    this._c = [0, 0, 0]; this._d = [0, 0, 0]; this._cache = null;
+    this._c = [0, 0, 0]; this._d = [0, 0, 0]; this._fl = [0, 0, 0]; this._cache = null; this._zUp = new THREE.Vector3(0, 0, 1);
     this.setHour(this.hour);
   }
 
@@ -187,11 +219,12 @@ export class Sky {
     if (!size) { this.sun.castShadow = false; return; }
     this.sun.castShadow = true;
     if (sh.mapSize.x !== size) { sh.mapSize.set(size, size); if (sh.map) { sh.map.dispose(); sh.map = null; } }
+    const R = size <= 1024 ? 95 : 125; if (R !== this.shR) { this.shR = R; const c = sh.camera; c.left = -R; c.right = R; c.top = R; c.bottom = -R; c.updateProjectionMatrix(); } // kichik xaritada qamrov ham kichik (0-daraja: avvalgi ±95 m)
   }
 
   // atmosfera bo'yicha ranglar (soat kam o'zgarsa qayta hisoblanmaydi)
   _atmo(S) {
-    const c = this._cache || (this._cache = { s: new THREE.Vector3(9, 9, 9), zen: [0, 0, 0], hor: [0, 0, 0], amb: [0, 0, 0], sunT: [0, 0, 0], cloudT: [0, 0, 0] });
+    const c = this._cache || (this._cache = { s: new THREE.Vector3(9, 9, 9), zen: [0, 0, 0], hor: [0, 0, 0], amb: [0, 0, 0], sunT: [0, 0, 0], cloudT: [0, 0, 0], horS: [0, 0, 0], horA: [0, 0, 0], glow: [0, 0, 0] });
     if (c.s.distanceToSquared(S) < 2e-6) return c;
     c.s.copy(S);
     const sy = S.y, sx = Math.sqrt(Math.max(1 - sy * sy, 1e-4)), Sc = [sx, sy, 0], E = this.lutU.uE.value, hz = this.lutU.uHaze.value, ms = this.lutU.uMs.value, o = this._c;
@@ -201,6 +234,11 @@ export class Sky {
     for (const y of [0.15, 0.45, 0.8]) for (let a = 0; a < 4; a++) { const az = (a / 4) * Math.PI * 2 + 0.4, r = Math.sqrt(1 - y * y); scatterJS([Math.cos(az) * r, y, Math.sin(az) * r], Sc, E, hz, ms, o); for (let k = 0; k < 3; k++) c.amb[k] += o[k] * y; wsum += y; }
     for (let k = 0; k < 3; k++) c.amb[k] = (c.amb[k] / wsum) * 0.8 + c.zen[k] * 0.2;
     sunTrans(Sc, OBS, hz, c.sunT); sunTrans(Sc, 1700, hz, c.cloudT);
+    // 0-daraja arzon osmon uchun: ufq quyosh tomonda / qarshi tomonda va quyosh atrofidagi nur (6° yuqorida, arzon modeldan ortig'i)
+    scatterJS([0.9995, 0.03, 0], Sc, E, hz, ms, c.horS); scatterJS([-0.9995, 0.03, 0], Sc, E, hz, ms, c.horA);
+    { const e = Math.asin(Math.max(-1, Math.min(1, sy))) + 0.1, gy = Math.max(Math.sin(e), 0.0), gd = [Math.sqrt(1 - gy * gy), gy, 0]; scatterJS(gd, Sc, E, hz, ms, o);
+      const cs = gd[0] * sx + gd[1] * sy, w = (cs * 0.5 + 0.5) ** 2, v = Math.sqrt(gy), ex = ((cs * 0.5 + 0.5) ** 128);
+      for (let k = 0; k < 3; k++) { const base = (c.horA[k] + (c.horS[k] - c.horA[k]) * w) * (1 - v) + c.zen[k] * v; c.glow[k] = Math.max(0, o[k] - base) / ex; } }
     return c;
   }
 
@@ -226,17 +264,18 @@ export class Sky {
     const A = this._atmo(this.sunDir), nz = this.lutU.uNightZ.value, nh = this.lutU.uNightH.value;
     const top = this.uniforms.uTop.value.setRGB(A.zen[0] + nz.r, A.zen[1] + nz.g, A.zen[2] + nz.b), horC = this.uniforms.uHor.value.setRGB(A.hor[0] + nh.r, A.hor[1] + nh.g, A.hor[2] + nh.b);
     LU.uSkyZen.value.copy(top); LU.uSkyHor.value.copy(horC);
+    LU.uSkyHorS.value.setRGB(A.horS[0] + nh.r, A.horS[1] + nh.g, A.horS[2] + nh.b); LU.uSkyHorA.value.setRGB(A.horA[0] + nh.r, A.horA[1] + nh.g, A.horA[2] + nh.b); LU.uSkyGlow.value.setRGB(A.glow[0], A.glow[1], A.glow[2]); syncFogOut();
     const amb = LU.uSkyAmb.value.setRGB(A.amb[0] + (nz.r + nh.r) * 0.5, A.amb[1] + (nz.g + nh.g) * 0.5, A.amb[2] + (nz.b + nh.b) * 0.5);
     this.fogColor.copy(horC); this.scene.fog.color.copy(horC);
     // quyosh / oy yorug'ligi: quyosh ufqqa botgach oy nuri qorong'ilik bilan asta kiradi (yo'nalish almashuvi sezilmaydi)
     const ST = A.sunT, SUNK = 3.5;
     if (isDay) { this.lightDir.copy(this.sunDir); this.sun.color.setRGB(ST[0], ST[1], ST[2]); const m = Math.max(ST[0], ST[1], ST[2], 1e-4); this.sun.color.multiplyScalar(1 / m); this.sun.intensity = SUNK * m * smoothstep(-0.012, 0.03, sunEl); }
-    else { this.lightDir.copy(moonDir); this.sun.color.setRGB(0.62, 0.74, 1.0); this.sun.intensity = 0.65 * smoothstep(0.0, 0.25, moonDir.y) * smoothstep(-0.0, -0.14, sunEl); }
+    else { this.lightDir.copy(moonDir); this.sun.color.setRGB(0.64, 0.7, 1.0); this.sun.intensity = 0.65 * smoothstep(0.0, 0.25, moonDir.y) * smoothstep(-0.0, -0.14, sunEl); }
     if (this.lightDir.y < 0.08) { this.lightDir.y = 0.08; this.lightDir.normalize(); }
     // osmon yoritishi: Lambert materiallar uchun yarim shar chirog'i (Standard'lar atrof-muhit xaritasidan oladi)
-    const gAlb = [0.16, 0.15, 0.1], sunIrr = this.sun.intensity * Math.max(this.lightDir.y, 0) / SUNK;
+    const gAlb = G_ALB, sunIrr = this.sun.intensity * Math.max(this.lightDir.y, 0) / SUNK;
     const flo = dark * 0.55 + 0.03; // tunda o'ynash uchun minimal yorug'lik (oy nuri ostidagi ko'z moslashuvi)
-    const fl = [0.045 * flo, 0.06 * flo, 0.15 * flo];
+    const fl = this._fl; fl[0] = 0.05 * flo; fl[1] = 0.058 * flo; fl[2] = 0.15 * flo;
     this.du.uEnvFloor.value.setRGB(fl[0], fl[1], fl[2]);
     const g = this.du.uGround.value.setRGB(gAlb[0] * (sunIrr * this.sun.color.r + amb.r * 1.0), gAlb[1] * (sunIrr * this.sun.color.g + amb.g * 1.0), gAlb[2] * (sunIrr * this.sun.color.b + amb.b * 1.0));
     this.hemi.color.setRGB(amb.r + fl[0], amb.g + fl[1], amb.b + fl[2]); this.hemi.groundColor.setRGB(g.r + fl[0], g.g + fl[1], g.b + fl[2]); this.hemi.intensity = Math.PI * ENV_K; this.scene.environmentIntensity = ENV_K;
@@ -281,18 +320,19 @@ export class Sky {
           const fx = (x0 + dx * s + HALF) / CELL, fz = (z0 + dz * s + HALF) / CELL; if (fx < 0 || fz < 0 || fx > N || fz > N) break;
           const v = gh[((fz + 0.5) | 0) * NV + ((fx + 0.5) | 0)] - s * tn; if (v > best) best = v;
         }
-        data[j * OCC + i] = best;
+        data[j * OCC + i] = best; this.occStage[j * OCC + i] = THREE.DataUtils.toHalfFloat(Math.max(-2000, Math.min(60000, best))); // half-float qator bo'yicha (yakunda sakrash bo'lmasin)
       }
     }
     if (this._occRow >= OCC) {
-      for (let k = 0; k < data.length; k++) this.occHalf[k] = THREE.DataUtils.toHalfFloat(Math.max(-2000, Math.min(60000, data[k])));
-      this.occTex.needsUpdate = true; this._occDir.copy(D); this._occRow = -1; LU.uOccMap.value.z = 1;
+      this.occHalf.set(this.occStage); this.occTex.needsUpdate = true; this._occDir.copy(D); this._occRow = -1; LU.uOccMap.value.z = 1;
     }
   }
 
   update(dt, cam, focus) {
-    this.dome.position.copy(cam.position);
+    const q0 = LU.uQ.value < 0.5; this.dome.visible = !q0; this.dome0.visible = q0; // 0-darajada arzon gumbaz
+    this.dome.position.copy(cam.position); this.dome0.position.copy(cam.position);
     LU.uViewPos.value.copy(cam.position);
+    { const F = LU.uFog.value; LU.uFogCam.value = F.x * Math.exp(-F.y * (cam.position.y - F.z)); }
     const g = LOOK.game; LU.uTimeL.value = g ? g.time : 0;
     LU.uCloudOff.value.set(LU.uTimeL.value * 7.5 + 3100, LU.uTimeL.value * 2.2 - 900);
     this._renderLut(this._jump);
@@ -301,7 +341,7 @@ export class Sky {
     // soya kamerasi: yo'nalish kichik qadamlar bilan yangilanadi, markaz teksel bo'yicha yaxlitlanadi — soya titramaydi
     const f = focus || cam.position, sh = this.sun.shadow, sz = sh.mapSize.x, R = this.shR;
     if (this._shDir.angleTo(this.lightDir) > 0.003) this._shDir.copy(this.lightDir);
-    const Ld = this._shDir, up = Math.abs(Ld.y) > 0.99 ? new THREE.Vector3(0, 0, 1) : this.sun.up;
+    const Ld = this._shDir, up = Math.abs(Ld.y) > 0.99 ? this._zUp : this.sun.up;
     const ax = this._ax || (this._ax = new THREE.Vector3()), ay = this._ay || (this._ay = new THREE.Vector3());
     ax.crossVectors(up, Ld).normalize(); ay.crossVectors(Ld, ax);
     const tx = (2 * R) / sz, px = f.x * ax.x + f.y * ax.y + f.z * ax.z, py = f.x * ay.x + f.y * ay.y + f.z * ay.z;
