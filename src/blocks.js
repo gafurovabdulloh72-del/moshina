@@ -130,12 +130,10 @@ export function tree(g, x, z, s, hex, kind = 0) {
   else { g.blob(2.1, 1, { cy: 4.5, sy: 0.92, jitter: 0.09, shade: 0.2 }); g.blob(1.4, 1, { cx: 1.2, cy: 3.6, cz: 0.4, jitter: 0.1, shade: 0.2 }); g.blob(1.3, 1, { cx: -1.1, cy: 3.8, cz: -0.4, jitter: 0.1, shade: 0.2 }); }
   g.pop();
 }
+// Manzildagi odam: statik quti emas — joy va kiyim ro'yxatga yoziladi, places.js ularni haqiqiy skeletli odam (rig.js) qilib qo'yadi
+export const PEOPLE = [];
 export function person(g, x, z, yaw, shirt = 0x2f7fd0, pants = 0x3a3f4c) {
-  g.push().translate(x, 0, z).rotY(yaw);
-  g.color(pants).box(-0.13, 0.42, 0, 0.2, 0.84, 0.24); g.box(0.13, 0.42, 0, 0.2, 0.84, 0.24);
-  g.color(shirt).box(0, 1.15, 0, 0.52, 0.66, 0.3); g.box(-0.34, 1.12, 0, 0.15, 0.62, 0.2); g.box(0.34, 1.12, 0, 0.15, 0.62, 0.2);
-  g.color(0xe8b990).blob(0.2, 1, { cy: 1.68 }); g.color(0x3a2a20).blob(0.21, 0, { cy: 1.76, sy: 0.6 });
-  g.pop();
+  const q = wpt(g, x, 0, z); PEOPLE.push({ x: q[0], y: q[1], z: q[2], yaw: Math.atan2(g.m[2], g.m[8]) + yaw, shirt, pants });
 }
 export function boat(g, x, y, z, yaw, hex = 0x2f7fd0) {
   g.push().translate(x, y, z).rotY(yaw); g.color(hex).box(0, 0.3, 0, 1.5, 0.6, 3.6, { tx: 1.25, tz: 1.12 }); g.color(0xf2ead8).box(0, 0.58, 0, 1.3, 0.08, 3.4, { tx: 1.25, tz: 1.1 });

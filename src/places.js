@@ -8,6 +8,7 @@ import * as BK from './blocks.js';
 import { ROAD_RAMPS, edgePoint } from './acts.js';
 import { buildHome } from './home.js';
 import { buildDetails, glowMat, withMask } from './details.js';
+import { makeRig, poseRig } from './rig.js';
 const { PAL } = BK;
 
 class Site {
@@ -489,6 +490,10 @@ float cell(vec2 p) { vec2 i = floor(p), f = fract(p); float d1 = 9.0, d2 = 9.0; 
     });
     const m = new THREE.Mesh(g.build(), MAT.flat); m.castShadow = true; m.receiveShadow = true; scene.add(m);
   }
+  // ===== Manzillardagi odamlar: skeletli rig, yaqinda ko'rinadi va jonli turadi (gaplashadi, qo'l siltaydi) =====
+  { const PEO = BK.PEOPLE.map((q, i) => { const rig = makeRig({ shirt: q.shirt, pants: q.pants, seed: 7000 + i * 31, long: i % 3 === 1, hair: [0x3a2a20, 0x1d1612, 0x6a4a30][i % 3] }); rig.root.position.set(q.x, q.y, q.z); rig.root.rotation.y = q.yaw; rig.root.visible = false; scene.add(rig.root); COL.addCircle(q.x, q.z, 0.3, q.y - 1, q.y + 1.8); return { rig, q, anim: i % 4 === 1 ? 'talk' : 'idle' }; });
+    out.people = PEO;
+    out.anim.push((dt) => { const c = game.camera && game.camera.position; if (!c) return; for (const o of PEO) { const d2 = (o.q.x - c.x) ** 2 + (o.q.z - c.z) ** 2, on = d2 < 150 * 150; o.rig.root.visible = on; if (on) poseRig(o.rig, o.anim, dt, 0); } }); }
   // ===== Hayotiy detallar: yo'l belgilari, ustunlar, simlar, chiroqlar, hovli jihozlari, tutun, bayroqlar =====
   out.details = buildDetails(scene, game, out);
   return out;
