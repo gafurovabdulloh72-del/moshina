@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import * as T from './terrain.js';
 import { MAT } from './geo.js';
-import { floraProtos, leafMaterial, grassMaterial, grassPatch, flowerGeo } from './flora.js';
+import { floraProtos, leafMaterial, grassMaterial, grassPatch, flowerGeo, FLORA_U } from './flora.js';
 import { ROAD_RAMPS, RADARS, edgePoint } from './acts.js';
 import { hash2, clamp, lerp, noise, smoothstep } from './util.js';
 import * as COL from './colliders.js';
@@ -35,7 +35,9 @@ let extraDone = false;
 export function queueTree(x, y, z, s, hex, kind = 0, rot = (x * 12.9898 + z * 78.233) % 6.283) {
   if (extraDone) return false;
   const type = kind === 1 ? 'cypress' : kind === 2 ? 'pine' : ((hex >> 16) & 255) > 200 && (hex & 255) > 150 ? 'blossom' : 'round';
-  EXTRA_TREES.push([type, x, y, z, s, rot, hex]); return true;
+  // manzillardagi multfilm ranglari (0x5cab4a ...) tabiiy palitraga almashtiriladi: to'q hex — to'q yashil, qolgani — oddiy yashil
+  const pal = type === 'blossom' ? TINT.sakura : type === 'cypress' ? TINT.poplar : type === 'pine' || ((hex >> 8) & 255) < 140 ? TINT.dark : TINT.green;
+  EXTRA_TREES.push([type, x, y, z, s, rot, pal[(hash2(Math.round(x * 3), Math.round(z * 3), 93) * pal.length) | 0]]); return true;
 }
 export function buildProps(scene, game) {
   const P = floraProtos(), LM = leafMaterial();
@@ -196,7 +198,7 @@ export function buildProps(scene, game) {
     counts: cnt, chunks: list, far: 1500, hiD: 330, lite: null,
     update(cam) {
       // 0-darajada barg kartalari (alfa-test, ortiqcha chizish) umuman chizilmaydi: yaqinda kartasiz o'rta variant (md), toshlarda det-1 — eski narxda
-      const px = cam.position.x, pz = cam.position.z, t0 = tier() === 0 ? 8 : 0;
+      const px = cam.position.x, pz = cam.position.z, t0 = tier() === 0 ? 8 : 0; FLORA_U.uFlLite.value = t0 ? 1 : 0;
       for (let i = 0; i < list.length; i++) {
         const c = list[i]; const d = Math.hypot(c.cx - px, c.cz - pz);
         const st = (d < api.hiD ? 1 : d < api.far ? 2 : 0) + t0;

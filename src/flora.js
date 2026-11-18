@@ -230,21 +230,29 @@ const COLV = `
 const EDGE = `  diffuseColor.a *= smoothstep(0.06, 0.3, abs(dot(normalize(cross(dFdx(vViewPosition), dFdy(vViewPosition))), normalize(vViewPosition))));
 `;
 // wrap: yorug'likdan teskari tomonga ham ozgina tarqalgan yorug'lik (barg toji yarim shaffof) — tunda/tongda tojning soya yarmi qop-qora bo'lib qolmaydi
-const FRAG = (trans, wrap) => (s) => s.replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\n  normal = normalize( vNormal );\n')
+// uFlLite (umumiy uniform, props.update yozadi): 0-darajada qo'shimcha yorug'lik hadlari tashlab ketiladi (uniform shart — qayta kompilyatsiya yo'q)
+// osmon to'ldiruvchisi: toj/o'tning pastga qaragan tomoni faqat yer rangini olib qop-qora bo'lib qolmasin (tun/tong)
+export const FLORA_U = { uFlLite: { value: 0 } };
+const FRAG = (trans, wrap, fill) => (s) => 'uniform float uFlLite;\n' + s.replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\n  normal = normalize( vNormal );\n')
   .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+  if (uFlLite < 0.5) {
   #if NUM_DIR_LIGHTS > 0
     { vec3 dL = directionalLights[0].direction; float blT = pow(max(dot(normalize(-vViewPosition), dL), 0.0), 4.0), nl = dot(normal, dL), wr = 0.25 + (nl + 1.0) * 0.5 - max(0.0, nl);
       reflectedLight.directDiffuse += RECIPROCAL_PI * diffuseColor.rgb * directionalLights[0].color * (blT * ${trans.toFixed(2)} + wr * ${wrap.toFixed(2)}); }
   #endif
+  #if NUM_HEMI_LIGHTS > 0
+    reflectedLight.indirectDiffuse += BRDF_Lambert( diffuseColor.rgb ) * hemisphereLights[0].skyColor * ${fill.toFixed(2)};
+  #endif
+  }
 `);
 export function leafMaterial() {
   if (!LEAF.tex) LEAF.tex = drawAtlas();
   // alphaToCoverage: MSAA bor joyda (2-daraja) karta chetlari silliqlanadi va uzoqda miltillamaydi; MSAA yo'q bo'lsa oddiy alfa-testdek ishlaydi (doimiy xususiyat — qayta kompilyatsiya yo'q)
   const m = new MAT.tree.constructor({ vertexColors: true, map: LEAF.tex, alphaTest: 0.42, alphaToCoverage: true, side: THREE.DoubleSide });
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uTime = WIND;
+    sh.uniforms.uTime = WIND; sh.uniforms.uFlLite = FLORA_U.uFlLite;
     sh.vertexShader = 'attribute float aMask;\nuniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n' + SWAY).replace('#include <color_vertex>', COLV);
-    sh.fragmentShader = FRAG(0.9, 0.45)(sh.fragmentShader).replace('#include <alphatest_fragment>', EDGE + '#include <alphatest_fragment>');
+    sh.fragmentShader = FRAG(0.9, 0.45, 0.35)(sh.fragmentShader).replace('#include <alphatest_fragment>', EDGE + '#include <alphatest_fragment>');
   };
   m.customProgramCacheKey = () => 'flora-leaf-2';
   return m;
@@ -253,7 +261,7 @@ export function leafMaterial() {
 export function grassMaterial() {
   const m = new MAT.tree.constructor({ vertexColors: true, side: THREE.DoubleSide });
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uTime = WIND;
+    sh.uniforms.uTime = WIND; sh.uniforms.uFlLite = FLORA_U.uFlLite;
     sh.vertexShader = 'attribute float aMask;\nuniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
       #ifdef USE_INSTANCING
         vec4 wpI = instanceMatrix * vec4(position, 1.0); float swy = position.y * position.y * 2.2;
@@ -262,7 +270,7 @@ export function grassMaterial() {
         transformed.z += (cos(uTime * 1.6 + wpI.x * 0.22 - wpI.z * 0.31) * 0.3 * gust + sin(uTime * 3.7 + wpI.z * 1.1) * 0.07) * swy;
       #endif
 `).replace('#include <color_vertex>', COLV);
-    sh.fragmentShader = FRAG(0.7, 0.2)(sh.fragmentShader);
+    sh.fragmentShader = FRAG(0.7, 0.2, 0.12)(sh.fragmentShader);
   };
   m.customProgramCacheKey = () => 'flora-grass-2';
   return m;
@@ -270,7 +278,7 @@ export function grassMaterial() {
 
 // ================= Daraxt generatorlari =================
 // Toj soyasi: markazdan uzoqlik (t) va balandlik (h) bo'yicha — ichi qorong'i, tashqi yuqori uchlari yorug'
-const crownAO = (t, h) => (0.62 + 0.38 * sst(0.1, 0.92, t)) * (0.8 + 0.27 * h) * (t > 0.82 && h > 0.55 ? 1.06 : 1);
+const crownAO = (t, h) => (0.7 + 0.3 * sst(0.1, 0.92, t)) * (0.86 + 0.21 * h) * (t > 0.82 && h > 0.55 ? 1.06 : 1);
 const hueK = (k, hv) => [k * (1 + 0.08 * hv), k * (1 + 0.025 * hv), k * (1 - 0.09 * hv)];
 // Toj: klasterlar ro'yxati -> barg kartalari. Toj ellipsoid "konvert" sifatida qaraladi: normal — ellipsoid normali (+ yuqoriga), soya — markazga yaqinlik va balandlik.
 // Ichki klaster markazlarida katta qorong'i kartalar (silliq yadro sharlari o'rniga — ichkari zich barg massasidek ko'rinadi)
@@ -285,7 +293,7 @@ function crown(o, c, cl, opt) {
   for (const q of cl) {
     const n = Math.max(2, Math.round((opt.cards || 6) * (q.r / opt.rRef)));
     // ichki qorong'i karta (klaster markazida)
-    if (opt.inner !== false) for (let i = 0; i < (opt.inner || 1); i++) { const fn = nrm([rng() * 2 - 1, rng() * 2 - 1, rng() * 2 - 1]); let U = perp(fn); U = rot(U, fn, rng() * 6.28); const V = cross(fn, U), s = q.r * 1.15; card(c, add(q.c, [0, -q.r * 0.1, 0]), mul(U, s), mul(V, s), q.cell == null ? opt.cell : q.cell, nAt, (pp) => opt.ink ? opt.ink(kAt(pp) * 0.7, pp, q.hv) : hueK(kAt(pp) * 0.7, q.hv), 1); }
+    if (opt.inner !== false) for (let i = 0; i < (opt.inner || 1); i++) { const fn = nrm([rng() * 2 - 1, rng() * 2 - 1, rng() * 2 - 1]); let U = perp(fn); U = rot(U, fn, rng() * 6.28); const V = cross(fn, U), s = q.r * 1.15; card(c, add(q.c, [0, -q.r * 0.1, 0]), mul(U, s), mul(V, s), q.cell == null ? opt.cell : q.cell, nAt, (pp) => opt.ink ? opt.ink(kAt(pp) * 0.78, pp, q.hv) : hueK(kAt(pp) * 0.78, q.hv), 1); }
     for (let i = 0; i < n; i++) {
       const ru = nrm([rng() * 2 - 1, rng() * 2 - 1, rng() * 2 - 1]), p = add(q.c, mul([ru[0], ru[1] * (opt.flat || 1), ru[2]], q.r * (0.3 + 0.6 * Math.sqrt(rng()))));
       const out = nrm(loc(p));
@@ -346,10 +354,11 @@ function spruce(seed, snow) {
     const f = (y - 1.5) / (Ht - 2), nb = f < 0.5 ? 6 : f < 0.8 ? 5 : 4, a0 = rng() * 6.28, L = Rmax(y) * (0.98 + rng() * 0.1);
     for (let i = 0; i < nb; i++) {
       const az = a0 + (i / nb) * 6.28 + (rng() - 0.5) * 0.35, rise = -0.08 + f * 0.62 + (rng() - 0.5) * 0.14;
-      const d = nrm([Math.cos(az), rise, Math.sin(az)]), base = [d[0] * 0.12, y + 0.3, d[2] * 0.12], mid = add(base, mul(d, L * 0.55)), d2 = nrm(add(d, [0, -0.62 + f * 0.45, 0])), tip = add(mid, mul(d2, L * 0.5));
-      const side = rot(nrm(cross(d, UP)), d, (rng() - 0.5) * 0.9), w = (6.2832 * L / nb) * 0.92;
-      strip(c, base, mid, side, w * 0.22, w * 0.86, 1, nf, cf, 1, 0, 0.55); strip(c, mid, tip, rot(side, d2, (rng() - 0.5) * 0.4), w * 0.86, w, 1, nf, cf, 1, 0.55, 1);
-      if (snow) { const up = nrm(cross(side, d)), lift = up[1] < 0 ? -0.09 : 0.09; strip(c, add(add(base, mul(d, L * 0.12)), mul(up, lift)), add(add(mid, mul(d2, L * 0.18)), mul(up, lift)), side, w * 0.15, w * 0.7, 4, () => [0, 1, 0], (p) => { const k = 0.8 + 0.2 * cl01(Math.hypot(p[0], p[2]) / Rmax(p[1])); return [k * 0.95, k * 0.97, k]; }, 0); }
+      // har shox o'z balandligida (qavat chizig'i "tokcha" bo'lib ko'rinmasin), tekisligi kuchliroq buralgan, osilishi har xil
+      const yj = y + 0.3 + (rng() - 0.5) * 0.7, Lb = L * (0.82 + rng() * 0.26), d = nrm([Math.cos(az), rise, Math.sin(az)]), base = [d[0] * 0.12, yj, d[2] * 0.12], mid = add(base, mul(d, Lb * 0.55)), d2 = nrm(add(d, [0, -0.5 + f * 0.4 - rng() * 0.35, 0])), tip = add(mid, mul(d2, Lb * 0.5));
+      const side = rot(nrm(cross(d, UP)), d, (rng() - 0.5) * 1.15), w = (6.2832 * L / nb) * 0.92;
+      strip(c, base, mid, side, w * 0.22, w * 0.86, 1, nf, cf, 1, 0, 0.55); strip(c, mid, tip, rot(side, d2, (rng() - 0.5) * 0.6), w * 0.86, w * 0.9, 1, nf, cf, 1, 0.55, 1);
+      if (snow) { const up = nrm(cross(side, d)), lift = up[1] < 0 ? -0.09 : 0.09; strip(c, add(add(base, mul(d, L * 0.12)), mul(up, lift)), add(add(mid, mul(d2, L * 0.18)), mul(up, lift)), side, w * 0.12, w * 0.5, 4, () => [0, 1, 0], (p) => { const k = 0.8 + 0.2 * cl01(Math.hypot(p[0], p[2]) / Rmax(p[1])); return [k * 0.95, k * 0.97, k]; }, 0); }
     }
   }
   // uchidagi novda (tik tutam)
@@ -387,7 +396,7 @@ function birch(seed) {
   const tp = bend([0, -0.3, 0], [0.04, 1, 0.02], H + 0.3, 0, NR, rng, 0.025);
   const bc = (t, p) => { const y = p[1], k = 0.78 * (0.84 + 0.16 * sst(0, 1.2, y)); return [k, k * 0.975, k * 0.94]; };
   // yasmiqchalar: halqa (i) va yon (s) bo'yicha xesh; tagida (0.6 m gacha) yorilgan qoramtir po'stloq
-  const qk = (i, s) => { const y = (i / NR) * (H + 0.3) - 0.3; if (y < 0.55) return h3(i, s, 3, 8) < 0.7 ? 0.32 : 0.5; const r = h3(i, s, 7, 3), run = h3(i, (s + 1) % 5, 7, 3); return r < 0.11 || (r < 0.2 && run < 0.2) ? 0.3 + 0.15 * h3(i, s, 2, 1) : r > 0.88 ? 0.86 : 1; };
+  const qk = (i, s) => { const y = (i / NR) * (H + 0.3) - 0.3; if (y < 0.55) return h3(i, s, 3, 8) < 0.7 ? 0.32 : 0.5; const r = h3(i, s, 7, 3), run = h3(i, (s + 1) % 5, 7, 3); return r < 0.15 || (r < 0.27 && run < 0.3) ? 0.24 + 0.14 * h3(i, s, 2, 1) : r > 0.86 ? 0.84 : 1; };
   pipe(o, tp, tp.map((_, i) => 0.2 * (1 - 0.72 * i / (tp.length - 1))), 5, bc, 0, 0, qk);
   const at = (y) => tp[Math.min(tp.length - 1, Math.max(0, Math.round((y + 0.3) / (H + 0.3) * (tp.length - 1))))];
   for (let i = 0; i < 4; i++) { const y = 1.7 + i * 0.45 + rng() * 0.2, az = rng() * 6.28, d = nrm([Math.cos(az), 0.25 + rng() * 0.3, Math.sin(az)]); pipe(o, bend(at(y), d, 0.45 + rng() * 0.4, -0.05, 1, rng, 0.2), [0.035, 0.012], 3, () => [0.18, 0.16, 0.14]); }
@@ -439,19 +448,19 @@ function palm(seed) {
   return { hi: o.build(), cards: c.build(true) };
 }
 // Kaktus (saguaro): qovurg'ali silindrlar, ariqchalarda soya
-function cactus(seed) {
-  const o = new FB(seed), rng = o.r;
+function cactus(seed, lite) { // lite — 0-daraja yaqin varianti (kamroq qirra)
+  const o = new FB(seed), rng = o.r, RF = lite ? 4 : 8, SD = (n) => lite ? n >> 1 : n;
   const ribbed = (pts, r0, r1, sides) => {
     const n = pts.length; let u = null; const rings = [];
     for (let i = 0; i < n; i++) { const tg = nrm(sub(pts[Math.min(n - 1, i + 1)], pts[Math.max(0, i - 1)])); u = u ? nrm(sub(u, mul(tg, dot(u, tg)))) : perp(tg); const w = cross(tg, u), t = i / (n - 1), rr = (r0 + (r1 - r0) * t) * (i === n - 1 ? 0.55 : i === n - 2 ? 0.92 : 1), ring = [];
-      for (let s = 0; s <= sides; s++) { const a = (s / sides) * 6.2832, rib = Math.cos(a * 8), d = add(mul(u, Math.cos(a)), mul(w, Math.sin(a))), dt = add(mul(u, -Math.sin(a)), mul(w, Math.cos(a)));
-        const p = add(pts[i], mul(d, rr * (1 + 0.075 * rib))), nn = nrm(add(d, mul(dt, 0.45 * Math.sin(a * 8)))), k = (0.62 + 0.38 * (rib * 0.5 + 0.5)) * (0.65 + 0.35 * sst(0, 1, p[1])); ring.push([p, i === n - 1 ? nrm(add(nn, tg)) : nn, [k, k, k]]); }
+      for (let s = 0; s <= sides; s++) { const a = (s / sides) * 6.2832, rib = Math.cos(a * RF), d = add(mul(u, Math.cos(a)), mul(w, Math.sin(a))), dt = add(mul(u, -Math.sin(a)), mul(w, Math.cos(a)));
+        const p = add(pts[i], mul(d, rr * (1 + 0.075 * rib))), nn = nrm(add(d, mul(dt, 0.45 * Math.sin(a * RF)))), k = (0.62 + 0.38 * (rib * 0.5 + 0.5)) * (0.65 + 0.35 * sst(0, 1, p[1])); ring.push([p, i === n - 1 ? nrm(add(nn, tg)) : nn, [k, k, k]]); }
       rings.push(ring); }
     for (let i = 0; i < n - 1; i++) for (let s = 0; s < sides; s++) { const A = rings[i][s], B = rings[i][s + 1], C = rings[i + 1][s + 1], D = rings[i + 1][s]; o.tri([A[0], A[1], A[2], 1], [B[0], B[1], B[2], 1], [C[0], C[1], C[2], 1]); o.tri([A[0], A[1], A[2], 1], [C[0], C[1], C[2], 1], [D[0], D[1], D[2], 1]); }
   };
-  ribbed([[0, -0.2, 0], [0, 1.2, 0], [0, 2.4, 0], [0, 3.3, 0], [0, 3.7, 0], [0, 3.82, 0]], 0.42, 0.38, 16);
-  ribbed([[0.3, 1.5, 0], [0.8, 1.6, 0], [1.15, 1.95, 0], [1.2, 2.6, 0], [1.2, 3.0, 0], [1.2, 3.1, 0]], 0.25, 0.23, 12);
-  ribbed([[-0.3, 2.1, 0], [-0.75, 2.2, 0], [-1.0, 2.5, 0], [-1.02, 2.95, 0], [-1.02, 3.15, 0]], 0.21, 0.19, 12);
+  ribbed([[0, -0.2, 0], [0, 1.2, 0], [0, 2.4, 0], [0, 3.3, 0], [0, 3.7, 0], [0, 3.82, 0]], 0.42, 0.38, SD(16));
+  ribbed([[0.3, 1.5, 0], [0.8, 1.6, 0], [1.15, 1.95, 0], [1.2, 2.6, 0], [1.2, 3.0, 0], [1.2, 3.1, 0]], 0.25, 0.23, SD(12));
+  ribbed([[-0.3, 2.1, 0], [-0.75, 2.2, 0], [-1.0, 2.5, 0], [-1.02, 2.95, 0], [-1.02, 3.15, 0]], 0.21, 0.19, SD(12));
   return { hi: o.build(), cards: null };
 }
 // Quruq/kuygan daraxt va saksovul: buralgan tana, rekursiv qiyshiq shoxlar
@@ -510,7 +519,7 @@ export function floraProtos() {
   put('acacia', acacia(61), lowCrown(62, 0x5a4636, 0.28, 4.6, [{ c: [0.3, 5.15, 0], r: [3.4, 0.62, 3.4] }]), 0.34, 5.5,
     blobs(63, 0x5a4636, 0.28, 4.6, [[0.3, 5.2, 0, 2.7, 0.55, 2.7], [-1.9, 4.95, 0.7, 1.6, 0.45, 1.6], [2.0, 5.0, -0.8, 1.6, 0.45, 1.6]]));
   put('palm', palm(71), (() => { const o = new FB(72); pipe(o, [[0, -0.3, 0], [0.6, 3.5, 0], [1.45, 7.0, 0]], [0.25, 0.21, 0.17], 4, () => [0.32, 0.24, 0.16]); sphere(o, { det: 0, c: [1.45, 7.0, 0], r: [2.9, 0.8, 2.9], n: (p, u) => nrm(add(u, [0, 0.4, 0])), col: (p) => { const k = p[1] > 7 ? 0.7 : 0.35; return [k, k, k]; }, m: 1 }); return o.build(); })(), 0.3, 7, 'lo');
-  put('cactus', cactus(81), (() => { const o = new FB(82); pipe(o, [[0, -0.2, 0], [0, 3.8, 0]], [0.42, 0.38], 5, (t, p) => { const k = 0.7 + 0.3 * t; return [k, k, k]; }, 1); pipe(o, [[1.2, 1.78, 0], [1.2, 3.1, 0]], [0.25, 0.22], 4, () => [0.8, 0.8, 0.8], 1); return o.build(); })(), 0.5, 3.6);
+  put('cactus', cactus(81), (() => { const o = new FB(82); pipe(o, [[0, -0.2, 0], [0, 3.8, 0]], [0.42, 0.38], 5, (t, p) => { const k = 0.7 + 0.3 * t; return [k, k, k]; }, 1); pipe(o, [[1.2, 1.78, 0], [1.2, 3.1, 0]], [0.25, 0.22], 4, () => [0.8, 0.8, 0.8], 1); return o.build(); })(), 0.5, 3.6, cactus(81, true).hi);
   put('dead', deadTree(91), (() => { const o = new FB(92); pipe(o, [[0, -0.3, 0], [0.1, 2.2, 0], [0.2, 4.2, 0]], [0.26, 0.18, 0.08], 4, () => [0.75, 0.75, 0.75], 1); pipe(o, [[0.1, 2.3, 0], [1.4, 3.6, 0.2]], [0.1, 0.04], 3, () => [0.75, 0.75, 0.75], 1); return o.build(); })(), 0.3, 4);
   put('bush', bushGen(101, 0, false), lowCrown(102, null, 0, 0, [{ c: [0, 0.45, 0], r: [1.15, 0.8, 1.15] }], { k: 0.72 }), 0, 1,
     blobs(103, null, 0, 0, [[0, 0.45, 0, 1.0, 0.72, 1.0], [0.8, 0.3, 0.3, 0.7, 0.52, 0.7]], 0.74));
