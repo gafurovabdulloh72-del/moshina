@@ -20,8 +20,9 @@ import { Player } from './player.js';
 import { initLiving } from './living.js';
 import { buildAds } from './ads.js';
 import { initGfx } from './gfx.js';
-import { bakeTextures } from './tex.js';
+import { bakeTextures, rebakeTextures } from './tex.js';
 import * as COLL from './colliders.js';
+import { runKeys } from './controls.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -36,7 +37,10 @@ async function boot() {
   game.tex = bakeTextures(renderer); // umumiy shovqin teksturalari (tex.js)
   const scene = (game.scene = new THREE.Scene());
   const camera = (game.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 1.2, 14000));
-  const resize = () => { renderer.setPixelRatio(game.pr || 1); renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (game.fx) game.fx.uni.uScale.value = innerHeight * (game.pr || 1) * 0.9; if (game.gfx) game.gfx.resize(); };
+  const resize = () => { renderer.setPixelRatio(game.pr || 1); renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (game.fx) game.fx.uni.uScale.value = innerHeight * (game.pr || 1) * 0.9; if (game.gfx) game.gfx.resize();
+    // kanvas o'lchami o'rnatilganda (hatto o'sha o'lchamga) uning tasviri tozalanadi — darhol qayta chizamiz, aks holda keyingi kadr
+    // kechiksa (sheyder kompilyatsiyasi, og'ir kadr) ekran qora bo'lib turadi
+    if (game.ready && !game.ctxLost) game.gfx.render(); };
   game.resize = resize; addEventListener('resize', resize);
 
   await step(0.05, 'Orol relyefi yaratilmoqda…');
@@ -76,6 +80,10 @@ async function boot() {
   if (st.foot && !st.fresh) { game.live.dismount(true); game.player.place(st.foot[0], st.foot[1], st.foot[2]); }
   game.ui = new UI(game);
   game.applyQuality('boot'); resize();
+  game.gfx.precompile(); // barcha sheyderlar yuklash paytida tayyorlanadi
+  // videokarta konteksti yo'qolsa (drayver qayta ishga tushdi va h.k.) — kutamiz va qaytganda hammasini qayta tiklaymiz
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); game.ctxLost = true; console.warn('WebGL konteksti yo\'qoldi'); });
+  canvas.addEventListener('webglcontextrestored', () => { game.ctxLost = false; game.tex = rebakeTextures(renderer); game.gfx.envRefresh(); resize(); console.warn('WebGL konteksti tiklandi'); });
   game.sky.setHour(game.hour);
   await step(1, 'Tayyor!');
   const ld = document.getElementById('load'); if (ld) ld.remove();
@@ -134,38 +142,11 @@ function syncCar(alpha) {
 }
 
 const ZERO = { throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false }, PARK = { throttle: 0, brake: 0, steer: 0, handbrake: true, nitro: false };
-function keys() {
-  const g = game, inp = g.input, ui = g.ui, pl = g.player;
-  if (inp.hit('Escape')) { if (ui.screenName && ui.screenName !== 'menu' && ui.screenName !== 'result') ui.close(); else if (g.mode === 'play') ui.open('pause'); }
-  if (g.mode !== 'play') return;
-  const foot = pl.onFoot;
-  if (inp.hit('KeyM')) ui.open('map');
-  if (inp.hit('Tab', 'KeyJ')) ui.open('progress');
-  if (inp.hit('KeyC')) { g.cam.next(); g.toast('Kamera: ' + g.cam.modeName); }
-  if (inp.hit('KeyN')) { const s = g.state.set; s.music = !s.music; g.audio.setMusic(s.music); g.toast(s.music ? 'Musiqa yoqildi' : "Musiqa o'chirildi"); }
-  if (inp.hit('KeyP')) ui.setHud(!g.hudOn);
-  if (inp.hit('KeyX') && g.act) g.endAct(false, 'cancel');
-  if (inp.hit('KeyT') && g.damage.wrecked) g.tow();
-  if (inp.hit('KeyF') && !(g.act && g.act.state === 'count')) { if (foot) g.live.tryMount(); else g.live.dismount(); }
-  if (!foot) {
-    if (inp.hit('KeyR') && !(g.act && g.act.state === 'count')) g.respawn();
-    if (inp.hit('KeyH')) g.audio.sfx(g.carModel.id === 'otochar' ? 'siren' : g.carModel.id === 'velo' ? 'bell' : 'horn');
-    if (inp.hit('KeyL')) { g.lightsForced = !g.lightsForced; g.toast(g.lightsForced ? 'Faralar yoqildi' : 'Faralar avtomatik'); }
-  } else if (inp.hit('KeyR')) { const nr = T.nearestRoad(pl.p[0], pl.p[2], 12); if (nr.edge >= 0) { pl.place(T.roads.x[nr.i], T.roads.z[nr.i], pl.yaw); g.toast("Yo'lga qaytdingiz"); } }
-  if (inp.hit('KeyE', 'Enter')) {
-    const pt = g.nearPoint;
-    if (pt && pl.lock <= 0) { if (pt.kind === 'board') { if (!g.act) ui.open('board', pt.place); } else if (pt.kind === 'garage') ui.open('garage', pt); else if (pt.kind === 'home') ui.open('home'); }
-    else g.live.useE();
-  }
-  g.live.keys(inp);
-  g.zoomView = foot && inp.down('KeyZ');
-}
-
 let ftAvg = 16, ftSum = 0, ftN = 0, ftT = 0, qT = 0, longN = 0, settle = 0, goodN = 0, calmN = 0, upAge = 99, prCeil = Infinity, ceilT = 0, ceilN = 0;
 let desc = null, lockT = 0, lockN = 0, qTry = null, qLock = false, upTry = null, upTries = 0;
 function update(dt) {
   const g = game, car = g.car, pl = g.player;
-  keys();
+  runKeys(game); // klaviatura va ekran tugmalari — controls.js jadvali bo'yicha
   const playing = g.mode === 'play' || g.mode === 'menu', foot = pl.onFoot;
   let inp = foot ? PARK : ZERO;
   if (g.mode === 'play' && !foot) { inp = g.auto ? g.auto.input(car) : g.input.poll(); if (g.auto && g.auto.done) g.auto = null; if (g.act && g.act.state === 'count') inp = ZERO; if (inp.nitro && g.nitro < 0.03) inp = Object.assign({}, inp, { nitro: false }); }
@@ -209,6 +190,7 @@ function frame(t) {
   const dt = Math.min(0.05, raw);
   if (!game.ready || game.paused) return;
   update(dt);
+  if (game.ctxLost) return;
   game.gfx.render();
   adapt(raw);
 }
@@ -267,7 +249,7 @@ function adapt(raw) {
     desc = null;
     if (ftAvg < 20.5 && pr < cap) { if (++goodN >= 2) { game.pr = Math.min(cap, pr + 0.1); goodN = 0; upAge = 0; } } else goodN = 0;
   }
-  if (game.pr !== pr) { game.resize(); game.gfx.render(); }
+  if (game.pr !== pr) game.resize();
 
   // Aniqlik eng pastga tushib qolgan (yoki u foyda bermayapti) va hali ham sekin — sifat pog'onasini sinab ko'ramiz
   if (!qLock && set.gfx > 0 && qT > 10 && play && game.pr === pr && ((pr <= 0.75 && ftAvg > 20.5) || (lockT > 0 && ftAvg > 30))) {

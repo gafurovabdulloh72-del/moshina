@@ -39,9 +39,8 @@ export function bakeTextures(renderer, size = 512) {
     const rt = new THREE.WebGLRenderTarget(size, size, { type: THREE.UnsignedByteType, format: THREE.RGBAFormat, depthBuffer: false, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, wrapS: THREE.RepeatWrapping, wrapT: THREE.RepeatWrapping, colorSpace: THREE.NoColorSpace });
     rt.texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     const mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: fs, uniforms, depthTest: false, depthWrite: false, toneMapped: false });
-    const quad = new FullScreenQuad(mat), prev = renderer.getRenderTarget();
-    renderer.setRenderTarget(rt); quad.render(renderer); renderer.setRenderTarget(prev);
-    quad.dispose(); mat.dispose();
+    const bake = (r) => { const quad = new FullScreenQuad(mat), prev = r.getRenderTarget(); r.setRenderTarget(rt); quad.render(r); r.setRenderTarget(prev); quad.dispose(); };
+    bake(renderer); rt.bake = bake; // videokarta konteksti yo'qolib qaytsa — shu nishonga qayta pishiriladi
     return rt;
   };
   TEX.size = size;
@@ -49,3 +48,5 @@ export function bakeTextures(renderer, size = 512) {
   TEX.noise = TEX.rt.noise.texture; TEX.nrm = TEX.rt.nrm.texture;
   return TEX;
 }
+// WebGL konteksti tiklangandan keyin teksturalarni o'sha nishonlarga qayta pishirish (materiallardagi havolalar o'zgarmaydi)
+export function rebakeTextures(renderer) { for (const k in TEX.rt) { const rt = TEX.rt[k]; if (rt.bake) rt.bake(renderer); } return TEX; }

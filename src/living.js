@@ -230,6 +230,12 @@ export function initLiving(game) {
       else if (a.k === 'ore') offer(d, st.tools.pick ? '<kbd>E</kbd> Ruda qazish' : "Ruda toshi — cho'kich kerak", () => { if (!st.tools.pick) return toast("Cho'kich kerak — bozordan oling", 'bad'); pl.act('swing', 1.6, () => { takeItem(a, 400); give('ore'); L.count('ore'); see('ore', 'Ruda'); sfx('hit', 0.5); fx().debris(5, a.x, a.y + 0.3, a.z, [0x5a5560, 0xffb030], 3, 0.16); if (rnd() < 0.1) { give('gem'); toast('🪨 +1 ruda va 💎 yoqut!', 'gold'); } else toast('🪨 +1 ruda', 'good'); }, 'pick'); }); }
     // daraxt silkitish va yo'ldagi tosh
     for (const o of COL.query(px, pz, 2.4)) { const r = o.ref; if (!r || !r.tree || o.dead) continue; const d = Math.hypot(o.x - px, o.z - pz) - o.r; if (d < 1.3) offer(d + 0.3, '<kbd>E</kbd> Daraxtni silkitish', () => shake(r)); }
+    const uncount = (k) => { st.cnt[k] = Math.max(0, (st.cnt[k] || 0) - 1); for (const t of st.tasks) if (t.id === k) t.n = Math.max(0, t.n - 1); }; // olib tashlangan ekin topshiriqqa sanalmaydi
+    // o'zi ekkan gul va o'sayotgan ko'chat — noto'g'ri joyga ekilgan bo'lsa olib tashlash: urug'/ko'chat qaytadi, ekish mukofoti qaytariladi
+    { let fb = null, fd = 1.3; for (const f of st.flowers) { const d = Math.hypot(f[0] - px, f[1] - pz); if (d < fd) { fd = d; fb = f; } }
+      if (fb) offer(fd + 0.5, '<kbd>E</kbd> Gulni olib tashlash', () => pl.act('bend', 0.9, () => { const i = st.flowers.indexOf(fb); if (i < 0) return; st.flowers.splice(i, 1); drawFlowers(); give('seed'); game.addMoney(-10); st.karma = Math.max(0, st.karma - 1); uncount('plant'); sfx('pluck'); fx().burst(8, fb[0], pl.p[1] + 0.3, fb[1], 2, 0.7, 0.3, 0x8ed466, 0.9, 1, 4, 0); toast("Gul olib tashlandi · 🌱 urug' qaytdi (−10 so'm)"); })); }
+    { let tb = -1, td = 1.6; st.trees.forEach((t, i) => { if (treeCols[i]) return; const d = Math.hypot(t[0] - px, t[1] - pz); if (d < td) { td = d; tb = i; } });
+      if (tb >= 0) { const t0 = st.trees[tb]; offer(td + 0.5, "<kbd>E</kbd> Ko'chatni qazib olish", () => pl.act('swing', 1.2, () => { const i = st.trees.indexOf(t0); if (i < 0 || treeCols[i]) return; st.trees.splice(i, 1); treeCols.splice(i, 1); treeCols.forEach((c, j) => { if (c && c.ref) { c.ref.planted = j; c.ref.rot = j * 2.1; } }); drawTrees(); give('sapling'); game.addMoney(-25); st.karma = Math.max(0, st.karma - 2); uncount('tree'); sfx('pluck'); toast("Ko'chat qazib olindi · 🌳 sumkaga qaytdi (−25 so'm)"); }, 'shovel')); } }
     { const s = T.bumpNear && T.bumpNear(px, pz, 1.6); if (s) offer(0.2, "<kbd>E</kbd> Toshni yo'ldan olib tashlash", () => pl.act('bend', 1.1, () => { T.removeBump(s); game.addMoney(18); karma(1); L.count('stone'); sfx('pick'); toast("Yo'l tozalandi! +18 so'm", 'good'); })); }
     // odamlar
     for (const o of npcs) { const d = Math.hypot(o.x - px, o.z - pz); if (d < 2.4) offer(d, npcText(o), () => npcUse(o)); }
@@ -283,16 +289,8 @@ export function initLiving(game) {
     // transportda: yo'lovchini olish
     for (const h of hikers) if (h.on && Math.hypot(h.x - car.p[0], h.z - car.p[2]) < 10 && car.speed < 3) { if (L.fare) return toast("Mashinada allaqachon yo'lovchi bor"); if (game.act) return toast('Avval chellenjni tugating'); h.on = false; h.rig.root.visible = false; h.t = 25 + rnd() * 40; L.fare = { dest: h.dest, name: h.name, d0: Math.hypot(h.dest.x - h.x, h.dest.z - h.z) }; game.setWaypoint(h.dest.board.x, h.dest.board.z, true); sfx('door'); game.banner(`${h.name}: «${h.dest.name}ga eltib qo'ying»`, "Yo'lovchi mashinada. GPS belgilandi", 'start'); return; } };
 
-  // ================= KLAVISHLAR =================
-  L.keys = (inp) => {
-    if (inp.hit('KeyI')) game.ui.open('bag');
-    if (!pl.onFoot) return;
-    if (inp.hit('KeyB')) game.ui.open('wheel');
-    if (pl.lock > 0) return;
-    if (inp.hit('KeyQ')) A.pull(); else if (inp.hit('KeyG')) A.plant(); else if (inp.hit('KeyY')) L.eatAny(); else if (inp.hit('KeyK')) A.sapling(); else if (inp.hit('KeyV')) A.whistle();
-    else if (inp.hit('Digit1')) A.dance(); else if (inp.hit('Digit2')) A.dutor(); else if (inp.hit('Digit3')) A.wave();
-    if (inp.hit('KeyL')) { pl.lampOn = !pl.lampOn; toast(pl.lampOn ? 'Fonar yoqildi 🔦' : "Fonar o'chirildi"); sfx('click'); }
-  };
+  // klavishlar va ekran tugmalari — controls.js (ACTIONS jadvali) → L.doAction / L.useE
+
 
   // ================= HAR KADR =================
   let scanT = 0, noteI = 0;

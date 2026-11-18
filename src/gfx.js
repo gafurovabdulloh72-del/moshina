@@ -107,23 +107,38 @@ export function initGfx(game) {
   const updEnv = () => { const rt = pmrem.fromScene(envScene, 0, 0.1, 200); if (envRT) envRT.dispose(); envRT = rt; scene.environment = rt.texture; envHour = game.hour; };
 
   // ---------- post-ishlov ----------
+  // Kompozitor BIR MARTA quriladi va sifat pog'onasi almashganda qayta qurilmaydi: faqat MSAA soni va bloom/rang o'tishlari
+  // yoqiladi-o'chiriladi. Eng past pog'onada ham sahna nishonga (render target) chiziladi — aks holda (ekranga to'g'ridan-to'g'ri
+  // chizilganda) tone mapping har bir materialning sheyderiga o'tadi va BARCHA sheyderlar qayta kompilyatsiya bo'lib, o'yin
+  // 1–3 soniya qotardi; shu orada tozalangan kanvas qora bo'lib turardi.
   let composer = null, bloom = null, grade = null, quality = -1;
   const size = new THREE.Vector2();
-  const build = (q) => {
-    quality = q; if (composer) { composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; }
-    if (q === 0) return;
+  const build = () => {
     renderer.getDrawingBufferSize(size);
-    const rt = new THREE.WebGLRenderTarget(Math.max(2, size.x), Math.max(2, size.y), { type: THREE.HalfFloatType, samples: q === 2 ? 4 : 0 });
+    const rt = new THREE.WebGLRenderTarget(Math.max(2, size.x), Math.max(2, size.y), { type: THREE.HalfFloatType, samples: 4 });
     composer = new EffectComposer(renderer, rt);
     composer.addPass(new RenderPass(scene, camera));
     bloom = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), 0.32, 0.6, 1.0); composer.addPass(bloom);
     grade = new ShaderPass(GRADE); composer.addPass(grade);
     composer.addPass(new OutputPass());
   };
+  const setQ = (q) => {
+    quality = q; if (!composer) build();
+    bloom.enabled = grade.enabled = q > 0;
+    const n = q === 2 ? 4 : 0; for (const rt of [composer.renderTarget1, composer.renderTarget2]) if (rt.samples !== n) { rt.samples = n; rt.dispose(); } // videokartada qayta ajratiladi
+  };
+  // Boshlanishda barcha sheyderlarni (yashirin narsalarnikini ham) oldindan kompilyatsiya qilish: keyin yangi narsa ko'ringanda o'yin qotmaydi
+  const precompile = () => {
+    const hid = []; scene.traverse((o) => { if (!o.visible) { hid.push(o); o.visible = true; } });
+    const prev = renderer.getRenderTarget(); renderer.setRenderTarget(composer ? composer.renderTarget1 : null);
+    try { renderer.compile(scene, camera); } finally { renderer.setRenderTarget(prev); for (const o of hid) o.visible = false; }
+  };
   const tmpC = new THREE.Color();
   const api = {
     sea, hTex,
-    setQuality(q) { if (q !== quality) build(q); },
+    setQuality(q) { if (q !== quality) setQ(q); },
+    precompile,
+    get quality() { return quality; },
     resize() { if (!composer) return; renderer.getDrawingBufferSize(size); composer.setSize(Math.max(2, size.x), Math.max(2, size.y)); },
     update(dt, force) {
       U.uTime.value = game.time; U.uSunDir.value.copy(sky.lightDir);
@@ -134,7 +149,8 @@ export function initGfx(game) {
       let dh = envHour == null ? 99 : Math.abs(game.hour - envHour); if (dh > 12 && dh < 90) dh = 24 - dh; if (dh > 0.45 || force) updEnv();
       if (bloom) { const n = sky.night; bloom.strength = 0.3 + 0.32 * n; bloom.threshold = 1.0 - 0.18 * n; grade.uniforms.uVig.value = 0.28 + 0.1 * n; }
     },
-    render() { if (composer) composer.render(); else renderer.render(scene, camera); },
+    render() { if (!composer) setQ(game.state.set.gfx ?? 2); composer.render(); },
+    envRefresh: () => updEnv(),
   };
   return api;
 }

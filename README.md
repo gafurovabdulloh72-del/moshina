@@ -298,7 +298,11 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | P | surat rejimi — interfeysni yashiradi (ekranda eslatma turadi, 20 soniyada o'zi qaytadi) |
 | Esc | pauza |
 
-Geympad: RT/LT — gaz/tormoz, chap stik — rul, A — qo'l tormozi, X — nitro. Sensorli ekranda tugmalar birinchi teginishda paydo bo'ladi (sodda boshqaruv).
+**Ekrandagi tugmalar.** Pastki markazda hozir mumkin bo'lgan amallar tugma bo'lib turadi (klavisha nomi + amal: `[Q] O't yulish`, `[Shift] Nitro`…), uning ustida — yaqindagi narsaga mos katta tugma (`[E] Hosilni yig'ish`, `[E] Gulni olib tashlash`). Yuqori o'ngda umumiy tugmalar: xarita, sumka, pasport, kamera, surat rejimi, menyu. Tugmani bosish klavishani bosish bilan aynan bir xil: ikkalasi ham `controls.js` dagi bitta jadvaldan olinadi.
+
+O'zi ekkan gul yonida **E** — gulni olib tashlash (urug' qaytadi, ekishda berilgan 10 so'm qaytariladi); hali o'sayotgan ko'chat yonida — qazib olish (ko'chat sumkaga qaytadi).
+
+Geympad: RT/LT — gaz/tormoz, chap stik — rul, A — qo'l tormozi, X — nitro. Sensorli ekranda birinchi teginishda chapda virtual joystik (yurish, transportda rul va gaz/tormoz), o'ngda pedallar paydo bo'ladi; amallar — o'sha ekran tugmalari, mini-xarita chap tepaga ko'chadi.
 
 ---
 
@@ -344,7 +348,8 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `camera.js` | kuzatuvchi kamera: transport, piyoda, durbin |
 | `fx.js` | zarrachalar (chang, tutun, uchqun), parchalar, shina izlari |
 | `audio.js` | sintez qilingan ovoz, dvigatel, generativ musiqa |
-| `input.js` | klaviatura, geympad, sensorli ekran |
+| `controls.js` | boshqaruv jadvali (`ACTIONS`): har bir klavisha nima qiladi, qachon ishlaydi va ekranda qanday tugma bo'lib chiqadi — klaviatura va ekran tugmalari uchun yagona manba |
+| `input.js` | klaviatura, geympad, sensorli ekran | (+ virtual joystik qiymatlari `touch.jx/jy`)
 | `ui.js` | HUD, mini-xarita, menyu va barcha oynalar (o'zbekcha) |
 | `colliders.js` | statik to'qnashuv jismlari (doira, kesma, quti) |
 | `util.js` | matematika, shovqin, tasodifiy sonlar, rang |
@@ -378,7 +383,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 ### 4.7. Grafika
 
-`gfx.js`: EffectComposer (HalfFloat, eng yuqori sifatda MSAA ×4) → UnrealBloom → rang korreksiyasi va vinyetka → OutputPass. Sifat pog'onasi: 0 — post-ishlovsiz, 1 — MSAA'siz, 2 — to'liq. Chiroqlar soni o'zgarmas saqlanadi (o'zgarsa sheyderlar qayta kompilyatsiya bo'lib, o'yin qotadi).
+`gfx.js`: EffectComposer (HalfFloat, eng yuqori sifatda MSAA ×4) → UnrealBloom → rang korreksiyasi va vinyetka → OutputPass. Sifat pog'onasi: 0 — bloom va rangsiz, 1 — MSAA'siz, 2 — to'liq. Kompozitor bir marta quriladi; pog'ona almashganda faqat MSAA soni va o'tishlar yoqiladi/o'chiriladi. Sahna har doim nishonga chiziladi — ekranga to'g'ridan-to'g'ri chizish materiallarning sheyderini o'zgartirib, hammasini qayta kompilyatsiya qildirardi (o'yin 1–3 soniya qotib, ekran qora bo'lib qolardi). Yuklashda barcha sheyderlar (yashirin narsalarnikini ham) oldindan kompilyatsiya qilinadi; kanvas o'lchami o'zgarsa darhol qayta chiziladi; WebGL konteksti yo'qolsa qaytganda teksturalar qayta pishiriladi. Chiroqlar soni o'zgarmas saqlanadi (o'zgarsa sheyderlar qayta kompilyatsiya bo'lib, o'yin qotadi).
 
 ### 4.8. Moslashuvchan grafika
 
