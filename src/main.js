@@ -68,7 +68,7 @@ async function boot() {
   game.ads = buildAds(scene, game.site);
   initLiving(game);
   game.gfx = initGfx(game);
-  game.localLight = new THREE.PointLight(0xffc878, 0, 55, 1.4); scene.add(game.localLight);
+  game.localLight = new THREE.PointLight(0xffe4c4, 0, 26, 2); scene.add(game.localLight);
   // boshlang'ich joy: yangi o'yin — uy oldida
   if (st.pos && !st.fresh) { car.place(st.pos[0], st.pos[1], st.pos[2]); game.hour = st.hour || 9.5; }
   else car.place(home.park[0], home.park[1], home.parkYaw);
@@ -134,6 +134,7 @@ function syncCar(alpha) {
 }
 
 const ZERO = { throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false }, PARK = { throttle: 0, brake: 0, steer: 0, handbrake: true, nitro: false };
+const _wh = new THREE.Color(1, 1, 1); // mahalliy chiroq rangini oqqa yaqinlashtirish uchun
 function keys() {
   const g = game, inp = g.input, ui = g.ui, pl = g.player;
   if (inp.hit('Escape')) { if (ui.screenName && ui.screenName !== 'menu' && ui.screenName !== 'result') ui.close(); else if (g.mode === 'play') ui.open('pause'); }
@@ -186,7 +187,7 @@ function update(dt) {
   { const k = 0.25 + 1.5 * night; MAT.glow.color.setRGB(k, k * (0.9 + 0.1 * night), k * (0.75 + 0.25 * (1 - night))); for (const a of g.site.anim) a(dt, g.time, night); }
   // eng yaqin chiroq/gulxan yorug'ligi
   { const L = g.localLight; let best = null, bd = 80 * 80; if (night > 0.25) for (const l of g.site.lights) { if (l.on === false) continue; const d = (l.x - focus.x) ** 2 + (l.z - focus.z) ** 2; if (d < bd) { bd = d; best = l; } }
-    if (best) { L.position.set(best.x, best.y, best.z); L.color.setHex(best.hex); L.intensity += (best.power * 60 * night * (0.9 + 0.1 * Math.sin(g.time * 9)) - L.intensity) * Math.min(1, dt * 4); } else L.intensity *= 0.9; }
+    if (best) { L.position.set(best.x, best.y, best.z); L.color.setHex(best.hex).lerp(_wh, 0.45); L.intensity += (best.power * 34 * night * (0.9 + 0.1 * Math.sin(g.time * 9)) - L.intensity) * Math.min(1, dt * 4); } else L.intensity *= 0.9; }
   g.camera.near = g.cam.mode === 2 && !foot ? 0.3 : g.zoomView ? 0.6 : 1.2;
   const sp = car.spec;
   g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt });
