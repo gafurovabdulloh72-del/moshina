@@ -497,8 +497,10 @@ float cell(vec2 p) { vec2 i = floor(p), f = fract(p); float d1 = 9.0, d2 = 9.0; 
     T.surfZones.push({ x: p.x, z: p.z, r: T.POND.r, surf: T.SURF.ICE });
     for (let i = 0; i < 24; i++) { const a = (i / 24) * 6.283; if (i % 3 === 0) st.put(Math.cos(a) * (T.POND.r + 4), Math.sin(a) * (T.POND.r + 4), 0, (g) => BK.flag(g, 0, 0, 4.5, PAL.tent[i % 5])); else smashL(st, 'cone', Math.cos(a) * (T.POND.r + 2), Math.sin(a) * (T.POND.r + 2)); }
     for (let i = 0; i < 9; i++) { const a = i * 0.7, d = 30 + (i * 37) % 70; smashL(st, 'cone', Math.cos(a) * d, Math.sin(a) * d); }
-    st.board = [0, -(T.POND.r + 8)]; st.put(0, -(T.POND.r + 8), 0, (g, gl) => BK.board(g, gl, 0, 0, 0));
-    for (let i = 0; i < 3; i++) smashL(st, 'snowman', -12 + i * 12, -(T.POND.r + 12), 0);
+    // taxta ko'lning eng yaqin yo'l tomonida (yo'ldan kelganda birinchi ko'rinadi)
+    const nr0 = T.nearestRoad(p.x, p.z, 12), ba = nr0.edge >= 0 ? Math.atan2(T.roads.x[nr0.i] - p.x, T.roads.z[nr0.i] - p.z) : Math.PI, bs = Math.sin(ba), bc = Math.cos(ba), br = T.POND.r + 8;
+    st.board = [bs * br, bc * br]; st.put(bs * br, bc * br, ba, (g, gl) => BK.board(g, gl, 0, 0, 0)); st.circ(bs * br, bc * br, 0.9, 3);
+    for (let i = 0; i < 3; i++) { const t = 9 + i * 6, sx = bs * (br - 2) + bc * t, sz = bc * (br - 2) - bs * t; if (st.roadD(sx, sz) > 3) smashL(st, 'snowman', sx, sz, 0); }
     done(st);
   }
   // ===== O'yinchining uyi =====
