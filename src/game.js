@@ -136,7 +136,10 @@ export function initGame(game) {
     const rg = mulberry32(4711);
     for (let c = 0; c < 46; c++) { for (let t = 0; t < 40; t++) { const x = (rg() - 0.5) * 5600, z = (rg() - 0.5) * 5600; const si = T.siteInfo(x, z); if (si.y < si.water + 1 || si.y < 2 || si.slope > 0.3 || si.roadD < 30) continue; for (let q = 0; q < 5; q++) { const a = q * 1.2566, px = x + Math.cos(a) * 5, pz = z + Math.sin(a) * 5; pick.coins.push({ x: px, z: pz, y: T.gridHeight(px, pz) + 1.1 }); } break; } }
     const spec = [[T.MOUNT.x + 14, T.MOUNT.z + 20], [1335, 2662], [2420, -640], [T.POND.x, T.POND.z], [-560, 590], [-1150, 60]];
-    for (const s of spec) pick.chests.push({ x: s[0], z: s[1], y: T.ground(s[0], s[1], 1e9).y });
+    const boardAt = (x, z) => Object.values(game.site.places).some((p) => p.board && Math.hypot(p.board.x - x, p.board.z - z) < 4);
+    for (const s of spec) { let x = s[0], z = s[1]; // belgilangan sandiq taxta oyog'i yoki jism ichida qolmasin — yaqin bo'sh joyga suriladi
+      for (let k = 0; k < 24 && (boardAt(x, z) || COL.query(x, z, 1.4).some((o) => !o.dead && (o.t === 1 || Math.hypot(o.x - x, o.z - z) < o.r + 1.2))); k++) { const a = k * 2.4, d = 2 + k * 0.6; x = s[0] + Math.cos(a) * d; z = s[1] + Math.sin(a) * d; }
+      pick.chests.push({ x, z, y: T.ground(x, z, 1e9).y }); }
     for (let t = 0; t < 4000 && pick.chests.length < 32; t++) { const x = (rg() - 0.5) * 5400, z = (rg() - 0.5) * 5400; const si = T.siteInfo(x, z); if (si.y < si.water + 1.5 || si.y < 2.5 || si.slope > 0.35 || si.roadD < 70) continue; if (COL.query(x, z, 3).length) continue; if (pick.chests.some((c) => Math.hypot(c.x - x, c.z - z) < 520)) continue; pick.chests.push({ x, z, y: si.y }); }
     // ta'mir qutisi: yo'l yoqasida, ustun/daraxt/devor ichida emas (yaqin bo'sh nuqta qidiriladi)
     const clear = (x, z, r) => !COL.query(x, z, r + 1).some((o) => { if (o.dead) return false; let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = clamp(((x - o.x) * sx + (z - o.z) * sz) / (sx * sx + sz * sz || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz * t; } return Math.hypot(x - qx, z - qz) < (o.r || 0) + r; });
