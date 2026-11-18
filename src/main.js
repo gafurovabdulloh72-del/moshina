@@ -148,7 +148,14 @@ function syncCar(alpha) {
   m.spot.intensity = on ? 560 * (fr < 12 ? 0.45 * (0.85 + 0.15 * Math.sin(game.time * 23)) : fr < 35 ? 0.75 : 1) : 0;
   if (on) m.headMat.color.setRGB(2.6, 2.4, 1.9); else m.headMat.color.setHex(0xb8b8b0);
   const braking = !foot && ((game.input.state.brake > 0.1 && car.fwd > 1) || game.input.state.handbrake);
-  if (braking) m.tailMat.color.setRGB(2.4, 0.22, 0.12); else m.tailMat.color.setHex(on ? 0xa81810 : 0x6a1410);
+  if (m.brakeMat.color === m.tailMat.color) m.brakeMat.color = m.tailMat.color.clone(); // tormoz chirog'i orqa chiroqdan alohida
+  m.tailMat.color.setHex(on ? 0xa81810 : 0x6a1410); if (braking) m.brakeMat.color.setRGB(2.6, 0.24, 0.12); else m.brakeMat.color.setHex(on ? 0x8a1410 : 0x6a1410);
+  if (!foot && car.fwd < -0.4) m.revMat.color.setRGB(2.2, 2.2, 2.0); else m.revMat.color.setHex(0x8a8a86); // orqaga yurish — oq chiroq
+  // burilish chiroqlari: past tezlikda rul keskin burilganda (musbat rul — chapga), avariyada — ikkalasi (avariya signali)
+  const st = foot ? 0 : game.input.state.steer, slow = Math.abs(car.fwd) < 14, blink = Math.sin(game.time * 9.4) > 0, haz = dm.wrecked;
+  const sL = blink && (haz || (slow && st > 0.4)), sR = blink && (haz || (slow && st < -0.4));
+  if (sL) m.sigLMat.color.setRGB(2.6, 1.3, 0.2); else m.sigLMat.color.setHex(0x8a5212);
+  if (sR) m.sigRMat.color.setRGB(2.6, 1.3, 0.2); else m.sigRMat.color.setHex(0x8a5212);
 }
 
 const ZERO = { throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false }, PARK = { throttle: 0, brake: 0, steer: 0, handbrake: true, nitro: false };
