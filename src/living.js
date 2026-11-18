@@ -262,16 +262,8 @@ export function initLiving(game) {
     // transportda: yo'lovchini olish
     for (const h of hikers) if (h.on && Math.hypot(h.x - car.p[0], h.z - car.p[2]) < 10 && car.speed < 3) { if (L.fare) return toast("Mashinada allaqachon yo'lovchi bor"); if (game.act) return toast('Avval chellenjni tugating'); h.on = false; h.rig.root.visible = false; h.t = 25 + rnd() * 40; L.fare = { dest: h.dest, name: h.name, d0: Math.hypot(h.dest.x - h.x, h.dest.z - h.z) }; game.setWaypoint(h.dest.board.x, h.dest.board.z, true); sfx('door'); game.banner(`${h.name}: «${h.dest.name}ga eltib qo'ying»`, "Yo'lovchi mashinada. GPS belgilandi", 'start'); return; } };
 
-  // ================= KLAVISHLAR =================
-  L.keys = (inp) => {
-    if (inp.hit('KeyI')) game.ui.open('bag');
-    if (!pl.onFoot) return;
-    if (inp.hit('KeyB')) game.ui.open('wheel');
-    if (pl.lock > 0) return;
-    if (inp.hit('KeyQ')) A.pull(); else if (inp.hit('KeyG')) A.plant(); else if (inp.hit('KeyY')) L.eatAny(); else if (inp.hit('KeyK')) A.sapling(); else if (inp.hit('KeyV')) A.whistle();
-    else if (inp.hit('Digit1')) A.dance(); else if (inp.hit('Digit2')) A.dutor(); else if (inp.hit('Digit3')) A.wave();
-    if (inp.hit('KeyL')) { pl.lampOn = !pl.lampOn; toast(pl.lampOn ? 'Fonar yoqildi 🔦' : "Fonar o'chirildi"); sfx('click'); }
-  };
+  // klavishlar va ekran tugmalari — controls.js (ACTIONS jadvali) → L.doAction / L.useE
+
 
   // ================= HAR KADR =================
   let scanT = 0, noteI = 0;
