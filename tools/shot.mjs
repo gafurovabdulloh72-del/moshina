@@ -41,7 +41,7 @@ page.on('pageerror', (e) => { failed = true; console.log('[pageerror]', e.messag
 await page.goto(pathToFileURL(file).href);
 const shot = async (name, opts = {}) => {
   const p = path.join(root, 'shots', name.endsWith('.jpg') || name.endsWith('.png') ? name : name + '.jpg');
-  await page.screenshot({ path: p, type: p.endsWith('.png') ? 'png' : 'jpeg', quality: p.endsWith('.png') ? undefined : 82, ...opts });
+  await page.screenshot({ path: p, type: p.endsWith('.png') ? 'png' : 'jpeg', quality: p.endsWith('.png') ? undefined : 82, timeout: 120000, ...opts });
   console.log('shot', p);
 };
 const scenario = (await import(pathToFileURL(path.resolve(scenarioPath)).href)).default;
