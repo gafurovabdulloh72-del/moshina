@@ -586,7 +586,7 @@ export function buildRoads(scene) {
         for (let q = 0; q < NO; q++) {
           const v = r * NO + q, o = v * 3, o4 = v * 4, oq = offs[q] * tap, px = x + lx * oq, pz = z + lz * oq;
           pos[o] = px; pos[o + 1] = y - drop[q] * (1 + jf * 2.5); pos[o + 2] = pz;
-          const inner = hw - 0.4, wq = drop[q] > 0 ? (drop[q] > 0.5 ? 1 : 0.5) * (1 - jf) : (e.type ? 0.85 : clamp((Math.abs(offs[q]) - inner) / 1.2, 0, 1) * 0.7) * (1 - jf); // yer ko'rinadigan qismda normal yernikiga yaqin (yorug'lik farqi bo'lmasin)
+          const inner = hw - 0.4, wq = drop[q] > 0 ? (drop[q] > 0.5 ? 1 : 0.5) : (e.type ? 0.85 : clamp((Math.abs(offs[q]) - inner) / 1.2, 0, 1) * 0.7) * (1 - jf); // yer ko'rinadigan qismda normal yernikiga yaqin (yorug'lik farqi bo'lmasin)
           if (wq > 0) { const t = terrN(px, pz), w = wq; let nx = lerp(rnx, t[0], w), ny = lerp(rny, t[1], w), nz = lerp(rnz, t[2], w); const l = Math.hypot(nx, ny, nz); nor[o] = nx / l; nor[o + 1] = ny / l; nor[o + 2] = nz / l; }
           else { nor[o] = rnx; nor[o + 1] = rny; nor[o + 2] = rnz; }
           cl[o] = c[0]; cl[o + 1] = c[1]; cl[o + 2] = c[2];
