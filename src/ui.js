@@ -162,7 +162,7 @@ export class UI {
   open(name, data) {
     const g = this.g; this.screenName = name; this.screenData = data; g.mode = name === 'menu' ? 'menu' : 'ui'; this.screen.className = 'on ' + name; this.screen.innerHTML = '';
     this.hud.style.visibility = name === 'menu' ? 'hidden' : '';
-    const small = ['pause', 'settings', 'help', 'result', 'rest', 'confirm'].includes(name);
+    const small = ['pause', 'settings', 'result', 'rest', 'confirm'].includes(name);
     // ✕ tugmasi oynaning o'zida emas, o'ramida turadi — oyna ichi qayta chizilganda ham o'chib ketmaydi
     const wrap = el('div', 'winwrap' + (small ? ' small' : '')), w = el('div', 'win'); wrap.appendChild(w);
     if (name !== 'menu') this.screen.appendChild(wrap);
@@ -203,7 +203,7 @@ export class UI {
       else if (a === 'full') { const d = document; if (d.fullscreenElement) d.exitFullscreen(); else d.documentElement.requestFullscreen && d.documentElement.requestFullscreen().catch(() => {}); } };
   }
   s_pause(w, d, btn, x) {
-    const g = this.g; x(); w.innerHTML = `<h1>Pauza</h1><p class="sub">${g.levelName()} · ★ ${g.totalStars()}/${g.maxStars} · Muhrlar ${g.stampCount()}/12 · ❤ ${Math.floor(g.state.karma)}</p>`;
+    const g = this.g; x(); w.innerHTML = `<h1>Pauza</h1><p class="sub">${g.levelName()} · ★ ${g.totalStars()}/${g.maxStars} · Muhrlar ${g.stampCount()}/${Object.keys(g.stamps()).length} · ❤ ${Math.floor(g.state.karma)}</p>`;
     const col = el('div'); col.style.cssText = 'display:flex;flex-direction:column;gap:8px'; w.appendChild(col);
     col.appendChild(btn('▶  Davom etish', () => this.close()));
     col.appendChild(btn('Xarita', () => this.open('map'), 'sec')); col.appendChild(btn('Sumka va topshiriqlar', () => this.open('bag'), 'sec')); col.appendChild(btn('Sayohat pasporti', () => this.open('progress'), 'sec'));
@@ -246,7 +246,7 @@ export class UI {
     if (a.cat === 'race') { g.raceInfo(a); extra = `<div class="meta"><span>${fmtDist(a._len)} · oltin ${fmtTime(a._t[2])}</span><span>${g.state.best[a.id] ? 'Rekord ' + fmtTime(g.state.best[a.id]) : ''}</span></div>`; }
     if (a.cat === 'zone') extra = `<div class="meta"><span>★ ${a.thr[0]} · ★★ ${a.thr[1]} · ★★★ ${a.thr[2]}</span><span>${g.state.best[a.id] ? 'Rekord ' + g.state.best[a.id] : ''}</span></div>`;
     c.innerHTML = `<h4><span class="tag ${a.cat}">${TYPE[a.type]}</span>${a.name}</h4><p>${a.desc}</p>${extra}<div class="meta"><span>💰 ${a.reward} so'm</span>${a.cat === 'inf' ? '<span class="stars">♾ cheksiz</span>' : stars(s)}</div>`;
-    const b = el('button', '', un ? (s ? 'Qayta bajarish' : 'Boshlash') : a.opt && a.opt.final ? `🔒 ${g.stampCount()}/10 muhr` : '🔒 Avval oldingisini bajaring'); b.disabled = !un; b.onclick = () => { g.audio.sfx('click'); onStart(a); }; c.appendChild(b);
+    const b = el('button', '', un ? (s ? 'Qayta bajarish' : 'Boshlash') : a.opt && a.opt.final ? `🔒 10 ta muhr kerak (${g.stampCount()}/10)` : '🔒 Avval oldingisini bajaring'); b.disabled = !un; b.onclick = () => { g.audio.sfx('click'); onStart(a); }; c.appendChild(b);
     return c;
   }
   s_board(w, pid, btn, x) {
@@ -276,7 +276,7 @@ export class UI {
       else {
         const ok = hp >= 100 && !d.tires.some(Boolean);
         h += `<div class="grid2"><div><div class="card"><h4>Ta'mirlash</h4><p>Holat: <b style="color:${hp > 70 ? 'var(--good)' : hp > 40 ? 'var(--ac)' : 'var(--bad)'}">${hp}%</b> · dvigatel ${Math.round(d.engine)}% ${d.tires.some(Boolean) ? '· yorilgan balon bor' : ''}${d.wrecked ? ' · <b style="color:var(--bad)">motor ishlamayapti</b>' : ''}</p><button data-a="fix" ${ok ? 'disabled' : ''}>${ok ? 'Transport soz ✓' : `To'liq ta'mirlash — ${som(Math.min(cost, st.money))} so'm`}</button></div>
-          <h4 style="margin:14px 0 0">Bo'yoq</h4><div class="paints" style="margin-bottom:26px">${PAINTS.filter((p) => p.cost >= 0 || st.paints.includes(p.id)).map((p) => `<div class="paint${st.paint === p.id ? ' sel' : ''}" data-a="paint:${p.id}" title="${p.name}" style="background:#${p.hex.toString(16).padStart(6, '0')}"><span>${st.paints.includes(p.id) ? '' : p.cost}</span></div>`).join('')}</div></div>
+          <h4 style="margin:14px 0 0">Bo'yoq</h4><div class="paints" style="margin-bottom:26px">${PAINTS.filter((p) => p.cost >= 0 || st.paints.includes(p.id)).map((p) => `<div class="paint${st.paint === p.id ? ' sel' : ''}" data-a="paint:${p.id}" title="${p.name}" style="background:#${p.hex.toString(16).padStart(6, '0')}"><span>${st.paints.includes(p.id) ? '' : som(p.cost) + " so'm"}</span></div>`).join('')}</div></div>
           <div><h4 style="margin:0 0 6px">Tyuning <small style="font-weight:600;color:var(--mut)">(barcha transportlarga ta'sir qiladi)</small></h4>${UPG.map((u) => { const lv = st.up[u.id], mx = lv >= u.max, c = mx ? 0 : u.cost[lv]; return `<div class="card" style="margin-bottom:8px"><div class="meta"><h4>${u.name}</h4><span class="pips">${Array.from({ length: u.max }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></div><p>${u.desc}</p><button data-a="up:${u.id}" class="${mx ? 'sec' : ''}" ${mx || st.money < c ? 'disabled' : ''}>${mx ? 'Eng yuqori daraja' : `Yaxshilash — ${som(c)} so'm`}</button></div>`; }).join('')}</div></div>`;
       }
       w.innerHTML = h;
@@ -383,7 +383,11 @@ export class UI {
       for (const p of g.points) dot(p.x, p.z, p.kind === 'home' ? 9 : 6.5, p.kind === 'board' ? '#ffc83a' : p.kind === 'home' ? '#5fd38a' : '#4fb0ff', p.kind === 'home' ? '#fff' : '#141824');
       for (const q of g.live.dots) if (!q[3]) dot(q[0], q[1], 5, q[2], '#141824');
       c.font = '800 15px system-ui'; c.textAlign = 'center';
-      for (const id in g.site.places) { const p = g.site.places[id]; const nm = st.places[id] || id === 'uy' ? p.name : '?'; c.lineWidth = 4; c.strokeStyle = 'rgba(10,14,24,.85)'; c.strokeText(nm, P(p.x), P(p.z) - 13); c.fillStyle = st.places[id] ? '#fff' : '#ffd0a0'; c.fillText(nm, P(p.x), P(p.z) - 13); }
+      // nomlar bir-birining ustiga tushmasin: band bo'lsa nuqta ostiga yoki yon tomonga suriladi
+      const boxes = [];
+      for (const id in g.site.places) { const p = g.site.places[id]; const nm = st.places[id] || id === 'uy' ? p.name : '?'; const tw = c.measureText(nm).width + 6, px = P(p.x), pz = P(p.z);
+        let ly = pz - 13, lx = px; for (const [ox, oy] of [[0, -13], [0, 27], [tw / 2 + 12, 5], [-tw / 2 - 12, 5], [0, -31], [0, 45]]) { const bx = px + ox, by = pz + oy; if (!boxes.some((b) => Math.abs(b[0] - bx) < (b[2] + tw) / 2 && Math.abs(b[1] - by) < 17)) { lx = bx; ly = by; break; } }
+        boxes.push([lx, ly, tw]); c.lineWidth = 4; c.strokeStyle = 'rgba(10,14,24,.85)'; c.strokeText(nm, lx, ly); c.fillStyle = st.places[id] ? '#fff' : '#ffd0a0'; c.fillText(nm, lx, ly); }
       if (g.way) dot(g.way.x, g.way.z, 8, '#35e0ff', '#141824');
       if (pl.onFoot) dot(g.car.p[0], g.car.p[2], 6, '#d8392b', '#fff');
       c.save(); c.translate(P(me[0]), P(me[2])); c.rotate(Math.PI - myYaw); c.beginPath(); c.moveTo(0, -13); c.lineTo(9, 10); c.lineTo(0, 5); c.lineTo(-9, 10); c.closePath(); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 3; c.strokeStyle = '#d8392b'; c.stroke(); c.restore();
