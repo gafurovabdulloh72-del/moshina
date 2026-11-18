@@ -81,44 +81,49 @@ export function makeRig(o = {}) {
   const seed = o.seed != null ? o.seed : 1013 + rigN * 7919, rnd = mulberry32(seed); rigN++;
   const fem = !!(o.fem != null ? o.fem : o.long);
   const s = (o.height || (fem ? 0.93 + rnd() * 0.06 : 0.96 + rnd() * 0.08)) * (o.player ? 1 : 1);
-  const bw = o.build || (0.94 + rnd() * 0.16), shW = fem ? 0.9 : 1, hpW = fem ? 1.08 : 1;
+  const bw = o.build || (0.94 + rnd() * 0.16), hpW = fem ? 1.08 : 1;
   const skin = hexLin(o.skin || SKINS[(seed >>> 3) % SKINS.length]), skinD = mul(skin, 0.8), lip = mix3(skin, hexLin(0x8a3a32), 0.32);
   const shirt = cloth(o.shirt || 0x2f7fd0), pants = cloth(o.pants || 0x3a3f4c, 0.92), hair = hexLin(o.hair || 0x3a2a20), vest = o.vest ? cloth(o.vest) : null;
   const shoe = hexLin(o.shoe || SHOES[(seed >>> 5) % SHOES.length]), sole = mix3(shoe, hexLin(0x8a7a66), 0.45), belt = hexLin(0x2a1f18);
   const sleeve = o.sleeve != null ? o.sleeve : fem ? 1 : rnd() < 0.45 ? 1 : 0.42; // 1 — uzun yeng, <1 — kalta (yelka bo'ylab ulush)
   const dress = fem && (o.dress != null ? o.dress : true), stache = !fem && (o.stache != null ? o.stache : rnd() < 0.35);
+  // erkak: baquvvat, sportchi gavda (mu — mushak ulushi: o'yinchi to'liq, aholida 0.75..1); keng yelka, V-shaklli gavda, yo'g'on bo'yin, katta qo'l-oyoq
+  const mu = fem ? 0 : o.muscle != null ? o.muscle : o.player ? 1 : 0.75 + rnd() * 0.25, shW = fem ? 0.9 : 1 + 0.2 * mu, M = (a, b) => a + (b - a) * mu;
   // suyak nuqtalari (masshtab bilan)
   const J = BONES.map((b) => { const leg = b[1] >= 16 || b[0].startsWith('thigh'), arm = /clav|up|fore|hand|fing/.test(b[0]); return [b[2] * s * (arm ? shW : leg ? hpW : 1), b[3] * s, b[4] * s]; });
   const g = new SKB();
   const W1 = (b) => [b, b, 1], WB = (a, b, t) => [a, b, 1 - t];
   // ---- tana (chanoqdan bo'yingacha) ----
   const TOR = [ // y, ru, rf, rb, dx, cz
-    [0.835, 0.04, 0.03, 0.03, 0, 0.005], [0.85, 0.075, 0.06, 0.07, 0, 0.005], [0.885, 0.145 * hpW, 0.085, 0.105 * hpW, 0, -0.005], [0.94, 0.163 * hpW, 0.093, 0.118 * hpW, 0, -0.012], [0.995, 0.157 * (fem ? 1.02 : 1), 0.092, 0.098, 0, -0.008],
-    [1.07, 0.147 * (fem ? 0.88 : 1) * bw, 0.1 * bw, 0.087, 0, 0], [1.23, 0.168 * (fem ? 0.92 : 1) * bw, (fem ? 0.124 : 0.116) * bw, 0.096, 0, -0.005], [1.31, 0.176 * (fem ? 0.9 : 1), fem ? 0.122 : 0.114, 0.102, 0, -0.012],
-    [1.375, 0.18 * shW, 0.095, 0.104, 0, -0.022], [1.425, 0.17 * shW, 0.075, 0.092, 0, -0.03], [1.462, 0.118 * shW, 0.062, 0.074, 0, -0.034], [1.49, 0.068, 0.052, 0.058, 0, -0.035]];
+    [0.835, 0.04, 0.03, 0.03, 0, 0.005], [0.85, 0.075, 0.06, 0.07, 0, 0.005], [0.885, 0.145 * hpW, 0.085, 0.105 * hpW, 0, -0.005], [0.94, 0.163 * hpW * M(1, 0.94), 0.093, 0.118 * hpW, 0, -0.012], [0.995, 0.157 * (fem ? 1.02 : M(1, 0.93)), 0.092, 0.098, 0, -0.008],
+    [1.07, 0.147 * (fem ? 0.88 : M(1, 0.97)) * bw, M(0.1, 0.097) * bw, M(0.087, 0.09), 0, 0], [1.16, (fem ? 0.1434 : M(0.1576, 0.162)) * bw, (fem ? 0.1135 : M(0.109, 0.108)) * bw, M(0.0921, 0.1), 0, -0.003], [1.205, (fem ? 0.1506 : M(0.1645, 0.18)) * bw, (fem ? 0.1203 : M(0.1135, 0.115)) * bw, M(0.0946, 0.107), 0, -0.004], [fem ? 1.23 : 1.25, 0.168 * (fem ? 0.92 : M(1, 1.18)) * bw, (fem ? 0.124 : M(0.116, 0.123)) * bw, M(0.097, 0.112), 0, -0.006], [1.31, 0.176 * (fem ? 0.9 : M(1, 1.19)), fem ? 0.122 : M(0.114, 0.128), M(0.102, 0.118), 0, -0.012],
+    [1.375, 0.18 * shW, M(0.095, 0.118), M(0.104, 0.118), 0, -0.022], [1.425, M(0.17, 0.176) * shW, M(0.075, 0.084), M(0.092, 0.108), 0, -0.03], [1.462, M(0.118, 0.13) * shW, M(0.062, 0.068), M(0.074, 0.088), 0, -0.034], [1.49, M(0.068, 0.082), M(0.052, 0.06), M(0.058, 0.07), 0, -0.035]];
   const beltY = 0.99, hemY = dress ? 0.99 : 0.99;
   const torCol = (y, th) => { let c; if (y < beltY - 0.012) c = pants; else if (y < beltY + 0.012 && !dress) c = belt; else c = shirt; if (vest && y > beltY + 0.012 && y < 1.43 && Math.abs(Math.sin(th)) > 0.18) c = vest; let k = 1; if (y < 0.9) k *= 0.82 + (y - 0.835) * 2.5; if (y > 1.44) k *= 0.92; return mul(c, k * (0.97 + 0.03 * Math.cos(th))); };
   { const ts = ringTs(TOR, [beltY - 0.012, beltY + 0.012]); const rings = ts.map((t) => { const r = prof(TOR, t); return { c: [0, t * s, r[5] * s], ru: r[1] * s, rf: r[2] * s, rb: r[3] * s, t }; });
     g.tube({ n: 16, A: [0, 1, 0], V: [0, 0, 1], rot: Math.PI / 16, rings, cap0: 0.012 * s, cap1: 0.008 * s, surf: 8,
+      // erkak ko'kragi old tomondan yassiroq va kengroq (dumaloq emas): kesim superellips tomon tortiladi
+      xf: mu > 0 ? (p, th, k) => { const r = rings[k], c = Math.cos(th), w = sm(1.12, 1.22, r.t) * (1 - sm(1.4, 1.47, r.t)) * mu; if (w <= 0 || c <= 0.001) return p; p[2] = r.c[2] + (p[2] - r.c[2]) * (1 + (Math.pow(c, 0.5) / c - 1) * 0.55 * w); return p; } : null,
       col: (p, th, k, r) => torCol(r.t, th),
-      wt: (p, th, k, r) => { const y = r.t; if (y < 0.97) return W1(B.hips); if (y < 1.1) return WB(B.hips, B.spine, sm(0.97, 1.1, y)); if (y < 1.27) return WB(B.spine, B.chest, sm(1.1, 1.27, y)); if (y > 1.36 && Math.abs(p[0]) > 0.1 * s) return WB(B.chest, p[0] > 0 ? B.clavL : B.clavR, sm(0.1 * s, 0.18 * s, Math.abs(p[0])) * 0.65 * sm(1.36, 1.42, y)); if (y > 1.47) return WB(B.chest, B.neck, 0.35); return W1(B.chest); } }); }
+      wt: (p, th, k, r) => { const y = r.t; if (y < 0.97) return W1(B.hips); if (y < 1.1) return WB(B.hips, B.spine, sm(0.97, 1.1, y)); if (y < 1.27) return WB(B.spine, B.chest, sm(1.1, 1.27, y)); if (y > 1.36 && Math.abs(p[0]) > 0.1 * s * shW) return WB(B.chest, p[0] > 0 ? B.clavL : B.clavR, sm(0.1 * s * shW, 0.18 * s * shW, Math.abs(p[0])) * 0.65 * sm(1.36, 1.42, y)); if (y > 1.47) return WB(B.chest, B.neck, 0.35); return W1(B.chest); } }); }
   // ---- ko'ylak etagi (ayollar: uzun ko'ylak tizzadan pastgacha) ----
   if (dress) { const D = [[0, 0.158 * hpW, 0.096, 0.1], [0.12, 0.17 * hpW, 0.11, 0.13], [0.32, 0.19, 0.135, 0.15], [0.5, 0.205, 0.15, 0.16], [0.62, 0.21, 0.155, 0.165]];
     const y0 = 0.985 * s, rings = D.map((r) => ({ c: [0, y0 - r[0] * s, -0.012 * s], ru: r[1] * s, rf: r[2] * s, rb: r[3] * s, t: r[0] }));
     g.tube({ n: 16, A: [0, -1, 0], V: [0, 0, 1], rot: Math.PI / 16, rings, surf: 8, col: (p, th, k, r) => mul(shirt, (k === rings.length - 1 ? 0.8 : 1) * (0.96 + 0.04 * Math.cos(th))),
       wt: (p, th, k, r) => { const side = Math.sin(th), lt = sm(0.05, 0.6, r.t) * Math.min(1, Math.abs(side) * 1.6) * 0.75; return lt < 0.01 ? W1(B.hips) : [side < 0 ? B.thighL : B.thighR, B.hips, lt]; } }); }
   // ---- bo'yin ----
-  { const N0 = J[B.neck], H0 = J[B.head]; const rings = [[1.425, 0.066, 0.062, 0.062, -0.034, shirt, W1(B.chest)], [1.475, 0.054, 0.05, 0.053, -0.033, skinD, WB(B.chest, B.neck, 0.6)], [1.53, 0.053, 0.05, 0.055, -0.028, skin, W1(B.neck)], [1.585, 0.052, 0.047, 0.055, -0.022, skin, WB(B.neck, B.head, 0.5)], [1.62, 0.05, 0.04, 0.055, -0.02, skin, W1(B.head)]]
+  { const N0 = J[B.neck], H0 = J[B.head]; const nk = M(1, 1.2), rings = [[1.425, 0.066 * M(1, 1.22), 0.062, 0.062 * nk, -0.034, shirt, W1(B.chest)], [1.475, 0.054 * nk, 0.05 * M(1, 1.12), 0.053 * nk, -0.033, skinD, WB(B.chest, B.neck, 0.6)], [1.53, 0.053 * nk, 0.05 * M(1, 1.1), 0.055 * nk, -0.028, skin, W1(B.neck)], [1.585, 0.052 * M(1, 1.14), 0.047, 0.055 * M(1, 1.12), -0.022, skin, WB(B.neck, B.head, 0.5)], [1.62, 0.05, 0.04, 0.055, -0.02, skin, W1(B.head)]]
       .map((r) => ({ c: [0, r[0] * s, r[4] * s], ru: r[1] * s * (r[5] === shirt ? 1.08 : 1), rf: r[2] * s, rb: r[3] * s, col: r[5], w: r[6] }));
     g.tube({ n: 10, A: [0, 1, 0], V: [0, 0, 1], rings, surf: 11, sf: (p, th, k) => (k < 2 ? 8 : 11) }); }
   // ---- bosh ----
   const HJ = J[B.head], hp = (x, y, z) => [HJ[0] + x * s, HJ[1] + y * s, HJ[2] + z * s];
-  { const HD = [[-0.06, 0.024, 0.016, 0.02, 0, 0.071], [-0.045, 0.046, 0.028, 0.034, 0, 0.056], [-0.026, 0.06, 0.046, 0.05, 0, 0.037], [-0.006, 0.067, 0.066, 0.066, 0, 0.022], [0.018, 0.072, 0.08, 0.084, 0, 0.011], [0.044, 0.076, 0.085, 0.095, 0, 0.003], [0.072, 0.078, 0.086, 0.098, 0, -0.003], [0.102, 0.074, 0.079, 0.094, 0, -0.008], [0.13, 0.062, 0.062, 0.079, 0, -0.012], [0.152, 0.04, 0.038, 0.052, 0, -0.015]];
+  { const HD = [[-0.06, M(0.024, 0.032), M(0.016, 0.019), 0.02, 0, 0.071], [-0.045, M(0.046, 0.054), 0.028, 0.034, 0, 0.056], [-0.026, M(0.06, 0.066), 0.046, M(0.05, 0.054), 0, 0.037], [-0.006, M(0.067, 0.07), 0.066, 0.066, 0, 0.022], [0.018, 0.072, 0.08, 0.084, 0, 0.011], [0.044, 0.076, 0.085, 0.095, 0, 0.003], [0.072, 0.078, 0.086, 0.098, 0, -0.003], [0.102, 0.074, 0.079, 0.094, 0, -0.008], [0.13, 0.062, 0.062, 0.079, 0, -0.012], [0.152, 0.04, 0.038, 0.052, 0, -0.015]];
     const fw = fem ? 0.95 : 1, rings = HD.map((r) => ({ c: hp(0, r[0], r[5]), ru: r[1] * s * fw, rf: r[2] * s * fw, rb: r[3] * s * fw, y: r[0] }));
     g.tube({ n: 16, A: [0, 1, 0], V: [0, 0, 1], rot: Math.PI / 16, rings, cap0: 0.007 * s, cap1: 0.014 * s, surf: 11,
       col: (p, th, k, r) => { const c = Math.cos(th); let col = skin; if (r.y < -0.015 && r.y > -0.05 && c > 0.5) col = mix3(skin, skinD, 0.25); if (c < -0.2 && r.y < 0.0) col = mul(skin, 0.9); return mul(col, 0.94 + 0.06 * Math.max(0, c)); }, w: W1(B.head) });
     const H = W1(B.head), ell = (x, y, z, rx, ry, rz, n, m, col, o2) => g.ell(hp(x, y, z), rx * s, ry * s, rz * s, n, m, col, H, Object.assign({ surf: 11 }, o2));
     ell(0, 0.014, 0.084, 0.0125, 0.026, 0.017, 6, 4, mul(skin, 0.97), { rx: -0.32 }); // burun
+    if (mu > 0.3) ell(0, 0.0575, 0.0755, 0.047, 0.0085, 0.0105, 8, 3, mul(skin, 0.95)); // erkak: qosh ustidagi bo'rtiq (qattiqroq yuz)
     ell(0, -0.002, 0.086, 0.016, 0.006, 0.008, 6, 3, mul(skin, 0.95)); // burun ostki qanotlari
     for (const sx of [1, -1]) {
       ell(sx * 0.077 * fw, 0.028, -0.008, 0.011, 0.03, 0.019, 6, 3, mul(skin, 0.9), { ry: sx * 0.35 }); // quloq
@@ -140,26 +145,26 @@ export function makeRig(o = {}) {
     const L = sd > 0, bC = L ? B.clavL : B.clavR, bU = L ? B.upL : B.upR, bF = L ? B.foreL : B.foreR, bH = L ? B.handL : B.handR, bG = L ? B.fingL : B.fingR;
     const S0 = J[bU], E = J[bF], Wr = J[bH], FG = J[bG];
     const along = (a, b, t, dx = 0, dz = 0) => [a[0] + (b[0] - a[0]) * t + sd * dx * s, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t + dz * s];
-    const UP = [[-0.12, 0.026, 0.03, 0.03, -0.004, 0], [-0.05, 0.042, 0.046, 0.044, 0, 0], [0.04, 0.047, 0.05, 0.047, 0.002, 0], [0.22, 0.046, 0.047, 0.044, 0.002, 0], [0.45, 0.044, 0.047, 0.043, 0, 0.002], [0.75, 0.039, 0.039, 0.038, 0, 0], [0.98, 0.036, 0.036, 0.035, 0, 0]];
+    const UP = [[-0.12, 0.026, 0.03, 0.03, -0.004, 0], [-0.05, M(0.042, 0.044), M(0.046, 0.05), M(0.044, 0.048), 0, 0], [0.04, M(0.047, 0.053), M(0.05, 0.056), M(0.047, 0.054), M(0.002, 0.004), 0], [0.13, M(0.0465, 0.055), M(0.0485, 0.055), M(0.0455, 0.054), M(0.002, 0.006), 0], [0.22, M(0.046, 0.051), M(0.047, 0.054), M(0.044, 0.054), 0.002, 0], [0.45, M(0.044, 0.05), M(0.047, 0.059), M(0.043, 0.053), 0, 0.002], [0.75, M(0.039, 0.044), M(0.039, 0.049), M(0.038, 0.046), 0, 0], [0.98, M(0.036, 0.04), M(0.036, 0.04), M(0.035, 0.04), 0, 0]];
     const lenU = Math.hypot(E[0] - S0[0], E[1] - S0[1], E[2] - S0[2]), sl = sleeve * 0.98, cuff = sleeve < 0.99;
-    const ts = ringTs(UP, cuff ? [sl] : []), loose = sleeve >= 0.99 ? 1.05 : 1.07;
-    g.tube({ n: 8, A: [0, -1, 0], V: [0, 0, 1], rings: ts.map((t) => { const r = prof(UP, t), cl = t < sl + 0.001; return { c: along(S0, E, t, r[4], r[5]), ru: r[1] * s * shW * (cl ? loose : 1), rf: r[2] * s * (cl ? loose : 1), rb: r[3] * s * (cl ? loose : 1), t }; }), cap0: 0.012 * s, surf: 8,
+    const ts = ringTs(UP, cuff ? [sl] : []), loose = sleeve >= 0.99 ? 1.05 : M(1.07, 1.02);
+    g.tube({ n: 8, A: [0, -1, 0], V: [0, 0, 1], rings: ts.map((t) => { const r = prof(UP, t), cl = t < sl + 0.001; return { c: along(S0, E, t, r[4], r[5]), ru: r[1] * s * (fem ? shW : 1) * (cl ? loose : 1), rf: r[2] * s * (cl ? loose : 1), rb: r[3] * s * (cl ? loose : 1), t }; }), cap0: 0.012 * s, surf: 8,
       sf: (p, th, k) => (ts[k] < sl + 0.001 ? 8 : 11),
       col: (p, th, k, r) => (r.t < sl + 0.001 ? mul(shirt, 0.96 + 0.05 * Math.cos(th) - (r.t < 0 ? 0.06 : 0)) : mul(skin, 0.95 + 0.05 * Math.cos(th))),
       wt: (p, th, k, r) => (r.t < 0.02 ? WB(bU, bC, 0.35 * sm(0.02, -0.14, r.t)) : r.t > 0.85 ? WB(bU, bF, sm(0.85, 1.05, r.t) * 0.5) : W1(bU)) });
-    const FO = [[-0.05, 0.036, 0.036, 0.035], [0.15, 0.041, 0.039, 0.043], [0.45, 0.035, 0.033, 0.034], [0.8, 0.027, 0.023, 0.025], [1.0, 0.025, 0.019, 0.021], [1.04, 0.023, 0.018, 0.019]];
+    const FO = [[-0.05, M(0.036, 0.04), M(0.036, 0.04), M(0.035, 0.04)], [0.15, M(0.041, 0.05), M(0.039, 0.046), M(0.043, 0.052)], [0.45, M(0.035, 0.042), M(0.033, 0.038), M(0.034, 0.041)], [0.8, M(0.027, 0.031), M(0.023, 0.026), M(0.025, 0.029)], [1.0, M(0.025, 0.029), M(0.019, 0.022), M(0.021, 0.024)], [1.04, M(0.023, 0.027), M(0.018, 0.021), M(0.019, 0.022)]];
     const longS = sleeve >= 0.99, ts2 = ringTs(FO, longS ? [0.9] : []);
     g.tube({ n: 8, A: [0, -1, 0], V: [0, 0, 1], rings: ts2.map((t) => { const r = prof(FO, t), cl = longS && t < 0.901; return { c: along(E, Wr, t), ru: r[1] * s * (cl ? 1.15 : 1), rf: r[2] * s * (cl ? 1.2 : 1), rb: r[3] * s * (cl ? 1.2 : 1), t }; }), surf: 11,
       sf: (p, th, k) => (longS && ts2[k] < 0.901 ? 8 : 11),
       col: (p, th, k, r) => (longS && r.t < 0.901 ? mul(shirt, (r.t > 0.85 ? 0.85 : 0.94) + 0.05 * Math.cos(th)) : mul(skin, 0.94 + 0.05 * Math.cos(th))),
       wt: (p, th, k, r) => (r.t < 0.1 ? WB(bU, bF, 0.5 + 0.5 * sm(-0.05, 0.1, r.t)) : r.t > 0.85 ? WB(bF, bH, sm(0.85, 1.04, r.t) * 0.6) : W1(bF)) });
     // kaft va barmoqlar: kaft ichkariga (son tomonga) qaragan
-    const hy = Wr[1], HN = [[0.004, 0.017, 0.022, 0.021], [-0.022, 0.019, 0.036, 0.034], [-0.058, 0.0175, 0.04, 0.035], [-0.08, 0.0155, 0.04, 0.033], [-0.112, 0.0135, 0.037, 0.029], [-0.148, 0.0105, 0.031, 0.023]];
-    g.tube({ n: 8, A: [0, -1, 0], V: [0, 0, 1], rot: Math.PI / 8, rings: HN.map((r) => ({ c: [Wr[0] - sd * 0.002 * s, hy + r[0] * s, Wr[2] + 0.004 * s], ru: r[1] * s, rf: r[2] * s, rb: r[3] * s, t: r[0] })), cap1: 0.012 * s, surf: 11,
+    const hk = M(1, 1.13), hy = Wr[1], HN = [[0.004, 0.017, 0.022, 0.021], [-0.022, 0.019, 0.036, 0.034], [-0.058, 0.0175, 0.04, 0.035], [-0.08, 0.0155, 0.04, 0.033], [-0.112, 0.0135, 0.037, 0.029], [-0.148, 0.0105, 0.031, 0.023]];
+    g.tube({ n: 8, A: [0, -1, 0], V: [0, 0, 1], rot: Math.PI / 8, rings: HN.map((r) => ({ c: [Wr[0] - sd * 0.002 * s, hy + r[0] * s * M(1, 1.06), Wr[2] + 0.004 * s], ru: r[1] * s * hk, rf: r[2] * s * hk, rb: r[3] * s * hk, t: r[0] })), cap1: 0.012 * s, surf: 11,
       col: (p, th, k, r) => mul(skin, (r.t < -0.09 ? 0.93 : 0.97) + 0.04 * Math.cos(th) + (Math.sin(th) * sd > 0.3 ? 0.04 : 0)),
       wt: (p, th, k, r) => (r.t > -0.06 ? W1(bH) : r.t > -0.09 ? WB(bH, bG, 0.5) : W1(bG)) });
     // bosh barmoq (old tomonda, kaftga yaqin)
-    g.tube({ n: 6, A: [0, -1, 0], V: [0, 0, 1], rings: [[0, -0.012, 0.024, 0.0125], [0.5, -0.045, 0.036, 0.011], [1, -0.07, 0.044, 0.0085]].map((r) => ({ c: [Wr[0] - sd * 0.011 * s, hy + r[1] * s, Wr[2] + r[2] * s], ru: r[3] * s, rf: r[3] * s, rb: r[3] * s })), cap0: 0.004 * s, cap1: 0.008 * s, surf: 11,
+    g.tube({ n: 6, A: [0, -1, 0], V: [0, 0, 1], rings: [[0, -0.012, 0.024, 0.0125], [0.5, -0.045, 0.036, 0.011], [1, -0.07, 0.044, 0.0085]].map((r) => ({ c: [Wr[0] - sd * 0.011 * s * hk, hy + r[1] * s * M(1, 1.06), Wr[2] + r[2] * s * hk], ru: r[3] * s * hk, rf: r[3] * s * hk, rb: r[3] * s * hk })), cap0: 0.004 * s, cap1: 0.008 * s, surf: 11,
       col: () => mul(skin, 0.95), wt: () => W1(bH) });
   }
   // ---- oyoqlar ----
@@ -168,11 +173,11 @@ export function makeRig(o = {}) {
     const Hj = J[bT], K = J[bS], A = J[bF];
     const along = (a, b, t, dx = 0, dz = 0) => [a[0] + (b[0] - a[0]) * t + sd * dx * s, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t + dz * s];
     const tr = 1.1, TH = [[-0.1, 0.085, 0.088, 0.094, -0.008, 0], [0.0, 0.089, 0.088, 0.096, -0.004, 0], [0.2, 0.083, 0.082, 0.085, 0, 0], [0.45, 0.072, 0.07, 0.068, 0, 0], [0.75, 0.06, 0.058, 0.056, 0, 0], [0.97, 0.053, 0.054, 0.05, 0, 0]];
-    g.tube({ n: 10, A: [0, -1, 0], V: [0, 0, 1], rings: TH.map((r) => ({ c: along(Hj, K, r[0], r[4], r[5]), ru: r[1] * s * (fem ? 1.04 : 1) + 0.006 * s, rf: r[2] * s + 0.006 * s, rb: r[3] * s * (fem ? 1.04 : 1) + 0.006 * s, t: r[0] })), surf: 8,
+    g.tube({ n: 10, A: [0, -1, 0], V: [0, 0, 1], rings: TH.map((r) => ({ c: along(Hj, K, r[0], r[4], r[5]), ru: r[1] * s * (fem ? 1.04 : M(1, 1.22 - 0.08 * r[0])) + 0.006 * s, rf: r[2] * s * M(1, 1.22 - 0.1 * r[0]) + 0.006 * s, rb: r[3] * s * (fem ? 1.04 : M(1, 1.1)) + 0.006 * s, t: r[0] })), surf: 8,
       col: (p, th, k, r) => mul(pants, (r.t < 0.05 && Math.sin(th) * sd > 0 ? 0.8 : 0.94) + 0.05 * Math.cos(th)),
       wt: (p, th, k, r) => (r.t < 0.05 ? WB(bT, B.hips, (Math.sin(th) * sd > 0.2 ? 0.35 : 0.5) * sm(0.05, -0.1, r.t)) : r.t > 0.85 ? WB(bT, bS, sm(0.85, 1.05, r.t) * 0.5) : W1(bT)) });
     const SH = [[-0.05, 0.053, 0.054, 0.05, 0, 0], [0.15, 0.05, 0.047, 0.056, 0, -0.005], [0.33, 0.05, 0.044, 0.062, 0, -0.01], [0.6, 0.045, 0.042, 0.05, 0, -0.004], [0.85, 0.043, 0.042, 0.045, 0, 0], [0.97, 0.045, 0.045, 0.047, 0, 0]];
-    g.tube({ n: 10, A: [0, -1, 0], V: [0, 0, 1], rings: SH.map((r) => ({ c: along(K, A, r[0], r[4], r[5]), ru: r[1] * s, rf: r[2] * s, rb: r[3] * s, t: r[0] })), surf: 8,
+    g.tube({ n: 10, A: [0, -1, 0], V: [0, 0, 1], rings: SH.map((r) => ({ c: along(K, A, r[0], r[4], r[5]), ru: r[1] * s * M(1, r[0] < 0.6 ? 1.1 : 1.04), rf: r[2] * s * M(1, 1.04), rb: r[3] * s * M(1, r[0] > 0.05 && r[0] < 0.6 ? 1.16 : 1.05), t: r[0] })), surf: 8,
       col: (p, th, k, r) => mul(pants, (r.t > 0.9 ? 0.8 : 0.92) + 0.05 * Math.cos(th)),
       wt: (p, th, k, r) => (r.t < 0.1 ? WB(bT, bS, 0.5 + 0.5 * sm(-0.05, 0.1, r.t)) : r.t > 0.9 ? WB(bS, bF, 0.25) : W1(bS)) });
     // poyabzal (tovondan uchigacha, taglik alohida rangda)
@@ -189,13 +194,13 @@ export function makeRig(o = {}) {
   mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0.9 * s, 0), 1.45 * s); mesh.boundingBox = new THREE.Box3(new THREE.Vector3(-1.2, -0.6, -1.2), new THREE.Vector3(1.2, 2.4, 1.2));
   root.add(mesh); root.updateMatrixWorld(true); mesh.bind(new THREE.Skeleton(bones));
   const hatG = new THREE.Group(); bones[B.head].add(hatG);
-  const tool = new THREE.Group(); tool.position.set(0, -0.072 * s, 0.006 * s); bones[B.handR].add(tool); // o'ng qo'ldagi asbob (musht markazi)
+  const tool = new THREE.Group(); tool.position.set(0, -0.072 * s * M(1, 1.06), 0.006 * s); bones[B.handR].add(tool); // o'ng qo'ldagi asbob (musht markazi)
   const toolC = new THREE.Group(); bones[B.chest].add(toolC); // ko'krakka suyalgan asbob (dutor)
   const bn = (i) => bones[i];
   const rig = { root, body: bn(B.body), hips: bn(B.hips), torso: bn(B.spine), chest: bn(B.chest), neck: bn(B.neck), head: bn(B.head),
     aL: { clav: bn(B.clavL), up: bn(B.upL), fore: bn(B.foreL), hand: bn(B.handL) }, aR: { clav: bn(B.clavR), up: bn(B.upR), fore: bn(B.foreR), hand: bn(B.handR) },
     lL: { up: bn(B.thighL), shin: bn(B.shinL), foot: bn(B.footL) }, lR: { up: bn(B.thighR), shin: bn(B.shinR), foot: bn(B.footR) },
-    hatG, tool, toolC, mesh, bones, J, s, fem, seed, ph: 0, anim: 'idle', t: 0, hat: null, toolName: null, blend: 0 };
+    hatG, tool, toolC, mesh, bones, J, s, fem, mu, seed, ph: 0, anim: 'idle', t: 0, hat: null, toolName: null, blend: 0 };
   initAnim(rig);
   return rig;
 }
