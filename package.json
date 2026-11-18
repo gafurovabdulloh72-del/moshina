@@ -10,6 +10,7 @@
     "build:dev": "node tools/build.mjs --dev",
     "test": "node tools/veh_test.mjs && node tools/steer_test.mjs",
     "test:roads": "node tools/sim.mjs",
+    "test:anim": "node tools/anim_test.mjs",
     "test:smoke": "node tools/shot.mjs tools/s_smoke.js",
     "test:real": "NO_TEST=1 node tools/shot.mjs tools/s_real.js",
     "test:hud": "NO_TEST=1 node tools/shot.mjs tools/s_hud.js",

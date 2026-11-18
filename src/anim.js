@@ -14,7 +14,7 @@ const CH = {}; let nch = 0; for (const k of ['PX', 'PY', 'PZ', 'BX', 'BY', 'BZ',
 const ARM = ['CLE', 'CLP', 'UF', 'UA', 'UR', 'EF', 'EP', 'WF', 'WD', 'FG'], LEG = ['TF', 'TA', 'TR', 'KF', 'AF', 'TP', 'LIK'];
 const AL = nch; nch += ARM.length; const AR = nch; nch += ARM.length; const LL = nch; nch += LEG.length; const LR = nch; nch += LEG.length;
 const NCH = nch; ARM.forEach((k, i) => { CH[k + 'L'] = AL + i; CH[k + 'R'] = AR + i; }); LEG.forEach((k, i) => { CH[k + 'L'] = LL + i; CH[k + 'R'] = LR + i; });
-const NEUT = new Float32Array(NCH); { const n = NEUT; for (const o of [AL, AR]) { n[o + 2] = 0.05; n[o + 3] = 0.09; n[o + 4] = 0.12; n[o + 5] = 0.2; n[o + 6] = 0.25; n[o + 7] = 0.1; n[o + 9] = 0.38; } n[LL + 6] = 1; n[LR + 6] = 1; n[CH.LOOK] = 1; }
+const NEUT = new Float32Array(NCH); { const n = NEUT; for (const o of [AL, AR]) { n[o + 2] = 0.07; n[o + 3] = 0.11; n[o + 4] = 0.1; n[o + 5] = 0.3; n[o + 6] = 0.45; n[o + 7] = 0.12; n[o + 9] = 0.45; } n[LL + 6] = 1; n[LR + 6] = 1; n[CH.LOOK] = 1; }
 // prujina tezligi (rad/s) kanal bo'yicha: tana — tez (qadam tebranishi yo'qolmasin), qo'l — sekinroq (inersiya), bosh — eng sekin
 const OMEGA = new Float32Array(NCH).fill(40); { for (const k of ['PX', 'PY', 'PZ', 'HX', 'HY', 'HZ']) OMEGA[CH[k]] = 70; for (const k of ['SX', 'SY', 'SZ', 'CX', 'CY', 'CZ']) OMEGA[CH[k]] = 45; for (const k of ['NX', 'NY', 'KX', 'KY', 'KZ']) OMEGA[CH[k]] = 22; for (const o of [AL, AR]) { for (let i = 0; i < 10; i++) OMEGA[o + i] = 38; OMEGA[o + 7] = OMEGA[o + 8] = OMEGA[o + 9] = 36; } for (const o of [LL, LR]) for (let i = 0; i < 7; i++) OMEGA[o + i] = 50; OMEGA[CH.BX] = OMEGA[CH.BY] = OMEGA[CH.BZ] = 30; OMEGA[CH.LOOK] = 8; }
 
@@ -100,7 +100,7 @@ function planFeet(rig, A, dt, root, yaw, grounded) {
         f.tx = tw[0]; f.tz = tw[1]; f.tyaw = pyaw + sd * lerp(0.1, 0.04, g);
         const e = lerp(u * u * (3 - 2 * u), u, 0.35 * g);
         f.wx = lerp(f.sx, f.tx, e); f.wz = lerp(f.sz, f.tz, e); f.wyaw = f.syaw + ang(f.tyaw - f.syaw) * e;
-        const H = A.m * lerp(0.075, lerp(0.24, 0.44, s2), g) * s, peakAt = lerp(0.5, 0.36, g);
+        const H = A.m * lerp(0.075, lerp(0.2, 0.33, s2), g) * s, peakAt = lerp(0.5, 0.36, g);
         f.lift = H * sn(PI * Math.pow(u, Math.log(0.5) / Math.log(peakAt)));
         f.pitch = A.m * (g < 0.5 ? curve([[0, 0.95], [0.25, 0.4], [0.7, -0.08], [1, -0.3]], u) : curve([[0, 1.1], [0.3, 1.05], [0.75, -0.05], [1, -0.05]], u)); f.toe = u < 0.15 ? -0.4 * (1 - u / 0.15) : 0;
       }
@@ -148,12 +148,14 @@ function idleLayer(rig, A, o, k, t, dt, allowVar) {
   if (fat > 0.55) { const e = sm(0.55, 0.85, fat) * k; o[CH.HX] += 0.3 * e; o[CH.SX] += 0.42 * e; o[CH.CX] += 0.15 * e; o[CH.PY] -= 0.08 * e; o[CH.PZ] -= 0.06 * e; o[CH.KX] -= 0.5 * e; A.kneesW = e; } else A.kneesW = 0;
   if (!allowVar) return;
   // vaqti-vaqti bilan o'zgarishlar
-  if (!A.iv) { A.idleT += dt; if (A.idleT > A.ivNext && k > 0.95 && fat < 0.3) { A.iv = { k: IVAR[(Math.floor(hash(sd + t * 0.37) * 1000)) % IVAR.length], t: 0 }; A.iv.dur = { look: 3.6, stretch: 3.4, watch: 2.4, scratch: 2.6, hips: 4.5, cross: 5.5, shrug: 1.8 }[A.iv.k]; A.idleT = 0; A.ivNext = 5 + hash(sd + t) * 9; } return; }
+  if (!A.iv) { A.idleT += dt; if (A.idleT > A.ivNext && k > 0.95 && fat < 0.3) { A.iv = { k: IVAR[(Math.floor(hash(sd + t * 0.37) * 1000)) % IVAR.length], t: 0 }; A.iv.dur = { look: 3.6, stretch: 3.4, watch: 2.4, scratch: 2.6, hips: 4.5, cross: 5.5, shrug: 1.8 }[A.iv.k]; A.idleT = 0; A.ivNext = 8 + hash(sd + t) * 12; } return; }
   const v = A.iv; v.t += dt; const u = v.t / v.dur, e = sm(0, 0.38, v.t) * (1 - sm(v.dur - 0.5, v.dur, v.t)) * k;
   if (v.t >= v.dur) { A.iv = null; return; }
   switch (v.k) {
     case 'look': { const y = sn(TAU * u) * 0.95; o[CH.KY] += y * 0.6 * e; o[CH.NY] += y * 0.35 * e; o[CH.CY] += y * 0.12 * e; o[CH.KX] -= 0.08 * e; o[CH.LOOK] -= e; break; }
-    case 'stretch': { const p = sm(0.15, 0.45, u) * (1 - sm(0.75, 0.95, u)); armAdd(o, AL, { uf: 2.75, ua: 0.25, ef: -0.1, ur: -0.3, fg: -0.25, wf: -0.4 }, p * e); armAdd(o, AR, { uf: 2.75, ua: 0.25, ef: -0.1, ur: -0.3, fg: -0.25, wf: -0.4 }, p * e); o[CH.SX] -= 0.14 * p * e; o[CH.CX] -= 0.16 * p * e; o[CH.KX] -= 0.3 * p * e; o[CH.PY] += 0.012 * p * e; o[CH.LOOK] -= e; break; }
+    case 'stretch': { // yelkani yozish: qo'llar biroz orqaga, ko'krak ochiladi, bosh yonga egiladi (sokin, tabiiy)
+      const p = sm(0.15, 0.45, u) * (1 - sm(0.7, 0.95, u)), r2 = sn(PI * sm(0.3, 0.8, u)); armAdd(o, AL, { uf: -0.32, ua: 0.16, ef: -0.1, ep: -0.3, wf: -0.25, fg: -0.15 }, p * e); armAdd(o, AR, { uf: -0.32, ua: 0.16, ef: -0.1, ep: -0.3, wf: -0.25, fg: -0.15 }, p * e);
+      o[CH.CX] -= 0.05 * p * e; o[CH.CLPL] -= 0.06 * p * e; o[CH.CLPR] -= 0.06 * p * e; o[CH.KZ] += 0.16 * r2 * e; o[CH.KX] -= 0.06 * p * e; o[CH.LOOK] -= e; break; }
     case 'watch': { armAdd(o, AL, { uf: 0.9, ua: 0.15, ur: 0.95, ef: 1.75, ep: 0.6, wf: 0.2 }, e); o[CH.KX] += 0.38 * e; o[CH.KY] += 0.22 * e; o[CH.NX] += 0.1 * e; o[CH.LOOK] -= e; break; }
     case 'scratch': { armAdd(o, AR, { uf: 1.1, ua: 1.35, ur: 0.2, ef: 2.15 + 0.12 * sn(v.t * 40) * sm(0.3, 0.4, u), wf: 0.3, fg: 0.3 }, e); o[CH.KZ] += 0.14 * e; o[CH.KX] += 0.08 * e; break; }
     case 'hips': { for (const b of [AL, AR]) armAdd(o, b, { ua: 0.62, ur: -0.55, uf: -0.12, ef: 1.55, ep: 0.6, wf: -0.4, fg: -0.15 }, e); o[CH.CX] -= 0.04 * e; o[CH.CLPL] -= 0.04 * e; o[CH.CLPR] -= 0.04 * e; break; }
@@ -171,10 +173,11 @@ function sLoco(rig, A, o, t, dt) {
   o[CH.HZ] += m * lerp(0.06, 0.035, g) * cL; o[CH.SZ] -= m * lerp(0.04, 0.02, g) * cL; o[CH.CZ] -= m * lerp(0.02, 0.012, g) * cL;
   const hy = m * lerp(0.075, lerp(0.14, 0.18, s2), g), cy2 = m * lerp(0.06, 0.14, g);
   o[CH.HY] -= hy * c1; o[CH.SY] += (hy + cy2) * 0.5 * c1; o[CH.CY] += (hy + cy2) * 0.5 * c1;
-  o[CH.HX] += m * lerp(0.03, 0.09, g) + 0.05 * s2;
-  const lean = m * lerp(0.03, 0.12, g) + 0.14 * s2 + A.accF; o[CH.SX] += lean * 0.5; o[CH.CX] += lean * 0.35; o[CH.KX] -= lean * 0.2;
-  // burilishga og'ish
-  const lt = cl(Math.atan(sp * A.yawRate / 9.8) * 0.9, -0.38, 0.38) * m; o[CH.PX] += sn(lt) * 0.5; o[CH.HZ] -= lt * 0.7; o[CH.SZ] -= lt * 0.25;
+  // tik gavda: yurishda ~3°, yengil yugurishda ~7°, tez yugurishda ~12° (tezlanishda biroz ko'proq, cheklangan)
+  o[CH.HX] += m * lerp(0.02, 0.05, g) + 0.04 * s2;
+  const lean = cl(m * lerp(0.02, 0.05, g) + 0.07 * s2 + A.accF * m, -0.05, 0.16); o[CH.SX] += lean * 0.55; o[CH.CX] += lean * 0.3; o[CH.KX] -= lean * 0.25;
+  // burilishga og'ish (yengil, cheklangan)
+  const lt = cl(Math.atan(sp * A.yawRate / 9.8) * 0.45, -0.12, 0.12) * m; o[CH.PX] += sn(lt) * 0.3; o[CH.HZ] -= lt * 0.6; o[CH.SZ] -= lt * 0.2;
   // qo'llar: oyoqqa qarama-qarshi
   const Aw = lerp(0.28, 0.52, cl(sp / 3, 0, 1)), Ar = lerp(0.8, 1.05, s2), Aa = m * lerp(Aw, Ar, g);
   for (let i = 0; i < 2; i++) {
@@ -369,12 +372,15 @@ export function animate(rig, anim, dt, speed, ctl) {
   if (A.px == null) { A.px = P.x; A.pz = P.z; A.yaw0 = yaw; }
   let vx, vz; if (ctl) { vx = ctl.vx; vz = ctl.vz; } else { vx = (P.x - A.px) / Math.max(dt, 1e-4); vz = (P.z - A.pz) / Math.max(dt, 1e-4); if (vx * vx + vz * vz > 400) vx = vz = 0; }
   A.px = P.x; A.pz = P.z; A.vx = vx; A.vz = vz;
-  const spRaw = Math.hypot(vx, vz), spPrev = A.sp; A.sp += (spRaw - A.sp) * Math.min(1, dt * 14); const sp = A.sp;
-  const yr = ang(yaw - A.yaw0) / Math.max(dt, 1e-4); A.yaw0 = yaw; A.yawRate += (cl(yr, -8, 8) - A.yawRate) * Math.min(1, dt * 8);
-  const acc = (sp - spPrev) / Math.max(dt, 1e-4); A.acc0 += (cl(acc, -30, 30) - A.acc0) * Math.min(1, dt * 10); A.accF += (cl(A.acc0 * 0.022, -0.18, 0.3) - A.accF) * Math.min(1, dt * 6);
-  A.g = sm(1.8, 3.1, sp); A.s2 = sm(4.9, 7.0, sp); A.m = sm(0.15, 0.9, sp);
-  if (sp > 5.5) A.fat = Math.min(1, A.fat + dt / 9); else A.fat = Math.max(0, A.fat - dt / (sp > 1 ? 30 : 14));
-  if (ctl && ctl.energy != null && ctl.energy < 22) A.fat = Math.max(A.fat, sm(22, 4, ctl.energy));
+  // hamma filtrlar eksponensial (kadr chastotasiga bog'liq emas: 30 Gs ham, 144 Gs ham bir xil), sakrashlar cheklanadi
+  const spRaw = Math.min(Math.hypot(vx, vz), 12), spPrev = A.sp; A.sp += (spRaw - A.sp) * (1 - Math.exp(-dt * 12)); const sp = A.sp;
+  const yr = ang(yaw - A.yaw0) / Math.max(dt, 1e-3); A.yaw0 = yaw; A.yawRate += (cl(yr, -6, 6) - A.yawRate) * (1 - Math.exp(-dt * 6));
+  const acc = (sp - spPrev) / Math.max(dt, 1e-3); A.acc0 += (cl(acc, -12, 12) - A.acc0) * (1 - Math.exp(-dt * 8)); A.accF += (cl(A.acc0 * 0.008, -0.06, 0.08) - A.accF) * (1 - Math.exp(-dt * 5));
+  // yurish (g) ~3 m/s dan yengil yugurishga o'tadi; s2 — Shift bilan tez yugurish
+  A.g = sm(2.2, 4.3, sp); A.s2 = sm(4.9, 7.0, sp); A.m = sm(0.15, 0.9, sp);
+  // charchoq: o'yinchida faqat haqiqiy kuch (energiya) tugaganda; aholida — uzoq yugurishdan
+  if (ctl && ctl.energy != null) A.fat += (sm(20, 3, ctl.energy) - A.fat) * (1 - Math.exp(-dt * 1.5));
+  else if (sp > 5.5) A.fat = Math.min(1, A.fat + dt / 25); else A.fat = Math.max(0, A.fat - dt / (sp > 1 ? 30 : 14));
   A.br += dt * TAU / lerp(A.brPer, 1.25, A.fat); A.swPh = (A.swPh || 0) + dt * lerp(0.42, 0.62, sm(0.3, 1.6, sp));
   if (rig === ENV.player || !ENV.player) ENV.time += dt; // umumiy musiqa vaqti (raqs zarbi)
   // ---- havo / yer ----
@@ -428,7 +434,7 @@ export function animate(rig, anim, dt, speed, ctl) {
   if (A.first) { A.x.set(acc2); A.v.fill(0); } else for (let i = 0; i < NCH; i++) spring(A.x, A.v, i, acc2[i], OMEGA[i], dt);
   if (!(A.x[CH.PY] === A.x[CH.PY]) || !(A.x[CH.UFL] === A.x[CH.UFL])) { A.x.set(NEUT); A.v.fill(0); A.land = A.landV = 0; } // xavfsizlik: NaN bo'lsa tiklanadi
   // ---- oyoqlar, FK/IK, suyaklarga yozish ----
-  planFeet(rig, A, dt, P, yaw, grounded && key !== 'swim');
+  A.dtL = dt; planFeet(rig, A, dt, P, yaw, grounded && key !== 'swim');
   solve(rig, A, A.x, yaw, ctl);
   A.first = false;
 }
@@ -511,7 +517,7 @@ function solve(rig, A, x, yaw, ctl) {
   // chanoq juda baland bo'lsa (qiyalik, uzoq qadam) — tayanch oyog'i yetadigan qilib pasaytiriladi (havodagi oyoq hisobga olinmaydi)
   let drop = 0;
   for (let i = 0; i < 2; i++) { if (ikW[i] < 0.3 || A.ft[i].mode === 1) continue; const h = A.Pw[i ? B.thighR : B.thighL], at = AT[i], hd = Math.hypot(at.x - h.x, at.z - h.z), L = A.LS * 0.99; const vmax = hd < L ? Math.sqrt(L * L - hd * hd) : 0; const need = (h.y - (at.y + vmax)) * Math.min(1, ikW[i]); if (need > drop) drop = need; }
-  A.dropS = A.dropS || 0; A.dropS += (Math.min(drop, 0.5 * s) - A.dropS) * (drop > A.dropS ? 0.6 : 0.2);
+  A.dropS = A.dropS || 0; const dmax = (0.05 + 0.25 * cl(1 - A.w.loco + A.w.air, 0, 1)) * s; A.dropS += (Math.min(drop, dmax) - A.dropS) * (1 - Math.exp(-(drop > A.dropS ? 25 : 8) * A.dtL));
   if (A.dropS > 1e-4) { for (const b of [B.body, B.hips, B.spine, B.chest, B.neck, B.head, B.clavL, B.upL, B.foreL, B.handL, B.fingL, B.clavR, B.upR, B.foreR, B.handR, B.fingR]) A.Pw[b].y -= A.dropS; }
   for (let i = 0; i < 2; i++) {
     const f = A.ft[i], sd = i ? -1 : 1, bT = i ? B.thighR : B.thighL, base = i ? LR : LL;

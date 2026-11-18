@@ -67,6 +67,7 @@ export class Player {
     { const c = g.car, R = c.R, s = c.spec; const lx = (nx - c.p[0]) * R[0] + (nz - c.p[2]) * R[6], lz = (nx - c.p[0]) * R[2] + (nz - c.p[2]) * R[8]; const hx = s.wid / 2 + 0.3, hz = s.len / 2 + 0.3;
       if (Math.abs(lx) < hx && Math.abs(lz) < hz && Math.abs(p[1] - (c.p[1] - s.com)) < s.hgt) { const ox = hx - Math.abs(lx), oz = hz - Math.abs(lz); if (ox < oz) { const k = Math.sign(lx || 1) * ox; nx += R[0] * k; nz += R[6] * k; } else { const k = Math.sign(lz || 1) * oz; nx += R[2] * k; nz += R[8] * k; } } }
     nx = clamp(nx, -3150, 3150); nz = clamp(nz, -3150, 3150);
+    const avx = dt > 1e-4 ? (nx - p[0]) / dt : 0, avz = dt > 1e-4 ? (nz - p[2]) / dt : 0; // haqiqiy siljish (devorga tiralganda ~0) — animatsiya uchun
     p[0] = nx; p[2] = nz; p[1] += v[1] * dt;
     const gy = T.ground(nx, nz, p[1] + 0.7).y;
     if (!this.swim) { if (p[1] <= gy) { if (!this.grounded && v[1] < -9) g.audio.sfx('land', 0.35); p[1] = gy; v[1] = 0; this.grounded = true; } else if (this.grounded && p[1] - gy < 0.45 && v[1] <= 0) p[1] = gy; else this.grounded = false; }
@@ -79,7 +80,7 @@ export class Player {
     let anim = 'idle';
     if (this.lockAnim) anim = this.lockAnim; else if (this.swim) anim = 'swim'; else if (!this.grounded) anim = 'jump'; else if (this.speed > 4.6) anim = 'run'; else if (this.speed > 0.4) anim = 'walk'; else if (this.sit) anim = 'sit'; else if (this.emote) anim = this.emote;
     rig.root.position.set(p[0], p[1], p[2]); rig.root.rotation.y = this.yaw;
-    const C = this.ctl; C.vx = v[0]; C.vz = v[2]; C.vy = v[1]; C.grounded = this.grounded; C.swim = this.swim; C.energy = st.energy; C.moveYaw = moving ? Math.atan2(mx, mz) : null; C.camYaw = camYaw;
+    const C = this.ctl, real = avx * avx + avz * avz < 150; C.vx = real ? avx : v[0]; C.vz = real ? avz : v[2]; // devorga tiralsa oyoq joyida yurmaydi, gavda yiqilayotgandek engashmaydi C.vy = v[1]; C.grounded = this.grounded; C.swim = this.swim; C.energy = st.energy; C.moveYaw = moving ? Math.atan2(mx, mz) : null; C.camYaw = camYaw;
     poseRig(rig, anim, dt, this.speed, C); this.anim = anim;
     const c = Math.cos(this.yaw), s2 = Math.sin(this.yaw); this.R[0] = c; this.R[2] = s2; this.R[6] = -s2; this.R[8] = c;
     // qadam tovushi
