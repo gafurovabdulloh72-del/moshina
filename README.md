@@ -26,6 +26,7 @@ Brauzerda ochiladigan 3D sarguzasht o'yini: katta orol, 22 xil transport, 90 ta 
 10. [Tekshirilmagan narsalar va ma'lum cheklovlar](#10-tekshirilmagan-narsalar-va-malum-cheklovlar)
 11. [Keyingi g'oyalar](#11-keyingi-goyalar)
 12. [Uchinchi tomon kutubxonalari](#12-uchinchi-tomon-kutubxonalari)
+13. [Onlayn rejim](#13-onlayn-rejim)
 
 ---
 
@@ -295,6 +296,7 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | C | kamera (sichqoncha bilan aylantirish) |
 | X | chellenjni bekor qilish |
 | N | musiqa |
+| O / K | onlayn oynasi / chat (xonada) |
 | P | surat rejimi — interfeysni yashiradi (ekranda eslatma turadi, 20 soniyada o'zi qaytadi) |
 | Esc | pauza |
 
@@ -341,6 +343,7 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `living.js` | "hayot" tizimlari: terimchilik, ekish, baliq ovi, aholi, yo'lovchilar, hayvonlar, uy xo'jaligi, qurish, topshiriqlar, albom, bozor |
 | `life.js` | yo'ldagi boshqa mashinalar, qushlar, havo sharlari |
 | `ads.js` | "Kasb Egalari" reklama taxtalari (CanvasTexture) |
+| `net.js`, `coop.js`, `onlineui.js` | onlayn rejim: kirish, bulutli saqlov, reyting; birga o'ynash xonasi; onlayn oynalar ([13](#13-onlayn-rejim)) |
 | `camera.js` | kuzatuvchi kamera: transport, piyoda, durbin |
 | `fx.js` | zarrachalar (chang, tutun, uchqun), parchalar, shina izlari |
 | `audio.js` | sintez qilingan ovoz, dvigatel, generativ musiqa |
@@ -396,7 +399,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
 
-Saqlov brauzerning o'zida turadi: boshqa brauzerda yoki boshqa manzilda (masalan, Vercel'da) o'yin noldan boshlanadi.
+Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
 ### 4.10. Sinov ilgaklari
 
@@ -458,7 +461,7 @@ Muhit o'zgaruvchilari: `NO_TEST=1` (oddiy rejim), `CHROME_PATH` (Chrome joyi), `
 
 **B. Tashlab joylash (terminalsiz).** `npm run build` dan keyin `dist/SAFAR-vercel.zip` ni brauzerda [vercel.com/drop](https://vercel.com/drop) sahifasiga tashlang, loyiha nomini yozing, Deploy ni bosing. Vercel hisobi kerak. Eslatma: har bir tashlash alohida loyiha (alohida manzil) ochadi — doimiy manzil uchun A usuli.
 
-Sayt statik: `index.html` (butun o'yin), `og.jpg`, `vercel.json`.
+Sayt: `index.html` (butun o'yin), `og.jpg`, `vercel.json` va A usulida `api/` funksiyalari (onlayn rejim, [13](#13-onlayn-rejim)). B usulida (zip) `api/` yo'q — u yerda onlayn "mavjud emas" bo'ladi.
 
 **Ulashish rasmi.** Havola Telegram, WhatsApp, Facebook yoki X'da ulashilganda `og.jpg` chiqishi uchun sahifadagi `og:image` to'liq manzil (`https://…/og.jpg`) bo'lishi kerak — nisbiy `/og.jpg` bilan rasm chiqmasligi mumkin. A usulida buni yig'ish skripti o'zi qiladi: Vercel yig'ish paytida loyiha domenini `VERCEL_PROJECT_PRODUCTION_URL` o'zgaruvchisida beradi, `tools/build.mjs` esa sayt nusxasida (`dist/vercel/index.html`) `og:image` ni to'liq manzilga aylantiradi va domen Vercel'ning o'ziniki (`*.vercel.app`) bo'lsa `og:url` ham qo'shadi. `dist/SAFAR.html` bundan o'zgarmaydi. Kompyuterda yig'ilganda (B usuli) manzil noma'lum, shuning uchun `og:image` nisbiy qoladi.
 
@@ -471,7 +474,7 @@ Sayt statik: `index.html` (butun o'yin), `og.jpg`, `vercel.json`.
 
 Egasining talablari — har qanday o'zgarishda saqlanadi:
 
-1. **O'yin bitta HTML fayl.** Tashqi rasm, ovoz, shrift yoki skript yuklanmaydi; internet shart emas.
+1. **O'yin bitta HTML fayl.** Tashqi rasm, ovoz, shrift yoki skript yuklanmaydi; internet shart emas. *Istisno — faqat onlayn rejim* ([13](#13-onlayn-rejim)): saytda o'yinchi o'zi Onlayn oynasini ochganda Telegram kirish skripti, `api/` va PeerJS ulanadi; ularsiz o'yin to'liq ishlaydi.
 2. **Foydalanuvchi terminal ishlatmaydi.** O'ynash — faylni ikki marta bosish; joylash — brauzerda.
 3. **Barcha matn o'zbekcha (lotin).**
 4. **Haqiqiy brendlar yo'q.** Transport nomlari va dizaynlari o'zimizniki.
@@ -571,3 +574,101 @@ Ma'lum cheklovlar:
 | [esbuild](https://esbuild.github.io) | MIT | faqat yig'ishda |
 | [playwright-core](https://playwright.dev) | Apache-2.0 | faqat sinovda |
 | [sharp](https://sharp.pixelplumbing.com) | Apache-2.0 | faqat skrinshot varaqlari va xarita uchun |
+| [PeerJS](https://peerjs.com) 1.5 | MIT | o'yin ichida — onlayn xona (WebRTC) |
+| [peer](https://github.com/peers/peerjs-server) | MIT | faqat sinovda — mahalliy PeerJS brokeri |
+
+---
+
+## 13. Onlayn rejim
+
+Saytda (`https://cargame-self.vercel.app`) o'yin onlayn imkoniyatlarga ega: **Telegram orqali kirish**, **bulutli saqlov**, **reyting** va **do'stlar bilan birga o'ynash** (2–4 kishi). Yuklab olingan `SAFAR.html` avvalgidek internetsiz to'liq ishlaydi — u yerda Onlayn oynasi "faqat sayt orqali ishlaydi" deb tushuntiradi. Internet uzilsa yoki server sozlanmagan bo'lsa ham o'yin buzilmaydi, faqat onlayn qismlar "mavjud emas" bo'ladi.
+
+![Onlayn](docs/img/onlayn.jpg)
+
+### 13.1. O'yinchi uchun
+
+| Imkoniyat | Qanday ishlaydi |
+|---|---|
+| Kirish | Bosh menyu yoki pauza → **🌐 Onlayn** (yoki **O**) → "Log in with Telegram" tugmasi. Telefon raqami yoki parol so'ralmaydi — Telegram o'zi tasdiqlaydi |
+| Eski o'yinni ulash | Kirgan zahoti shu qurilmadagi o'yin hisobga biriktiriladi — **noldan boshlanmaydi**. Hisobda boshqa saqlov bo'lsa, ikkalasining puli, yulduzi, darajasi va o'ynalgan vaqti ko'rsatilib, qaysi biri davom etishi so'raladi |
+| Bulutli saqlov | O'yin har saqlanganda (ko'pi bilan 45 soniyada bir marta) va sahifa yopilganda bulutga yoziladi. Boshqa kompyuter yoki telefonda kirsangiz — o'sha o'yin ochiladi. Brauzerdagi saqlov ham qoladi |
+| Reyting | Onlayn → **🏆 Reyting**: yulduzlar, daraja va har bir poyga, drift/buzish zonasi, radar, tramplin bo'yicha eng yaxshi 20 sayyoh. Rekordlar o'zi yuboriladi |
+| Xona | **＋ Xona ochish** → 6 belgili kod (masalan `K7MP2Q`) chiqadi. Do'stingiz kodni kiritadi yoki **havolani** (`…?xona=K7MP2Q`) ochadi. Ko'pi bilan 4 kishi. Kirmagan o'yinchi ham mehmon sifatida qo'shila oladi |
+| Birga sayohat | Har kim o'z transportida (o'z bo'yog'i bilan) yoki piyoda ko'rinadi, boshida ism yorlig'i. Mini-xarita va katta xaritada do'stlar rangli nuqta. "Yoniga borish" — do'stingiz oldiga ko'chish. Kun vaqti xona egasiniki bilan bir xil |
+| Birga poyga | Xona egasi (👑) poygani tanlaydi → hamma start chizig'ida yonma-yon turadi, umumiy sanoq, panelda "O'rin: 2/3". Oxirida natija jadvali |
+| Chat | **K** — yozish, Enter — yuborish; tez emojilar (👋 😂 👍 🔥 😎 🏁 ❤️ 😮) do'stingiz boshi ustida ham chiqadi |
+| Uzilish | Kimdir chiqsa — xabar chiqadi. Xona egasi chiqsa, egalik keyingi o'yinchiga o'tadi va xona kodi ishlayveradi |
+
+### 13.2. Qanday tuzilgan
+
+```
+brauzer (o'yin)  ──HTTPS──▶  Vercel funksiyalari api/*.js  ──REST──▶  Upstash Redis (saqlov, reyting)
+      │                         ▲
+      │                         └── Telegram imzosi bot tokeni bilan serverda tekshiriladi
+      └──WebRTC (to'g'ridan-to'g'ri)──▶ do'stlar brauzeri      (tanishtirish: PeerJS brokeri, STUN)
+```
+
+| Fayl | Vazifasi |
+|---|---|
+| `api/_lib.js` | umumiy: JSON javob, so'rov tanasi, sessiya tokeni (HS256 JWT, `node:crypto`), Telegram imzosi, Upstash REST, tezlik cheklovi |
+| `api/config.js` | `GET` — bot nomi, nima yoqilgani, PeerJS brokeri va STUN/TURN ro'yxati (sirsiz) |
+| `api/auth.js` | `POST` — Telegram ma'lumotini tekshiradi (HMAC-SHA256, kalit = SHA256(bot token), 24 soatdan eski emas) → 30 kunlik sessiya; `GET` — sessiya amal qiladimi |
+| `api/save.js` | `GET/PUT` — har Telegram foydalanuvchisiga bitta saqlov (`safar_save_v2` formati, `v: 2`, 200 KB gacha). Saqlanganda yulduz/daraja reytingi server tomonda saqlovdan hisoblanadi |
+| `api/top.js` | `GET ?id=` — eng yaxshi 20 ta; `POST` — rekordlar. Chellenj turi va aqlga sig'adigan chegaralar serverda (`acts.js` → `actKinds()`), har o'yinchining eng yaxshisi saqlanadi |
+| `src/net.js` | o'yin tomoni: config, kirish (Telegram skripti faqat Onlayn oynasi ochilganda yuklanadi), bulut bilan solishtirish va avtomatik yuklash, rekordlarni yuborish |
+| `src/coop.js` | xona: PeerJS ulanishlari (har kim har kim bilan), holat paketlari (15 marta/s), boshqa o'yinchilarni silliq chizish (120 ms orqada oraliqlash + qisqa ekstrapolyatsiya), chat, birga poyga, egalik o'tishi, yumshoq to'qnashuv |
+| `src/onlineui.js` | oynalar: Onlayn, saqlov tanlovi, Reyting, poyga natijasi; HUD'dagi `🌐 KOD 2/4` belgisi |
+| `tools/dev-server.mjs` | mahalliy "Vercel": `dist/vercel` + `api/` + soxta Redis + mahalliy PeerJS brokeri (`npm run dev`) |
+
+Muhim qarorlar:
+
+- **Kim nimani hisoblaydi.** Har o'yinchi o'z transporti fizikasini o'zi hisoblaydi (bitta o'yinchi fizikasi o'zgarmagan — `npm test` jadvali aynan bir xil). Xona egasi umumiy narsalarga hakam: kun vaqti, poyga starti va natija jadvali, kim qaysi joyda.
+- **Boshqa o'yinchi modeli** — o'yindagi haqiqiy transport modellari (`buildVehicle(id, {lite: true})`) va odam modeli (`makeRig` + `poseRig`). Ularning chirog'i olib tashlanadi — sahnadagi chiroqlar soni o'zgarmaydi (aks holda sheyderlar qayta kompilyatsiya bo'lib o'yin qotadi).
+- **Xona kodi** = xona egasining PeerJS id'si (`safarxona-<kod>`). Ega chiqsa, keyingi o'yinchi shu id'ni qayta egallaydi.
+- **Xavfsizlik.** Shaxsni server faqat imzolangan sessiyadan biladi; bot tokeni va sessiya siri brauzerga chiqmaydi. Saqlov hajmi 200 KB bilan, so'rovlar IP/foydalanuvchi bo'yicha cheklangan. Reytingda imkonsiz natijalar (masalan, 3 soniyalik poyga) rad etiladi — lekin to'liq firibgarlikdan himoya emas (o'yin brauzerda hisoblanadi).
+
+### 13.3. Egasi uchun: bir martalik sozlash
+
+Terminal kerak emas — hammasi brauzerda.
+
+**1. Telegram bot (kirish uchun)**
+
+1. Telegram'da **@BotFather** ni oching → `/newbot` → bot nomi (masalan, `SAFAR o'yini`) → bot manzili (`..._bot` bilan tugaydi, masalan `safar_oyin_bot`). BotFather **token** beradi (`1234567890:AA...`) — uni hech kimga ko'rsatmang.
+2. Shu yerda `/setdomain` → botingizni tanlang → `cargame-self.vercel.app` deb yozing. (Busiz kirish tugmasi "Bot domain invalid" deydi.)
+
+**2. Bulut bazasi (saqlov va reyting uchun)**
+
+1. vercel.com → loyiha (cargame-self) → **Storage** → **Create Database** → **Upstash for Redis** (bepul reja) → yarating va loyihaga ulang (**Connect Project**). Vercel `KV_REST_API_URL` va `KV_REST_API_TOKEN` ni o'zi qo'shadi.
+
+**3. Muhit o'zgaruvchilari**
+
+Vercel → loyiha → **Settings** → **Environment Variables** → har birini qo'shing (Production, Preview, Development belgilansin):
+
+| Nomi | Qiymati |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | BotFather bergan token |
+| `TELEGRAM_BOT_USERNAME` | bot manzili, `@` siz (masalan `safar_oyin_bot`) |
+| `SESSION_SECRET` | istalgan uzun tasodifiy matn (32+ belgi). Berilmasa token asosida hosil qilinadi, lekin alohida qo'ygan ma'qul |
+
+Ixtiyoriy: `TURN_URLS`, `TURN_USERNAME`, `TURN_CREDENTIAL` — TURN server (qattiq tarmoqlarda ulanish uchun, 13.4 ga qarang); `PEER_HOST`, `PEER_PORT`, `PEER_PATH`, `PEER_SECURE`, `PEER_KEY` — o'z PeerJS brokeringiz (bo'lmasa bepul ommaviy `0.peerjs.com`).
+
+**4. Qayta joylash.** Vercel → **Deployments** → oxirgisi → **⋯ → Redeploy** (o'zgaruvchilar faqat yangi joylashda kuchga kiradi). Tekshirish: `https://cargame-self.vercel.app/api/config` sahifasida `"login":true,"save":true` bo'lishi kerak.
+
+Biror qadam qilinmasa nima bo'ladi: bot yo'q — kirish tugmasi o'rniga "hali sozlanmagan" yozuvi, lekin xona/birga o'ynash mehmon sifatida ishlaydi; baza yo'q — kirish ishlaydi, bulut va reyting "ulanmagan".
+
+### 13.4. Cheklovlar
+
+- **NAT/TURN.** Ulanish to'g'ridan-to'g'ri (WebRTC). Uy va mobil internetda odatda ishlaydi; ba'zi korporativ/maktab tarmoqlari yoki ikki tomonda ham "qattiq NAT" bo'lsa, TURN serversiz ulanmaydi. TURN (masalan, Cloudflare Calls TURN yoki metered.ca) `TURN_*` o'zgaruvchilari bilan qo'shiladi.
+- **Ommaviy PeerJS brokeri** (`0.peerjs.com`) bepul va kafolatsiz: u ishlamay qolsa xona ochilmaydi (o'yinning o'zi ishlayveradi). Kerak bo'lsa o'z brokeringiz (`npm` paketi `peer`) istalgan serverda ishga tushirilib, `PEER_*` bilan ulanadi.
+- Har o'yinchi o'z dunyosini hisoblaydi: do'stlarning transporti ko'rinadi va itaradi, lekin yo'ldagi boshqa mashinalar, tangalar, sandiqlar, tosh va qutilar har kimda alohida. Shikast/pachoqlanish do'stlarga ko'rinmaydi.
+- Reyting "aqlga sig'adigan chegara" bilan tekshiriladi, lekin brauzer o'yini bo'lgani uchun mohir firibgarni to'liq to'xtatmaydi.
+- Kirishdan keyin bulutdagi saqlov olinganda sahifa bir marta qayta yuklanadi.
+- Haqiqiy Telegram bilan kirish va Vercel'dagi funksiyalar bu muhitda sinalmagan (Telegram va vercel.app ochilmaydi) — imzo algoritmi sinov tokeni bilan, funksiyalar mahalliy serverda sinalgan.
+
+### 13.5. Sinov
+
+| Buyruq | Nimani tekshiradi | Vaqt |
+|---|---|---|
+| `npm run test:api` | `api/` funksiyalari: Telegram imzosi (to'g'ri/buzilgan/eski), sessiya tokeni (`alg:none` hujumi ham), saqlov (200 KB, format), reyting (chegaralar, tartib, eng yaxshisi saqlanishi), tezlik cheklovi, sozlanmagan muhit | ~1 s |
+| `npm run test:online` | ekransiz Chrome'da 4 o'yinchi: kirish, bulutga yuklash, boshqa qurilmada olish, tanlov oynasi, reyting, xona/kod, bir-birini ko'rish (skrinshot), chat (HTML bajarilmaydi), birga poyga va natija, egalik o'tishi, yuklab olingan faylda "mavjud emas". Avval `npm run build` | ~5–8 daq |
+| `npm run dev` | mahalliy sayt `http://127.0.0.1:8787` (sinov boti, xotiradagi baza, mahalliy broker) | — |

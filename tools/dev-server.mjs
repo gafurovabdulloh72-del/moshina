@@ -16,12 +16,13 @@ export async function startDev({ port = 8787, peerPort = 9000, quiet = false } =
   if (!process.env.KV_REST_API_URL && !process.env.UPSTASH_REDIS_REST_URL) { const r = await startFakeRedis(); process.env.KV_REST_API_URL = r.url; process.env.KV_REST_API_TOKEN = r.token; stop.push(r.close); }
   if (!process.env.TELEGRAM_BOT_TOKEN) { process.env.TELEGRAM_BOT_TOKEN = TEST_BOT_TOKEN; process.env.TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || 'safar_sinov_bot'; }
   if (!process.env.SESSION_SECRET) process.env.SESSION_SECRET = 'dev-session-secret';
-  if (peerPort && !process.env.PEER_HOST) {
-    const { PeerServer } = await import('peer');
-    const ps = PeerServer({ port: peerPort, path: '/', allow_discovery: false });
-    await new Promise((ok) => setTimeout(ok, 200));
-    Object.assign(process.env, { PEER_HOST: '127.0.0.1', PEER_PORT: String(peerPort), PEER_PATH: '/', PEER_SECURE: '0' });
-    stop.push(() => new Promise((ok) => { try { ps._server ? ps._server.close(ok) : ps.close ? ps.close(ok) : ok(); } catch { ok(); } setTimeout(ok, 300); }));
+  if (peerPort !== false && peerPort != null && !process.env.PEER_HOST) {
+    // mahalliy PeerJS brokeri (faqat IPv4 127.0.0.1 da — ba'zi muhitlarda IPv6 yo'q)
+    const { ExpressPeerServer } = await import('peer'), express = (await import('express')).default;
+    const app = express(), hs = http.createServer(app); app.use('/', ExpressPeerServer(hs, { path: '/', allow_discovery: false }));
+    await new Promise((ok) => hs.listen(peerPort, '127.0.0.1', ok));
+    Object.assign(process.env, { PEER_HOST: '127.0.0.1', PEER_PORT: String(hs.address().port), PEER_PATH: '/', PEER_SECURE: '0' });
+    stop.push(() => new Promise((ok) => { hs.closeAllConnections && hs.closeAllConnections(); hs.close(() => ok()); setTimeout(ok, 500); }));
   }
   const fnCache = {};
   const srv = http.createServer(async (req, res) => {

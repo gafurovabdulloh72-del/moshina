@@ -11,6 +11,9 @@ npm test               # fizika (22 transport, rul) — ~4 s, natijani o'qib tek
 npm run test:roads     # avtopilot barcha yo'llarni haydab chiqadi — ~7 s, har satr OK bo'lsin
 npm run test:smoke     # o'yin yuklanadimi — ~20 s
 npm run test:browser   # barcha brauzer sinovlari — ~5 daq
+npm run test:api       # onlayn server funksiyalari (soxta Redis) — ~1 s
+npm run test:online    # 4 o'yinchi: kirish, bulut, xona, poyga (avval build) — ~5–8 daq
+npm run dev            # mahalliy sayt + api + soxta Redis + PeerJS brokeri (127.0.0.1:8787)
 ```
 
 Brauzer sinovi `dist/SAFAR.html` ni ochadi — **avval `npm run build`**. Ixtiyoriy tekshiruv va skrinshot:
@@ -31,6 +34,7 @@ STEPS='[["","G.sim(2)"],["rasm_nomi","G.advance(0.3)"]]' node tools/shot.mjs too
 ## Buzilmasligi kerak bo'lgan qoidalar
 
 - **Bitta HTML fayl, tashqi resurs yo'q.** `fetch`, tashqi rasm/ovoz/shrift/CDN qo'shmang. Model va teksturalar kodda (`GB`, CanvasTexture), ovoz WebAudio'da sintez qilinadi.
+- **Istisno — faqat onlayn rejim** (egasi qarori; README 13): `api/*.js` (Vercel funksiyalari), `src/net.js`, `src/coop.js`, `src/onlineui.js`. Tarmoq faqat o'yinchi Onlayn oynasini ochganda yoki kirgan bo'lsa ishlaydi; Telegram skripti faqat kirish oynasida yuklanadi. Yuklab olingan `SAFAR.html` (file://) internetsiz to'liq ishlashi SHART — onlayn qism "mavjud emas" deb chiqadi. Onlayn kod bitta o'yinchi fizikasini o'zgartirmaydi (`npm test` jadvali bir xil qolsin). Sir (bot tokeni, sessiya siri, Redis tokeni) faqat serverda — mijoz to'plamiga yozilmaydi. Server shaxsni faqat imzolangan sessiyadan biladi. Boshqa o'yinchi modellarida chiroq bo'lmasin (`m.root.remove(m.spot)`).
 - **Egasi terminal ishlatmaydi.** Unga beriladigan narsa — tayyor fayl (`dist/SAFAR.html`, `dist/SAFAR-vercel.zip`) yoki havola.
 - **Matnlar o'zbekcha (lotin)**, kod izohlari ham.
 - **Haqiqiy brend, tayyor musiqa, birovning rasmi ishlatilmaydi.**

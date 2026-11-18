@@ -34,7 +34,7 @@ class Remote {
     this.ctl = { vx: 0, vz: 0, vy: 0, grounded: true, swim: false, energy: 100, moveYaw: null, camYaw: 0 };
     this.tagC = document.createElement('canvas'); this.tagC.width = 512; this.tagC.height = 128; this.tagTex = new THREE.CanvasTexture(this.tagC); this.tagTex.colorSpace = THREE.SRGBColorSpace;
     this.tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tagTex, transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, fog: false, toneMapped: false }));
-    this.tag.scale.set(0.2, 0.05, 1); this.tag.renderOrder = 999; this.tag.visible = false; game.scene.add(this.tag); this.drawTag();
+    this.tag.scale.set(0.26, 0.065, 1); this.tag.renderOrder = 999; this.tag.visible = false; game.scene.add(this.tag); this.drawTag();
   }
   drawTag(emoji) {
     const c = this.tagC.getContext('2d'), m = this.m, col = SLOT_COLORS[m.slot % 4]; c.clearRect(0, 0, 512, 128);
@@ -359,9 +359,13 @@ export function initCoop(game) {
     if (!n || !peer) return;
     acc += dt; if (acc >= RATE) { acc = Math.min(acc - RATE, RATE); const d = packet(); bcast(d); }
     if (C.room.isHost && (hourT += dt) > 3) { hourT = 0; bcast({ t: 'h', h: game.act && game.act.hourBak != null ? game.act.hourBak : game.hour }); }
-    const ms = performance.now();
-    if (ms - lastPing > 4000) { lastPing = ms; bcast({ t: 'pi', x: ms }); for (const m of C.members.values()) if (ms - m.last > 20000) { try { m.conn.close(); } catch { /* */ } onClose(m.conn); } }
   });
+  // aloqa nazorati kadr siklidan tashqarida: brauzer varag'i yashirilganda (kadrlar to'xtaydi) ham ping ketadi va aloqa uzilmaydi; 45 soniya jim qolgan o'yinchi — chiqib ketgan
+  setInterval(() => {
+    if (!C.room || !peer) return; const ms = performance.now();
+    if (ms - lastPing > 3000) { lastPing = ms; bcast({ t: 'pi', x: ms }); }
+    for (const m of [...C.members.values()]) if (ms - m.last > 45000) { try { m.conn.close(); } catch { /* */ } onClose(m.conn); }
+  }, 1000);
 
   // taklif havolasi: ?xona=KOD — sahifa ochilganda xonaga qo'shilish taklif qilinadi
   C.inviteCode = (() => { try { return normCode(new URLSearchParams(location.search).get('xona') || ''); } catch { return ''; } })();
