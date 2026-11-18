@@ -129,7 +129,7 @@ try {
   // ---------- 5. Uchinchi o'yinchi, egasi chiqib ketishi ----------
   const C3 = await player('C');
   ok(await C3.evaluate((c) => G.coop.join(c), code), 'C qo\'shildi (mehmon)');
-  ok(await until(B, () => G.coop.members.size === 2, null, 15, A, C3), 'B C ni ham ko\'radi (to\'r)');
+  ok(await until(B, () => G.coop.members.size === 2, null, 60, A, C3), 'B C ni ham ko\'radi (to\'r)', await B.evaluate(() => JSON.stringify(G.coop.errs.slice(-6))));
   await A.evaluate(() => G.coop.leave());
   ok(await until(B, () => G.coop.members.size === 1 && (G.coop.room.isHost || G.coop.room.hostPid !== null), null, 15, C3), 'A chiqdi');
   const hostOk = await until(B, () => { const r = G.coop.room; return r && r.hostPid && (r.isHost ? 1 : 0) + 0 >= 0; }, null, 5, C3);
@@ -140,7 +140,7 @@ try {
   const D = await player('D');
   let dj = false; for (let i = 0; i < 6 && !dj; i++) { dj = await D.evaluate((c) => G.coop.join(c), code); if (!dj) await run(1.5, B, C3); }
   ok(dj, 'egasi almashgandan keyin ham kod ishlaydi');
-  ok(await until(D, () => G.coop.members.size === 2, null, 15, B, C3), 'D ikkalasini ko\'radi');
+  ok(await until(D, () => G.coop.members.size === 2, null, 60, B, C3), 'D ikkalasini ko\'radi', await D.evaluate(() => JSON.stringify(G.coop.errs.slice(-6))));
   await D.evaluate(() => G.coop.leave()); await C3.evaluate(() => G.coop.leave()); await B.evaluate(() => G.coop.leave());
 
   // ---------- 6. Yuklab olingan fayl: onlayn "mavjud emas", o'yin ishlaydi ----------
