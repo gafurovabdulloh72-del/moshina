@@ -103,8 +103,8 @@ function assemble(v, B) {
   const M = vmats(), paintMat = paintMaterial(v.hex, B.seam), partPaint = paintMaterial(v.hex); partPaint.color = paintMat.color; // bitta rang obyekti: setPaint ikkalasini bo'yaydi
   const mesh = (gb, mat, shadow = true, weld = false) => { const m = new THREE.Mesh(gb.build(weld), mat); m.castShadow = shadow; m.receiveShadow = true; tilt.add(m); return m; };
   const body = mesh(B.paint, paintMat, true, true), trimMesh = mesh(B.trim, M.trim, true, true);
-  const deform = [body, trimMesh];
-  if (B.glass.count) { const gm = mesh(B.glass, M.glass, false, true); gm.receiveShadow = false; deform.push(gm); }
+  const dm = [body, trimMesh]; // shikastlanadigan haqiqiy meshlar (deform — ularni boshqaruvchi panjara, nusxada yasaladi)
+  if (B.glass.count) { const gm = mesh(B.glass, M.glass, false, true); gm.receiveShadow = false; dm.push(gm); }
   const parts = {};
   for (const name in B.parts || {}) {
     const [gb, zone, thr, painted] = B.parts[name]; if (!gb.count) continue;
@@ -125,9 +125,8 @@ function assemble(v, B) {
   }
   const spot = new THREE.SpotLight(0xfff0d0, 0, 120, 0.62, 0.55, 1.0);
   spot.position.set(0, B.lampY != null ? B.lampY : 0.3, s.len / 2 - 0.1); spot.target.position.set(0, -1.6 - s.com + 0.79, s.len / 2 + 20); root.add(spot); root.add(spot.target);
-  let rider = null;
-  if (B.rider) { const g = riderGeo2(B.rider); if (B.rider.x) g.translate(B.rider.x, 0, 0); rider = new THREE.Mesh(g, M.trim); rider.castShadow = true; rider.receiveShadow = true; rider.visible = false; tilt.add(rider); }
-  const out = { id: v.id, v, spec: s, root, tilt, body, trimMesh, deform, parts, paintMat, headMat, tailMat, brakeMat, revMat, sigLMat, sigRMat, wheels, spot, rider, open: !!B.rider, fork: null, crank: null, bike: !!s.bike, _seam: B.seam, _partPaint: partPaint };
+  const rider = null; // haydovchi nusxada qo'shiladi (attachRider)
+  const out = { id: v.id, v, spec: s, root, tilt, body, trimMesh, deform: [], _dm: dm, parts, paintMat, headMat, tailMat, brakeMat, revMat, sigLMat, sigRMat, wheels, spot, rider, _rd: B.rider || null, open: !!B.rider, fork: null, crank: null, bike: !!s.bike, _seam: B.seam, _partPaint: partPaint };
   if (B.fork) { const f = new THREE.Mesh(B.fork.build(), M.trim); f.castShadow = true; f.receiveShadow = true; f.position.set(0, 0, s.wzF); f.geometry.translate(0, 0, -s.wzF); tilt.add(f); out.fork = f; }
   if (B.crank) { const c = new THREE.Mesh(B.crank.gb.build(), M.trim); c.castShadow = true; c.position.set(0, B.crank.y, B.crank.z); c.geometry.translate(0, -B.crank.y, -B.crank.z); tilt.add(c); out.crank = c; }
   return out;
@@ -172,6 +171,8 @@ function genCar(v, o) {
     return P;
   }, (i, j, st) => { const y = GG[i][j][1]; return 0.8 + 0.2 * Math.min(1, Math.max(0, (y - st.yB) / 0.32)); });
   if (hoodP) B.parts.hood = [hoodP, 'front', 26, true];
+  // bamper uzilganda teshik ko'rinmasin: uning ortida qora qoplama (trimda — panjara bilan birga eziladi)
+  if (!sep) { T.mat(0x121316, 0.8, 0); emitInner(body, T, (i, j, s0, s1) => { if (j < 2 || j >= 8 || s0.raised[j] || s1.raised[j]) return false; const zc = (s0.z + s1.z) / 2, yc = cy(i, j); return (zc > zBF && yc < yBF) || (zc < zBR && yc < yBR); }, 0.06, true); }
   // panel chiziqlari (bo'yoq sheyderida)
   const hz = body.section(o.cowl + 0.3 < hl ? o.cowl + 0.3 : hl - 0.2).P[14][0], tz = blB != null ? body.section(blB - 0.2).P[14][0] : 0;
   B.seam = { a: [o.hoodPart || o.hoodSeam ? o.cowl + 0.035 : -99, hz, o.trunk ? blB - 0.035 : -99, tz], b: (o.doors || []).concat([-99, -99, -99, -99]).slice(0, 4), c: [Y(0.1), Y((o.belt[1] || o.belt[0])[1]) - 0.015, W * 0.72, Y(Math.min(o.hoodY, o.deckY || 9) - 0.12)] };
@@ -258,7 +259,7 @@ function carTrim(c) {
   if (o.fin && o.rr != null) { const z = o.rr + 0.12, y = body.topY(0, z); B.paint.rbox(0, y + 0.03, z, 0.05, 0.07, 0.17, 0.02, 1, { tz: 0.4 }); }
   // dvigatel bo'limi (kapot uchsa ko'rinadi) va ichki zarba to'sig'i
   if (o.hoodPart) { const hy = Math.min(o.hoodY, o.top[1][1]); T.mat(0x2e3036, 0.5, 0.6).rbox(0, Y(hy - 0.4), (o.cowl + hl) / 2, W * 1.1, 0.34, (hl - o.cowl) * 0.6, 0.04, 1); T.mat(0x8a8e96, 0.3, 0.9).rbox(0, Y(hy - 0.21), (o.cowl + hl) / 2 - 0.1, W * 0.6, 0.06, (hl - o.cowl) * 0.3, 0.02, 1); }
-  T.mat(0x18191c, 0.7, 0.2).rbox(0, Y(0.3), body.endZ(0, Y(0.3), 1) - 0.32, W * 1.05, 0.26, 0.12, 0.03, 1);
+  { const zb = body.endZ(0, Y(0.3), 1) - 0.32, y1 = Math.min(Y(0.43), body.topY(W * 0.55, zb) - 0.05), y0 = Math.max(Y(0.06), y1 - 0.26); if (y1 - y0 > 0.06) T.mat(0x18191c, 0.7, 0.2).rbox(0, (y0 + y1) / 2, zb, W * 1.05, y1 - y0, 0.12, 0.03, 1); } // kapot ostidan chiqmaydi
 }
 // Salon: torpeda, rul, o'rindiqlar, eshik qoplamalari, shift
 function carInterior(c) {
@@ -320,7 +321,7 @@ const STYLE = {
     extra: (c) => { pickupBed(c, -0.6); monsterChassis(c); scoop(c); stripes(c, 0xf0b83a); lightBar(c); } },
   super: { cowl: 0.95, rf: 0.2, rr: -0.45, deck: -1.6, blz: [-0.45, -0.95], top: [[2.25, 0.22], [2.15, 0.36, 0.1], [1.9, 0.42, 0.3], [0.95, 0.55, 0.25], [0.2, 1.03, 0.35], [-0.45, 1.02, 0.35], [-1.6, 0.78, 0.3], [-2.15, 0.7, 0.08], [-2.25, 0.5]], belt: [[2.25, 0.4], [0.95, 0.53], [-0.4, 0.68], [-2.25, 0.7]],
     bot: [[2.25, 0.14], [1.95, 0.03, 0.2], [-1.9, 0.03, 0.2], [-2.25, 0.2]], roofY: 1.03, hoodY: 0.55, deckY: 0.78, tumble: 0.7, hoodX: 0.84, pF: 2.4, pR: 3.2, taperF: 0.08, side: [1, 0.99, 0.965, 0.93], win: [[0.93, -0.4]], bl: true, doors: [0.88, -0.42], handles: [], twoSeat: true, seatY: 0.22, seatZ: -0.15, drvLean: -0.35,
-    head: [0.52, 0.94, 0.27, 0.35], tail: [0.4, 0.96, 0.5, 0.6], tailBar: true, grille: [0.5, 0.08, 0.22], noIntake: true, plateF: 0.15, plateR: 0.3, prof: 'sport', rim: 0x1d1e22, wstyle: 'split', spokes: 5, cal: 0xf0b83a, ww: 0.26, exhaust: [{ x: 0.12, dual: true, r: 0.045, y: 0.2 }],
+    head: [0.52, 0.94, 0.27, 0.35], tail: [0.4, 0.96, 0.5, 0.6], tailBar: true, grille: [0.5, 0.16, 0.25], noIntake: true, plateF: 0.205, plateR: 0.3, prof: 'sport', rim: 0x1d1e22, wstyle: 'split', spokes: 5, cal: 0xf0b83a, ww: 0.26, exhaust: [{ x: 0.12, dual: true, r: 0.045, y: 0.2 }],
     extra: (c) => { superAero(c); } },
 };
 
@@ -372,7 +373,16 @@ function lipSpoiler(c, painted) {
   ex.color(painted ? 0xffffff : 0x121316); ex.rbox(0, y + 0.03, z, W * 1.7, 0.035, 0.18, 0.015, 1, { tz: 0.7 });
   B.parts.extra = [ex, 'rear', 34, painted];
 }
-function splitter(c) { const { B, body, W, Y, o } = c, yy = Y(Math.max(0.1, (o.bot ? o.bot[0][1] : 0.25) + 0.04)); B.bF.color(0x111215).rbox(0, Y(0.04), body.endZ(0, yy, 1) - 0.06, W * 1.7, 0.025, 0.2, 0.01, 1); B.bF.color(0xffffff); }
+// Old splitter: burun planiga ergashadi (burchaklarda orqaga egiladi), bamper tagidan 3 sm chiqadi
+function splitter(c) {
+  const { B, body, W, Y, s } = c, g = B.bF, zmin = s.wzF + s.rF + 0.1, pts = [];
+  const y = Math.max(Y(0.035), body.bot(body.endZ(0, body.bot(body.zf) + 0.03, 1) - 0.14) - 0.012), yy = y + 0.035; // burun pastki labi balandligida
+  let xm = W * 0.9; while (xm > 0.2 && body.endZ(xm, yy, 1) < zmin) xm -= 0.02;
+  for (let k = 0; k <= 16; k++) { const x = -xm + (2 * xm * k) / 16; pts.push([x, y, body.endZ(x, yy, 1) + 0.03]); }
+  g.color(0x111215); g.sweep(pts, [[-0.012, -0.012], [0.19, -0.012], [0.19, 0.012], [-0.012, 0.012]], [0, 1, 0], { closed: true, flat: true });
+  for (const p of [pts[0], pts[16]]) g.rbox(p[0], y, p[2] - 0.09, 0.03, 0.026, 0.2, 0.008, 1);
+  g.color(0xffffff);
+}
 // Kapot havo olgichi
 function scoop(c) {
   const { B, body, o, hl } = c, g = B.hoodP || B.paint, z = (o.cowl + hl) / 2 - 0.08, y = body.topY(0, z);
@@ -758,20 +768,80 @@ function genBike(v) {
 
 STYLE.jip = Object.assign({}, JEEP, { extra: (c) => jeepExtras(c, { flares, bullBar, rearPanes, lightBar }) });
 
+// Shikastlanish panjarasi (FFD): damage.js zich korpus o'rniga siyrak panjara nuqtalarini suradi (geometry.attributes.position + computeVertexNormals
+// interfeysi bir xil), haqiqiy meshlar (bo'yoq, trim, ichki qoplama, oyna) silliqlangan siljishga uch chiziqli ergashadi: qatlamlar birga yuradi,
+// bir-biridan o'tib ketmaydi, zich to'rda shovqin tikan bo'lib chiqmaydi. Normallar: asl normal + (yangi − asl hisoblangan) farqi — butun joylar o'zgarmaydi
+function makeCage(meshes, len, follow = [], offs = []) { // follow: [{ o, p:[x,y,z], b:Vector3 }] — qattiq jism sifatida ergashadigan obyektlar (haydovchi)
+  const h = Math.min(0.34, Math.max(0.22, len / 16)), bb = new THREE.Box3();
+  const OF = meshes.map((m, i) => offs[i] || new THREE.Vector3()); // qism meshlari: geometriya o'z markazida, joyi — home
+  meshes.forEach((m, i) => { m.geometry.computeBoundingBox(); bb.union(m.geometry.boundingBox.clone().translate(OF[i])); });
+  const x0 = bb.min.x - h * 0.5, y0 = bb.min.y - h * 0.5, z0 = bb.min.z - h * 0.5, nx = Math.ceil((bb.max.x - x0) / h) + 2, ny = Math.ceil((bb.max.y - y0) / h) + 2, nz = Math.ceil((bb.max.z - z0) / h) + 2, NN = nx * ny * nz;
+  const L = new Float32Array(NN * 3); for (let k = 0, q = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++, q += 3) { L[q] = x0 + i * h; L[q + 1] = y0 + j * h; L[q + 2] = z0 + k * h; }
+  const L0 = L.slice(), D = new Float32Array(NN * 3), E = new Float32Array(NN * 3), st = [3, nx * 3, nx * ny * 3], dims = [nx, ny, nz];
+  const O = meshes.map((m) => m.geometry.attributes.position.array.slice()), NA = meshes.map((m) => m.geometry.attributes.normal.array.slice()), NC0 = [];
+  // [1 2 1]/4 silliqlash bitta o'q bo'ylab (chetlarda takrorlanadi)
+  const blur = (src, dst, ax) => {
+    const s = st[ax], n = dims[ax];
+    for (let q = 0; q < NN; q++) { const c = ax === 0 ? q % nx : ax === 1 ? ((q / nx) | 0) % ny : (q / (nx * ny)) | 0, p = q * 3, pa = c > 0 ? p - s : p, pb = c < n - 1 ? p + s : p; for (let e = 0; e < 3; e++) dst[p + e] = (src[pa + e] + 2 * src[p + e] + src[pb + e]) * 0.25; }
+  };
+  const sync = () => {
+    let any = false; for (let q = 0; q < L.length; q++) { const d = L[q] - L0[q]; D[q] = d; if (d) any = true; }
+    // past chastotali filtr (~[1 4 6 4 1]/16 har o'qda): damage.js shovqini (0.35–1 m to'lqin) yumshaydi, asosiy botiq qoladi; 0.8 — zich qobiq uchun yumshatish
+    if (any) { for (let q = 0; q < D.length; q++) D[q] *= 0.8; for (let r = 0; r < 2; r++) { blur(D, E, 0); blur(E, D, 1); blur(D, E, 2); if (r === 0) D.set(E); } }
+    for (let mi = 0; mi < meshes.length; mi++) {
+      const geo = meshes[mi].geometry, pa = geo.attributes.position, a = pa.array, o = O[mi], na = geo.attributes.normal, ox = OF[mi].x - x0, oy = OF[mi].y - y0, oz = OF[mi].z - z0;
+      if (!any) { a.set(o); na.array.set(NA[mi]); }
+      else {
+        if (!NC0[mi]) { a.set(o); geo.computeVertexNormals(); NC0[mi] = geo.attributes.normal.array.slice(); }
+        for (let v = 0; v < a.length; v += 3) {
+          let fx = (o[v] + ox) / h, fy = (o[v + 1] + oy) / h, fz = (o[v + 2] + oz) / h;
+          const i = Math.min(nx - 2, Math.max(0, fx | 0)), j = Math.min(ny - 2, Math.max(0, fy | 0)), k = Math.min(nz - 2, Math.max(0, fz | 0)); fx -= i; fy -= j; fz -= k;
+          const b = ((k * ny + j) * nx + i) * 3, sx = 3, sy = nx * 3, sz = nx * ny * 3;
+          for (let e = 0; e < 3; e++) {
+            const c00 = E[b + e] + (E[b + sx + e] - E[b + e]) * fx, c10 = E[b + sy + e] + (E[b + sy + sx + e] - E[b + sy + e]) * fx, c01 = E[b + sz + e] + (E[b + sz + sx + e] - E[b + sz + e]) * fx, c11 = E[b + sz + sy + e] + (E[b + sz + sy + sx + e] - E[b + sz + sy + e]) * fx;
+            const c0 = c00 + (c10 - c00) * fy, c1 = c01 + (c11 - c01) * fy; a[v + e] = o[v + e] + c0 + (c1 - c0) * fz;
+          }
+        }
+        geo.computeVertexNormals(); const n = na.array, n0 = NC0[mi], nA = NA[mi];
+        for (let v = 0; v < n.length; v += 3) { const x = nA[v] + n[v] - n0[v], y = nA[v + 1] + n[v + 1] - n0[v + 1], z = nA[v + 2] + n[v + 2] - n0[v + 2], l = Math.hypot(x, y, z) || 1; n[v] = x / l; n[v + 1] = y / l; n[v + 2] = z / l; }
+      }
+      pa.needsUpdate = true; na.needsUpdate = true; geo.computeBoundingSphere();
+    }
+    for (const f of follow) { const d = any ? sample(f.p) : [0, 0, 0]; f.o.position.set(f.b.x + d[0], f.b.y + d[1], f.b.z + d[2]); }
+  };
+  const sample = (p) => {
+    let fx = (p[0] - x0) / h, fy = (p[1] - y0) / h, fz = (p[2] - z0) / h; const i = Math.min(nx - 2, Math.max(0, fx | 0)), j = Math.min(ny - 2, Math.max(0, fy | 0)), k = Math.min(nz - 2, Math.max(0, fz | 0)); fx -= i; fy -= j; fz -= k;
+    const out = [0, 0, 0]; for (let c = 0; c < 8; c++) { const di = c & 1, dj = (c >> 1) & 1, dk = c >> 2, w = (di ? fx : 1 - fx) * (dj ? fy : 1 - fy) * (dk ? fz : 1 - fz), q = (((k + dk) * ny + j + dj) * nx + i + di) * 3; out[0] += E[q] * w; out[1] += E[q + 1] * w; out[2] += E[q + 2] * w; } return out;
+  };
+  return { isCage: true, geometry: { attributes: { position: { array: L, needsUpdate: false } }, computeVertexNormals: sync } };
+}
+
 // Namuna nusxasi: bir xil transport ikkinchi marta yasalmaydi — geometriya nusxalanadi (shikastlanadigan meshlar o'z massiviga ega), materiallar yangi
 const TPL = {};
 function cloneModel(src) {
   const root = src.root.clone(true), A = [], Bo = [], map = new Map(); src.root.traverse((o) => A.push(o)); root.traverse((o) => Bo.push(o)); A.forEach((o, i) => map.set(o, Bo[i]));
   const g = (o) => (o ? map.get(o) : null), pm = paintMaterial(src.paintMat.color.getHex(), src._seam), pp = paintMaterial(0xffffff); pp.color = pm.color;
   const lm = new Map([[src.paintMat, pm], [src._partPaint, pp]]); for (const k of ['headMat', 'tailMat', 'brakeMat', 'revMat', 'sigLMat', 'sigRMat']) lm.set(src[k], lampMat(src[k].color.getHex()));
-  const own = new Set(src.deform.concat(Object.values(src.parts).map((p) => p.mesh)));
+  const lamps = A.filter((o) => o.isMesh && lm.has(o.material) && o.material !== src.paintMat && o.material !== src._partPaint && o.parent === src.tilt); // chiroq meshlari ham eziladi
+  const own = new Set(src._dm.concat(Object.values(src.parts).map((p) => p.mesh), lamps));
   for (const o of A) if (o.isMesh) { const c = map.get(o); if (lm.has(o.material)) c.material = lm.get(o.material); if (own.has(o)) c.geometry = o.geometry.clone(); }
-  const out = Object.assign({}, src, { root, tilt: g(src.tilt), body: g(src.body), trimMesh: g(src.trimMesh), deform: src.deform.map(g), paintMat: pm, _partPaint: pp, rider: g(src.rider), fork: g(src.fork), crank: g(src.crank), spot: g(src.spot) });
+  const out = Object.assign({}, src, { root, tilt: g(src.tilt), body: g(src.body), trimMesh: g(src.trimMesh), _dm: src._dm.map(g), paintMat: pm, _partPaint: pp, rider: null, fork: g(src.fork), crank: g(src.crank), spot: g(src.spot) });
   for (const k of ['headMat', 'tailMat', 'brakeMat', 'revMat', 'sigLMat', 'sigRMat']) out[k] = lm.get(src[k]);
   out.brakeMat.color = out.tailMat.color; out.spot.target = g(src.spot.target);
   out.parts = {}; for (const k in src.parts) { const p = src.parts[k]; out.parts[k] = { mesh: g(p.mesh), zone: p.zone, thr: p.thr, on: true, home: p.home.clone() }; }
   out.wheels = src.wheels.map((w) => Object.assign({}, w, { pivot: g(w.pivot), mesh: g(w.mesh), spin: g(w.spin) }));
+  out.rider = attachRider(src, out); const o = src._rd, fol = out.rider && o.hip ? [{ o: out.rider.parent, p: [(o.x || 0) + (o.hip[0] || 0), o.hip[1], o.hip[2]], b: out.rider.parent.position.clone() }] : [];
+  const pm2 = Object.values(out.parts); // qismlar ham panjaraga ergashadi (kapot/bamper korpusdan ajralib qolmaydi)
+  const dl = out._dm.concat(lamps.map(g)); out._lamps = lamps.map(g);
+  out.deform = [makeCage(dl.concat(pm2.map((p) => p.mesh)), src.spec.len, fol, dl.map(() => null).concat(pm2.map((p) => p.home)))];
   return out;
+}
+// Haydovchi/chavandoz: har nusxaga alohida (B.rider ma'lumoti: hip, hand, foot, knee, lean, shirt, pants, helmet, x — yon siljish).
+// Ichida hamma koordinatalar x=0 atrofida, x siljishi o'rovchi guruhda — suyakli odam (rig.js makeRider) bilan almashtirish oson
+function attachRider(src, m) {
+  const o = src._rd; if (!o) return null;
+  const g = src._riderGeo || (src._riderGeo = riderGeo2(o)), r = new THREE.Mesh(g, vmats().trim), w = new THREE.Group();
+  r.castShadow = true; r.receiveShadow = true; r.visible = false; w.position.x = o.x || 0; w.add(r); m.tilt.add(w); return r;
 }
 export function buildVehicle(id, opt = {}) {
   const v = vehById[id] || vehById.jip, key = v.id + (opt.lite ? ':L' : '');

@@ -226,6 +226,7 @@ export function makeBody(D) {
     return W0 * s * (1 - (z >= zc ? D.taperF || 0.04 : D.taperR || 0.02) * t * t);
   };
   const arch = (z) => { let y = -1e9; for (const w of D.wheels || []) { const dz = z - w.z; if (Math.abs(dz) < w.ra) y = Math.max(y, w.cy + Math.sqrt(w.ra * w.ra - dz * dz)); } return y; };
+  const humpY = (z) => { let y = -1e9; for (const w of D.wheels || []) { const R = w.ra + 0.1, dz = z - w.z; if (Math.abs(dz) < R) y = Math.max(y, w.cy + Math.sqrt(R * R - dz * dz) - 0.04); } return y; };
   const archIn = (z) => { let x = 1e9; for (const w of D.wheels || []) if (Math.abs(z - w.z) < w.ra) x = Math.min(x, w.xin); return x; };
   // bitta kesim (keshlanadi: sirt so'rovlari bir xil z ni ko'p marta so'raydi)
   const secC = new Map(), section = (z) => { const key = Math.round(z * 1e5); let r = secC.get(key); if (!r) { r = section0(z); secC.set(key, r); } return r; };
@@ -244,6 +245,9 @@ export function makeBody(D) {
     const x14 = Xe - rr * 1.15, y14b = Ye + rr * 1.1;
     for (const a of [0.34, 0.64, 0.87]) P.push([x14 * (1 - a), y14b + (yT - y14b) * (1 - (1 - a) * (1 - a))]);
     P.push([0, yT]);
+    // ark yelkadan baland bo'lsa — qanot do'ngi: yelka va kapot cheti ark ustidan silliq o'tadi (aks holda ark kesigi kapotdan chiqib, qora "tirnoq" bo'lardi)
+    const hump = (1 - cab) * Math.max(0, humpY(z) - P[8][1]);
+    if (hump > 1e-4) for (let j = 5; j < 18; j++) P[j][1] += hump * HUMPW[j];
     // g'ildirak arkalari: yon nuqtalarni ark chizig'igacha ko'tarish
     const ay = arch(z), ax = archIn(z), raised = [];
     for (let j = 1; j <= 8; j++) { raised[j] = false; if (P[j][0] > ax && P[j][1] < ay) { P[j][1] = ay; raised[j] = true; if (j >= 3) P[j][0] = Math.max(P[j][0], W * 0.985 + (D.flare || 0)); } }
@@ -278,6 +282,7 @@ export function makeBody(D) {
   body.endN = (x, y, end) => { const e = 0.01, ax = Math.abs(x), z0 = body.endZ(ax, y, end), dx = (body.endZ(ax + e, y, end) - z0) / e * (Math.sign(x) || 1), dy = (body.endZ(ax, y + e, end) - z0) / e; return nrm(end > 0 ? [-dx, -dy, 1] : [dx, dy, -1]); };
   return body;
 }
+const HUMPW = [0, 0, 0, 0, 0, 0.15, 0.55, 1, 1, 1, 1, 1, 1, 1, 1, 0.92, 0.55, 0.2, 0];
 const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 
 // Korpusni quruvchilarga tarqatish: who(i, j, s0, s1) -> builder | null; k(i, j) — rang (AO)
@@ -297,11 +302,11 @@ export function emitBody(body, who, kfn) {
   }
 }
 // Ichki qoplama (salon devorlari, shift): tanlangan kataklar ichkariga siljitiladi va teskari qaraydi
-export function emitInner(body, g, sel, off = 0.035) {
+export function emitInner(body, g, sel, off = 0.035, out = false) { // out: tashqariga qaraydi (uzilgan bamper ortidagi qoplama)
   const { G, S } = body, ni = G.length;
   for (const sd of [1, -1]) for (let i = 0; i < ni - 1; i++) for (let j = 0; j < NC - 1; j++) {
     if (!sel(i, j, S[i], S[i + 1])) continue;
-    const q = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]].map(([a, b]) => { const n = body.normalAt(a, b, 0); const p = G[a][b]; return [[p[0] - n[0] * off, p[1] - n[1] * off, p[2] - n[2] * off], [-n[0], -n[1], -n[2]]]; });
+    const q = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]].map(([a, b]) => { const n = body.normalAt(a, b, 0); const p = G[a][b]; return [[p[0] - n[0] * off, p[1] - n[1] * off, p[2] - n[2] * off], out ? n : [-n[0], -n[1], -n[2]]]; });
     g.push(); if (sd < 0) g.scale(-1, 1, 1); g.qS(q[0][0], q[1][0], q[2][0], q[3][0], q[0][1], q[1][1], q[2][1], q[3][1]); g.pop();
   }
 }
