@@ -368,6 +368,7 @@ export function buildPlaces(scene, game) {
       const [x, z] = st.w(lx, lz); T.addPatch(x, z, st.yaw + yaw, len, wid, p.y, p.y + h, T.SURF.WOOD);
       out.ramps.push({ x, z, yaw: st.yaw + yaw, y: p.y + h, y0: p.y, len, wid, h });
     };
+    T.surfZones.push({ x: p.x, z: p.z, r: p.r + 18, surf: T.SURF.ROCK }); // shag'al tub: o't o'smaydi
     ramp(0, 10, 0, 16, 7, 3.6); ramp(-34, -20, 0.9, 14, 7, 2.8, 0xe2572f); ramp(36, -30, -0.7, 20, 8, 5.2, 0x2f7fd0); ramp(-10, -56, 2.4, 12, 6, 2.2, 0x3f9a58); ramp(52, 30, 2.0, 16, 7, 3.8, 0xb84ac8);
     st.put(-60, 30, 0.4, (g) => { g.color(0xf0b83a).box(0, 1.6, 0, 3.2, 2.2, 5); g.color(0x2a2c33).box(0, 0.5, 0, 3.6, 1.0, 5.6); g.color(0xf0b83a); g.push().translate(0, 2.6, 2.4).rotX(-0.7); g.box(0, 0, 3, 0.6, 0.6, 6); g.pop(); g.push().translate(0, 6.4, 6.9).rotX(0.9); g.box(0, 0, 2, 0.5, 0.5, 4.4); g.pop(); g.color(PAL.metalD).box(0, 3.6, 10.2, 1.6, 1.2, 1.4); g.color(0x9fd0e8).box(0, 2.9, -1.2, 2.2, 1.2, 1.6); });
     st.box(-60, 30, 2, 3, 0.4, 5);

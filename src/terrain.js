@@ -35,7 +35,7 @@ export const PLACES = [
   { id: 'dara', name: 'Qizil dara', x: -2030, z: 705, r: 52, blend: 36 },
   { id: 'aerodrom', name: 'Eski aerodrom', x: -1150, z: 30, r: 0, blend: 80, rect: { hl: 430, hw: 48, yaw: 0 } },
   { id: 'qala', name: "Ko'hna qal'a", x: -560, z: 560, r: 62, blend: 60, lift: 4 },
-  { id: 'karyer', name: 'Tosh karyeri', x: 2420, z: -690, r: 95, blend: 50, lift: -9 },
+  { id: 'karyer', name: 'Tosh karyeri', x: 2420, z: -690, r: 95, blend: 38, lift: -12, quarry: 1 },
   { id: 'tegirmon', name: 'Shamol tegirmonlari', x: 700, z: 1900, r: 60, blend: 70, lift: 8 },
   { id: 'vulqon', name: "Olovtog' krateri", x: 0, z: 0, r: 30, blend: 34 },
   { id: 'muzkol', name: "Muzko'l", x: POND.x, z: POND.z, r: POND.r + 12, blend: 60, fixY: 181.4 },
@@ -218,7 +218,8 @@ export function base0(x, z, roadMode = false, noPads = false) {
   if (!noPads && padsReady) {
     for (let i = 0; i < PLACES.length; i++) {
       const p = PLACES[i];
-      const w = padWeight(p, x, z);
+      let w = padWeight(p, x, z);
+      if (p.quarry && w > 0 && w < 1) { const q = w * 3, f = q - Math.floor(q); w = (Math.floor(q) + smoothstep(0.55, 1, f)) / 3; } // karyer devorlari: 3 ta pog'ona
       if (w > 0) h = lerp(h, p.y, w);
     }
   }
@@ -400,8 +401,9 @@ const C = {
   beach: [hexLin(0xf1e0aa), hexLin(0xead69c), hexLin(0xf6e8ba)],
   rock: [hexLin(0x8f929c), hexLin(0x83868f), hexLin(0x9da0a8)],
   redrock: [hexLin(0xa9553a), hexLin(0x9c4c35), hexLin(0xb86343)],
-  lavender: hexLin(0x9a7fd0), seabed: hexLin(0xc9c79a), riverbed: hexLin(0xb9b08c),
+  gravel: hexLin(0xa9a294), lavender: hexLin(0x9a7fd0), seabed: hexLin(0xc9c79a), riverbed: hexLin(0xb9b08c),
 };
+const QUARRY = PLACES.find((p) => p.quarry);
 const BCOL = [C.meadow, C.autumn, C.taiga, C.desert, C.canyon, null, null, C.sakura, C.savanna, C.volcanic];
 const ZB = [0, 1, 2, 3, 4, 7, 8, 9];
 const _c = [0, 0, 0];
@@ -423,6 +425,9 @@ export function groundColor(x, z, h, slope) {
   }
   // lavanda dalalari (o'tloqda)
   if (W[0] > 0.6) { const lv = smoothstep(0.52, 0.66, noise(x * 0.0021 + 100, z * 0.0021 + 60)) * W[0] * (1 - smoothstep(0.1, 0.3, slope)); if (lv > 0) { r = lerp(r, C.lavender[0], lv * 0.8); g = lerp(g, C.lavender[1], lv * 0.8); b = lerp(b, C.lavender[2], lv * 0.8); if (lv > 0.5) _c.lav = 1; else _c.lav = 0; } else _c.lav = 0; } else _c.lav = 0;
+  // karyer: o't emas — shag'al tubi, devorlarda qatlam-qatlam tosh
+  const qw = QUARRY ? padWeight(QUARRY, x, z) : 0;
+  if (qw > 0) { const k = smoothstep(0, 0.35, qw), v = 0.85 + 0.3 * noise(x * 0.05, z * 0.05), band = 0.9 + 0.12 * Math.sin(h * 2.3 + noise(x * 0.02, z * 0.02) * 2); const gr = C.gravel; r = lerp(r, gr[0] * v * band, k); g = lerp(g, gr[1] * v * band, k); b = lerp(b, gr[2] * v * band, k); _c.lav = 0; }
   const redness = Math.min(1, W[3] * 0.5 + W[4]);
   const rk = smoothstep(0.5, 0.85, slope);
   if (rk > 0) {
@@ -432,7 +437,7 @@ export function groundColor(x, z, h, slope) {
   }
   const sn = snowAt(x, z, h) * (1 - 0.8 * smoothstep(0.75, 1.1, slope)) * (1 - W[9]);
   if (sn > 0) { const c = C.snow[0]; r = lerp(r, c[0], sn); g = lerp(g, c[1], sn); b = lerp(b, c[2], sn); if (sn > 0.5) dom = BIOME.SNOW; }
-  const be = smoothstep(4.2, 1.8, h) * (1 - W[9]);
+  const be = smoothstep(4.2, 1.8, h) * (1 - W[9]) * (1 - smoothstep(0, 0.2, qw));
   if (be > 0) { const c = C.beach[0]; r = lerp(r, c[0], be); g = lerp(g, c[1], be); b = lerp(b, c[2], be); if (be > 0.5) dom = BIOME.BEACH; }
   if (h < 0) { const k = smoothstep(0, -7, h) * 0.7; r = lerp(r, C.seabed[0], k); g = lerp(g, C.seabed[1], k); b = lerp(b, C.seabed[2], k); }
   _c[0] = r; _c[1] = g; _c[2] = b; _c.dom = dom;
