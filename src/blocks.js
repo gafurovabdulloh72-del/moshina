@@ -1,5 +1,6 @@
 // Qurilish bloklari: uy, devor, chodir, gulxan, daraxt va boshqalar. Hammasi GB ichiga quriladi.
 import { hexLin } from './util.js';
+import { queueTree } from './props.js';
 
 // O'zaro ta'sir nuqtalari (skameyka, quduq, rasta): piyoda [E] bilan ishlatiladi
 export const SPOTS = [];
@@ -122,6 +123,8 @@ export function board(g, gl, x, z, yaw) {
 }
 // Silliq daraxt (statik geometriya ichiga)
 export function tree(g, x, z, s, hex, kind = 0) {
+  // manzil quruvchisi (toProps) bo'lsa — haqiqiy o'simlik (props.js/flora.js) navbatiga; aks holda eski geometriya
+  if (g.toProps) { const m = g.m; if (queueTree(m[0] * x + m[2] * z + m[9], m[3] * x + m[5] * z + m[10], m[6] * x + m[8] * z + m[11], s, hex, kind)) return; }
   g.push().translate(x, 0, z).scale(s);
   g.color(0x7a5236).cyl(6, 0.3, 0.2, -0.3, 3.2, { shade: 0.1 });
   g.color(hex);

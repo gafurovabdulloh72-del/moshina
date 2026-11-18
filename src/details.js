@@ -378,7 +378,7 @@ export function buildDetails(scene, game, site) {
   if (PP.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(PP, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(PN, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(PU, 2)); const m = new THREE.Mesh(g, plateMat); m.receiveShadow = true; m.matrixAutoUpdate = false; scene.add(m); out.plates = m; }
   // ko'cha chirog'i ostidagi yumshoq yorug'lik dog'i (haqiqiy chiroq emas — qo'shiluvchi tekislik)
   const poolTex = (() => { const S = 64, cv = document.createElement('canvas'); cv.width = cv.height = S; const cx = cv.getContext('2d'), gr = cx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(0.7, 'rgba(255,255,255,0.14)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); cx.fillStyle = gr; cx.fillRect(0, 0, S, S); return new THREE.CanvasTexture(cv); })();
-  const poolMat = new THREE.MeshBasicMaterial({ map: poolTex, color: 0xffc070, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+  const poolMat = new THREE.MeshBasicMaterial({ map: poolTex, color: 0xe8a060, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), poolMat, Math.max(1, lamps.length)); pools.count = lamps.length; pools.frustumCulled = false; pools.renderOrder = 2; pools.onAfterRender = () => { pools.userData.ok = true; };
   { const o = new THREE.Object3D(); lamps.forEach((l, i) => { o.position.set(l.x, l.y, l.z); o.scale.set(l.s, 1, l.s); o.updateMatrix(); pools.setMatrixAt(i, o.matrix); }); } scene.add(pools);
   // mato: bayroqlar va kirlar
@@ -396,7 +396,7 @@ export function buildDetails(scene, game, site) {
     const night = game.sky ? game.sky.night : 0; DU.uNight.value = night; DU.uHour.value = game.hour != null ? game.hour : 12;
     const cx = camera.position.x, cz = camera.position.z;
     for (const o of group) { const d2 = (o.x - cx) ** 2 + (o.z - cz) ** 2; for (const [m, r] of o.objs) m.visible = d2 < (r + CH * 0.71) ** 2; }
-    poolMat.opacity = smoothstep(0.25, 0.75, night) * 0.5; pools.visible = poolMat.opacity > 0.005 || !pools.userData.ok; /* birinchi kadrda (kunduzi ham) bir marta chiziladi — keyin sheyder yig'ilmaydi */
+    poolMat.opacity = smoothstep(0.25, 0.75, night) * 0.32; /* iliq, yumshoq: qo'shiluvchi dog' o'tni neon qilib yubormasin */ pools.visible = poolMat.opacity > 0.005 || !pools.userData.ok; /* birinchi kadrda (kunduzi ham) bir marta chiziladi — keyin sheyder yig'ilmaydi */
     plateMat.emissiveIntensity = night * 0.1;
   };
   const prevBR = scene.onBeforeRender;

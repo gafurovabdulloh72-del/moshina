@@ -13,7 +13,7 @@ const { PAL } = BK;
 class Site {
   constructor(p, yaw, seed) {
     this.p = p; this.yaw = yaw; this.c = Math.cos(yaw); this.s = Math.sin(yaw); this.rng = mulberry32(seed);
-    this.g = new GB(seed); this.g.jit = 0.035; this.gl = new GB(seed + 1); this.gl.jit = 0;
+    this.g = new GB(seed); this.g.toProps = true; this.g.jit = 0.035; this.gl = new GB(seed + 1); this.gl.jit = 0;
     this.g.translate(p.x, p.y, p.z).rotY(yaw); this.gl.translate(p.x, p.y, p.z).rotY(yaw);
     this.lights = []; this.taken = [];
   }
