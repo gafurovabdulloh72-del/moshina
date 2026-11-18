@@ -79,7 +79,8 @@ export function initGfx(game) {
         float n1 = vnoise(vWP.xz * 0.7) - 0.5, n2 = vnoise(vWP.xz * 0.085 + 31.7) - 0.5, n3 = vnoise(vWP.xz * 3.1 + 11.0) - 0.5;
         diffuseColor.rgb *= 1.0 + (n1 * 0.16 + n3 * 0.1) * kN + n2 * 0.14 * kF;
         float cs = smoothstep(0.52, 0.8, vnoise(vWP.xz * 0.0013 + vec2(uTime * 0.0045, uTime * 0.003)) * 0.65 + vnoise(vWP.xz * 0.0041 - vec2(uTime * 0.006, 0.0)) * 0.35);
-        diffuseColor.rgb *= 1.0 - 0.24 * cs * uDay; }`);
+        diffuseColor.rgb *= 1.0 - 0.24 * cs * uDay;
+        float lu = dot(diffuseColor.rgb, vec3(0.3, 0.55, 0.15)); diffuseColor.rgb = mix(vec3(lu), diffuseColor.rgb, 0.45 + 0.55 * uDay); } /* tunda yer rangi xiralashadi: kuzgi/savanna to'q sariq, tepaliklar zangori-yashil yonmaydi */`);
   };
   MAT.terrain.needsUpdate = true;
 

@@ -120,8 +120,10 @@ export function initGame(game) {
     for (const a of A.acts) if (a.cat === 'radar') {
       const yaw = Math.atan2(a.tx, a.tz);
       g.push().translate(a.x, a.y, a.z).rotY(yaw);
-      g.color(0xffffff).box(0, 0.04, 0, a.hw * 2, 0.03, 0.7); g.color(0xf0c030).box(0, 0.045, 0.6, a.hw * 2, 0.03, 0.25);
-      for (const sx of [-1, 1]) { g.color(0x4a4e58).box(sx * (a.hw + 3.4), 2.9, 0, 0.18, 5.8, 0.18); g.color(0xf0c030).box(sx * (a.hw + 3.4), 5.0, 0, 0.7, 0.9, 0.6); g.color(0x202127).box(sx * (a.hw + 3.4), 5.0, 0.31, 0.4, 0.4, 0.05); }
+      // start chizig'i yo'l yuzasiga yopishgan bo'laklar (yo'l chetidan chiqmaydi); ustunlar yerga tushadi
+      const NS = Math.max(2, Math.round(a.hw * 2)), sw = (a.hw * 2 - 0.4) / NS;
+      for (let k = 0; k < NS; k++) { const lx = -a.hw + 0.2 + (k + 0.5) * sw, gy = T.ground(a.x + a.tz * lx, a.z - a.tx * lx, a.y + 2).y - a.y; g.color(0xffffff).box(lx, gy + 0.025, 0, sw + 0.02, 0.03, 0.7); g.color(0xf0c030).box(lx, gy + 0.03, 0.6, sw + 0.02, 0.03, 0.25); }
+      for (const sx of [-1, 1]) { const px = sx * (a.hw + 3.4), b = Math.min(0, T.gridHeight(a.x + a.tz * px, a.z - a.tx * px) - a.y) - 0.3; g.color(0x4a4e58).box(px, (b + 5.8) / 2, 0, 0.18, 5.8 - b, 0.18); g.color(0xf0c030).box(px, 5.0, 0, 0.7, 0.9, 0.6); g.color(0x202127).box(px, 5.0, 0.31, 0.4, 0.4, 0.05); }
       g.color(0x4a4e58).box(0, 5.8, 0, a.hw * 2 + 7, 0.16, 0.16);
       g.pop(); COL.addCircle(a.x + a.tz * (a.hw + 3.4), a.z - a.tx * (a.hw + 3.4), 0.25, a.y - 1, a.y + 5); COL.addCircle(a.x - a.tz * (a.hw + 3.4), a.z + a.tx * (a.hw + 3.4), 0.25, a.y - 1, a.y + 5);
     }
@@ -134,9 +136,15 @@ export function initGame(game) {
     const rg = mulberry32(4711);
     for (let c = 0; c < 46; c++) { for (let t = 0; t < 40; t++) { const x = (rg() - 0.5) * 5600, z = (rg() - 0.5) * 5600; const si = T.siteInfo(x, z); if (si.y < si.water + 1 || si.y < 2 || si.slope > 0.3 || si.roadD < 30) continue; for (let q = 0; q < 5; q++) { const a = q * 1.2566, px = x + Math.cos(a) * 5, pz = z + Math.sin(a) * 5; pick.coins.push({ x: px, z: pz, y: T.gridHeight(px, pz) + 1.1 }); } break; } }
     const spec = [[T.MOUNT.x + 14, T.MOUNT.z + 20], [1335, 2662], [2420, -640], [T.POND.x, T.POND.z], [-560, 590], [-1150, 60]];
-    for (const s of spec) pick.chests.push({ x: s[0], z: s[1], y: T.ground(s[0], s[1], 1e9).y });
+    const boardAt = (x, z) => Object.values(game.site.places).some((p) => p.board && Math.hypot(p.board.x - x, p.board.z - z) < 4);
+    for (const s of spec) { let x = s[0], z = s[1]; // belgilangan sandiq taxta oyog'i yoki jism ichida qolmasin — yaqin bo'sh joyga suriladi
+      for (let k = 0; k < 24 && (boardAt(x, z) || COL.query(x, z, 1.4).some((o) => !o.dead && (o.t === 1 || Math.hypot(o.x - x, o.z - z) < o.r + 1.2))); k++) { const a = k * 2.4, d = 2 + k * 0.6; x = s[0] + Math.cos(a) * d; z = s[1] + Math.sin(a) * d; }
+      pick.chests.push({ x, z, y: T.ground(x, z, 1e9).y }); }
     for (let t = 0; t < 4000 && pick.chests.length < 32; t++) { const x = (rg() - 0.5) * 5400, z = (rg() - 0.5) * 5400; const si = T.siteInfo(x, z); if (si.y < si.water + 1.5 || si.y < 2.5 || si.slope > 0.35 || si.roadD < 70) continue; if (COL.query(x, z, 3).length) continue; if (pick.chests.some((c) => Math.hypot(c.x - x, c.z - z) < 520)) continue; pick.chests.push({ x, z, y: si.y }); }
-    for (const e of R.edges) { if (e.type !== 0) continue; for (let k = 60; k < e.count - 40; k += 330) { const i = e.start + k; const off = e.hw + 2.6; pick.kits.push({ x: R.x[i] + R.tz[i] * off, z: R.z[i] - R.tx[i] * off, y: T.gridHeight(R.x[i] + R.tz[i] * off, R.z[i] - R.tx[i] * off) + 1.0, cd: 0 }); } }
+    // ta'mir qutisi: yo'l yoqasida, ustun/daraxt/devor ichida emas (yaqin bo'sh nuqta qidiriladi)
+    const clear = (x, z, r) => !COL.query(x, z, r + 1).some((o) => { if (o.dead) return false; let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = clamp(((x - o.x) * sx + (z - o.z) * sz) / (sx * sx + sz * sz || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz * t; } return Math.hypot(x - qx, z - qz) < (o.r || 0) + r; });
+    for (const e of R.edges) { if (e.type !== 0) continue; for (let k = 60; k < e.count - 40; k += 330) { let best = null; for (const dk of [0, 2, -2, 4, -4, 7, -7]) { for (const sd of [1, -1]) { const i = e.start + k + dk; if (R.bridge[i]) continue; const off = (e.hw + 2.6) * sd, x = R.x[i] + R.tz[i] * off, z = R.z[i] - R.tx[i] * off; if (clear(x, z, 1.4) && T.gridHeight(x, z) > T.waterY(x, z) + 0.3) { best = [x, z]; break; } } if (best) break; }
+      if (!best) { const i = e.start + k, off = e.hw + 2.6; best = [R.x[i] + R.tz[i] * off, R.z[i] - R.tx[i] * off]; } pick.kits.push({ x: best[0], z: best[1], y: T.gridHeight(best[0], best[1]) + 1.0, cd: 0 }); } }
   }
   const dummy = new THREE.Object3D();
   const mkInst = (gb, n, mat) => { const im = new THREE.InstancedMesh(gb.build(), mat || MAT.flat, n); im.frustumCulled = false; scene.add(im); return im; };

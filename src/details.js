@@ -167,8 +167,14 @@ export function buildDetails(scene, game, site) {
   const plate = (x, y, z, yaw, w, h, u, lift = 0) => { if (!u) return; const c = Math.cos(yaw), s = Math.sin(yaw), nx = s, nz = c, o = 0.012 + lift; const P = (lx, ly) => [x + lx * c, y + ly, z - lx * s];
     const A = P(-w / 2, -h / 2), B = P(w / 2, -h / 2), C = P(w / 2, h / 2), D = P(-w / 2, h / 2);
     for (const [p, uu, vv] of [[A, u.u0, u.v0], [B, u.u1, u.v0], [C, u.u1, u.v1], [A, u.u0, u.v0], [C, u.u1, u.v1], [D, u.u0, u.v1]]) { PP.push(p[0] + nx * o, p[1], p[2] + nz * o); PN.push(nx, 0, nz); PU.push(uu, vv); } };
+  // manzillardagi yozuvli peshtoqlar (ustaxona) — atlasda birinchilardan joy oladi
+  { const um = {}; for (const q of site.signs || []) plate(q.x, q.y, q.z, q.yaw, q.w, q.h, um[q.text] || (um[q.text] = AT.place(q.text, 'kir')), 0.01); }
   // bo'sh joymi: yo'l ustida emas, suvda emas, to'qnashuv jismlari bilan kesishmaydi
-  const solidNear = (x, z, r) => { for (const o of COL.query(x, z, r + 2)) { let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = clamp(((x - o.x) * sx + (z - o.z) * sz) / (sx * sx + sz * sz || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz * t; } if (Math.hypot(x - qx, z - qz) < o.r + r) return true; } return false; };
+  const solidNear = (x, z, r) => { for (const o of COL.query(x, z, r + 2)) { let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = clamp(((x - o.x) * sx + (z - o.z) * sz) / (sx * sx + sz * sz || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz * t; } if (Math.hypot(x - qx, z - qz) < o.r + r) return true; } return rampNear(x, z, r) || boardNear(x, z, r + 2.6); };
+  // e'lonlar taxtasi yonida (o'yinchi turadigan joy) ustun/ariq bo'lmasin
+  const boardNear = (x, z, r) => { for (const id in site.places) { const b = site.places[id].board; if (b && Math.hypot(x - b.x, z - b.z) < r) return true; } return false; };
+  // tramplin ustiga (va uchish yo'liga) ustun/belgi qo'yilmasin
+  const rampNear = (x, z, r) => { for (const q of site.ramps || []) { const dx = x - q.x, dz = z - q.z, fs = Math.sin(q.yaw), fc = Math.cos(q.yaw), u = dx * fs + dz * fc, w = dx * fc - dz * fs; if (Math.abs(w) < q.wid / 2 + r + 1.5 && u > -q.len / 2 - r - 2 && u < q.len / 2 + r + (q.road ? 30 : 4)) return true; } return false; };
   const roadClear = (x, z, m) => { const nr = T.nearestRoad(x, z, 2); return nr.edge < 0 || nr.d - nr.hw > m; };
   const dry = (x, z) => T.gridHeight(x, z) > T.waterY(x, z) + 0.25;
   const inPlace = (x, z, pad = 0) => { for (const p of T.PLACES) { if (p.rect) { if (Math.abs(x - p.x) < p.rect.hl + pad && Math.abs(z - p.z) < p.rect.hw + pad) return p; } else if (Math.hypot(x - p.x, z - p.z) < p.r + pad) return p; } return null; };
@@ -272,7 +278,7 @@ export function buildDetails(scene, game, site) {
     let prev = null;
     for (let k = 6; k < e.count - 6; k += 12) {
       const i = e.start + k, tx = R.tx[i], tz = R.tz[i], off = R.hw[i] + 3.9, x = R.x[i] + tz * off, z = R.z[i] - tx * off;
-      if (!dry(x, z) || !roadClear(x, z, 3.4) || solidNear(x, z, 1.2) || R.bridge[i] || (T.placeBy.uy && Math.hypot(x - T.placeBy.uy.x, z - T.placeBy.uy.z) < 45)) { prev = null; continue; }
+      if (!dry(x, z) || !roadClear(x, z, 3.4) || solidNear(x, z, 1.2) || boardNear(x, z, 14) || R.bridge[i] || (T.placeBy.uy && Math.hypot(x - T.placeBy.uy.x, z - T.placeBy.uy.z) < 45)) { prev = null; continue; }
       const y = gy(x, z), yaw = Math.atan2(tx, tz), H = 8.2, lean = (rng() - 0.5) * 0.03;
       put(x, y, z, yaw, (g) => { g.rotZ(lean); g.color(0x5f5040).cyl(6, 0.14, 0.1, -0.3, H, { shade: 0.06 }); g.color(0x4e4234).box(0, H - 0.55, 0, 2.1, 0.12, 0.13); g.box(-0.45, H - 0.85, 0, 0.06, 0.55, 0.06, { ox: 0.3 }); g.color(0xd8dcd8); for (const ax of [-0.9, 0.9]) { g.push().translate(ax, 0, 0); g.cyl(6, 0.055, 0.04, H - 0.49, H - 0.3); g.pop(); } g.cyl(6, 0.055, 0.04, H, H + 0.19); });
       COL.addCircle(x, z, 0.16, y - 1, y + H); cnt('ustun'); at('ustun', x, z, yaw);
@@ -309,13 +315,14 @@ export function buildDetails(scene, game, site) {
   // aryq: beton bilan qoplangan sug'orish ariqchasi (Bog'iston ko'chalari bo'ylab, yo'lning chap chetida)
   const AQ = [];
   for (const id of ['bogiston']) { const p = T.placeBy[id]; if (!p) continue;
-    for (const e of edges) { let prev = null; for (let k = 1; k < e.count - 1; k++) { const i = e.start + k; const tx = R.tx[i], tz = R.tz[i], hw = R.hw[i], o0 = hw + 0.75, o1 = hw + 1.45, om = (o0 + o1) / 2, mx = R.x[i] + tz * om, mz = R.z[i] - tx * om;
-      let ok = Math.hypot(R.x[i] - p.x, R.z[i] - p.z) < p.r + 10 && !R.bridge[i] && dry(mx, mz); if (ok) { const nr = T.nearestRoad(mx, mz, 2); ok = nr.edge === e.id && nr.d - nr.hw > 0.5 && !solidNear(mx, mz, 0.45); }
-      if (!ok) { prev = null; continue; }
-      const y = Math.max(gy(mx, mz), R.y[i]) + 0.05, row = [[R.x[i] + tz * o0, y, R.z[i] - tx * o0], [R.x[i] + tz * o1, y, R.z[i] - tx * o1], tx, tz];
-      if (prev) { const [a, b] = prev, [c2, d] = row; AQ.push(a, c2, d, a, d, b); const L = Math.hypot(c2[0] - a[0], c2[2] - a[2]), yaw = Math.atan2(c2[0] - a[0], c2[2] - a[2]);
-        for (const [q0, q1, sd] of [[a, c2, -1], [b, d, 1]]) put((q0[0] + q1[0]) / 2, y - 0.05, (q0[2] + q1[2]) / 2, yaw, (g) => { g.color(0xb4b0a6).box(sd * 0.07, 0.11, 0, 0.14, 0.22, L + 0.02); }); }
-      prev = row; } } }
+    // bo'laklar uzluksiz qatorlarga yig'iladi: qisqa (o'tloqda tugaydigan) bo'laklar tashlanadi, uchlari beton bilan yopiladi, chetlari baland — yotqizilgan ko'k tasma emas, ariqcha
+    const flush = (run) => { if (run.length < 7) return; for (let r = 1; r < run.length; r++) { const [a, b] = run[r - 1], [c2, d] = run[r], y = (a[1] + c2[1]) / 2; AQ.push(a, c2, d, a, d, b); const L = Math.hypot(c2[0] - a[0], c2[2] - a[2]), yaw = Math.atan2(c2[0] - a[0], c2[2] - a[2]);
+        for (const [q0, q1, sd] of [[a, c2, -1], [b, d, 1]]) put((q0[0] + q1[0]) / 2, y - 0.05, (q0[2] + q1[2]) / 2, yaw, (g) => { g.color(0xb4b0a6).box(sd * 0.08, 0.12, 0, 0.16, 0.34, L + 0.02); }); }
+      for (const q of [run[0], run[run.length - 1]]) { const [a, b] = q, mx = (a[0] + b[0]) / 2, mz = (a[2] + b[2]) / 2; put(mx, a[1] - 0.05, mz, Math.atan2(q[2], q[3]), (g) => { g.color(0xb4b0a6).box(0, 0.12, 0, 0.86, 0.34, 0.16); }); } };
+    for (const e of edges) { let run = []; for (let k = 1; k < e.count - 1; k++) { const i = e.start + k; const tx = R.tx[i], tz = R.tz[i], hw = R.hw[i], o0 = hw + 0.75, o1 = hw + 1.45, om = (o0 + o1) / 2, mx = R.x[i] + tz * om, mz = R.z[i] - tx * om;
+      let ok = Math.hypot(R.x[i] - p.x, R.z[i] - p.z) < p.r + 10 && !R.bridge[i] && dry(mx, mz); if (ok) { const nr = T.nearestRoad(mx, mz, 2); ok = nr.edge === e.id && nr.d - nr.hw > 0.5 && !solidNear(mx, mz, 0.45) && !boardNear(mx, mz, 4); }
+      if (!ok) { flush(run); run = []; continue; }
+      const y = Math.max(gy(mx, mz), R.y[i]) + 0.05; run.push([[R.x[i] + tz * o0, y, R.z[i] - tx * o0], [R.x[i] + tz * o1, y, R.z[i] - tx * o1], tx, tz]); } flush(run); } }
   if (AQ.length) { const P = new Float32Array(AQ.length * 3), N = new Float32Array(AQ.length * 3); AQ.forEach((q, k) => { P[k * 3] = q[0]; P[k * 3 + 1] = q[1] + 0.07; P[k * 3 + 2] = q[2]; N[k * 3 + 1] = 1; }); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.computeBoundingSphere(); const m = new THREE.Mesh(g, waterMat()); m.receiveShadow = true; m.matrixAutoUpdate = false; m.frustumCulled = false; scene.add(m); out.aryq = m; /* doim chiziladi: sheyder yuklanishda yig'ilsin */ cnt('aryq'); }
 
   // ---------- 4) hovli detallari: to'siqlar, pochta qutisi, o'tin, kir arqoni, gul tuvaklari, axlat qutisi ----------
@@ -376,11 +383,11 @@ export function buildDetails(scene, game, site) {
   // matnli plastinalar
   const ptex = AT.finish(); const plateMat = new THREE.MeshLambertMaterial({ map: ptex, alphaTest: 0.5, emissive: 0xffffff, emissiveMap: ptex, emissiveIntensity: 0 });
   if (PP.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(PP, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(PN, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(PU, 2)); const m = new THREE.Mesh(g, plateMat); m.receiveShadow = true; m.matrixAutoUpdate = false; scene.add(m); out.plates = m; }
-  // ko'cha chirog'i ostidagi yumshoq yorug'lik dog'i (haqiqiy chiroq emas — qo'shiluvchi tekislik)
+  // ko'cha chirog'i ostidagi yumshoq yorug'lik dog'i (haqiqiy chiroq emas — yarim shaffof iliq tekislik; qo'shiluvchi aralash o'tni neon qilardi)
   const poolTex = (() => { const S = 64, cv = document.createElement('canvas'); cv.width = cv.height = S; const cx = cv.getContext('2d'), gr = cx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(0.7, 'rgba(255,255,255,0.14)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); cx.fillStyle = gr; cx.fillRect(0, 0, S, S); return new THREE.CanvasTexture(cv); })();
-  const poolMat = new THREE.MeshBasicMaterial({ map: poolTex, color: 0xe8a060, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+  const poolMat = new THREE.MeshBasicMaterial({ map: poolTex, color: 0xffd8a0, transparent: true, opacity: 0, blending: THREE.NormalBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), poolMat, Math.max(1, lamps.length)); pools.count = lamps.length; pools.frustumCulled = false; pools.renderOrder = 2; pools.onAfterRender = () => { pools.userData.ok = true; };
-  { const o = new THREE.Object3D(); lamps.forEach((l, i) => { o.position.set(l.x, l.y, l.z); o.scale.set(l.s, 1, l.s); o.updateMatrix(); pools.setMatrixAt(i, o.matrix); }); } scene.add(pools);
+  { const o = new THREE.Object3D(); lamps.forEach((l, i) => { o.position.set(l.x, l.y, l.z); o.scale.set(l.s * 0.7, 1, l.s * 0.7); o.updateMatrix(); pools.setMatrixAt(i, o.matrix); }); } scene.add(pools);
   // mato: bayroqlar va kirlar
   const cmat = clothMat(), dum = new THREE.Object3D(), col = new THREE.Color();
   const FL = BK.FLAGS, flags = new THREE.InstancedMesh(clothGeo(true), cmat, Math.max(1, FL.length)); flags.count = FL.length; flags.castShadow = true; flags.frustumCulled = false;
@@ -396,7 +403,7 @@ export function buildDetails(scene, game, site) {
     const night = game.sky ? game.sky.night : 0; DU.uNight.value = night; DU.uHour.value = game.hour != null ? game.hour : 12;
     const cx = camera.position.x, cz = camera.position.z;
     for (const o of group) { const d2 = (o.x - cx) ** 2 + (o.z - cz) ** 2; for (const [m, r] of o.objs) m.visible = d2 < (r + CH * 0.71) ** 2; }
-    poolMat.opacity = smoothstep(0.25, 0.75, night) * 0.32; /* iliq, yumshoq: qo'shiluvchi dog' o'tni neon qilib yubormasin */ pools.visible = poolMat.opacity > 0.005 || !pools.userData.ok; /* birinchi kadrda (kunduzi ham) bir marta chiziladi — keyin sheyder yig'ilmaydi */
+    poolMat.opacity = smoothstep(0.25, 0.75, night) * 0.17; pools.visible = poolMat.opacity > 0.005 || !pools.userData.ok; /* birinchi kadrda (kunduzi ham) bir marta chiziladi — keyin sheyder yig'ilmaydi */
     plateMat.emissiveIntensity = night * 0.1;
   };
   const prevBR = scene.onBeforeRender;
