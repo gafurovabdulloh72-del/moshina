@@ -445,7 +445,16 @@ float cell(vec2 p) { vec2 i = floor(p), f = fract(p); float d1 = 9.0, d2 = 9.0; 
   // ===== 15. Muzko'l (muz maydoni) =====
   {
     const p = P.muzkol; const st = new Site(p, 0, 1515);
-    const ice = new THREE.Mesh(new THREE.CircleGeometry(T.POND.r, 48).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0xbfe6f8, emissive: 0x4a88b0, emissiveIntensity: 0.25 }));
+    // muz: chokli (takrorlanuvchi) tekstura — qirov dog'lari, yoriqlar, konki izlari; o'zi nur sochmaydi (kechasi ko'k yonmaydi), osmonni xira aks ettiradi
+    const iceTex = (() => { const S = 512, cv = document.createElement('canvas'); cv.width = cv.height = S; const cx = cv.getContext('2d'), rg = mulberry32(1517);
+      cx.fillStyle = '#b9d9ea'; cx.fillRect(0, 0, S, S);
+      const wrap = (f) => { for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { cx.save(); cx.translate(ox, oy); f(); cx.restore(); } };
+      for (let i = 0; i < 70; i++) { const x = rg() * S, y = rg() * S, r = 20 + rg() * 70, w = rg() < 0.6; wrap(() => { const gr = cx.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, w ? 'rgba(240,248,255,0.35)' : 'rgba(120,170,200,0.25)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); cx.fillStyle = gr; cx.fillRect(x - r, y - r, r * 2, r * 2); }); }
+      for (let i = 0; i < 26; i++) { let x = rg() * S, y = rg() * S, a = rg() * 6.283; const pts = [[x, y]]; for (let k = 0; k < 8; k++) { a += (rg() - 0.5) * 1.2; const l = 8 + rg() * 22; x += Math.cos(a) * l; y += Math.sin(a) * l; pts.push([x, y]); } const lw = 0.6 + rg() * 1.2, white = rg() < 0.5;
+        wrap(() => { cx.strokeStyle = white ? 'rgba(250,253,255,0.75)' : 'rgba(70,115,150,0.5)'; cx.lineWidth = lw; cx.beginPath(); pts.forEach((p, k) => (k ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1]))); cx.stroke(); }); }
+      for (let i = 0; i < 18; i++) { const x = rg() * S, y = rg() * S, r = 40 + rg() * 160, a0 = rg() * 6.283, da = 0.4 + rg() * 1.2; wrap(() => { cx.strokeStyle = 'rgba(235,245,255,0.45)'; cx.lineWidth = 1.2; cx.beginPath(); cx.arc(x, y, r, a0, a0 + da); cx.stroke(); }); }
+      const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(7, 7); t.anisotropy = 8; return t; })();
+    const ice = new THREE.Mesh(new THREE.CircleGeometry(T.POND.r, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xe4f2fa, map: iceTex, roughness: 0.32, metalness: 0.0, envMapIntensity: 0.8 }));
     ice.position.set(p.x, p.y + 0.06, p.z); ice.receiveShadow = true; scene.add(ice);
     T.surfZones.push({ x: p.x, z: p.z, r: T.POND.r, surf: T.SURF.ICE });
     for (let i = 0; i < 24; i++) { const a = (i / 24) * 6.283; if (i % 3 === 0) st.put(Math.cos(a) * (T.POND.r + 4), Math.sin(a) * (T.POND.r + 4), 0, (g) => BK.flag(g, 0, 0, 4.5, PAL.tent[i % 5])); else smashL(st, 'cone', Math.cos(a) * (T.POND.r + 2), Math.sin(a) * (T.POND.r + 2)); }
