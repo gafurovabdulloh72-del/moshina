@@ -28,7 +28,7 @@ async function player(name, { save } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
   await ctx.addInitScript(() => { window.__TEST = true; });
   if (save) await ctx.addInitScript((s) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('safar_save_v2', s); sessionStorage.setItem('seeded', '1'); } }, JSON.stringify(save));
-  const page = await ctx.newPage(); page.tag = name;
+  const page = await ctx.newPage(); page.tag = name; page.setDefaultTimeout(120000); // ekransiz Chrome dasturiy chizadi: bir nechta sahifa birga sekin
   page.on('pageerror', (e) => { failed++; console.log(`[${name} pageerror]`, e.message); });
   page.on('console', (m) => { if (m.type() === 'error' && !/ERR_|Failed to load|net::|stun|ICE|telegram/i.test(m.text())) console.log(`[${name} ${m.type()}]`, m.text()); });
   await page.goto(dev.url + '/'); await page.waitForFunction(() => window.__ready === true && window.G.net.status !== 'wait', null, { timeout: 120000 });

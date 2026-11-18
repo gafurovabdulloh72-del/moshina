@@ -10,7 +10,7 @@ export const KIND = { SMOKE: 0, FIRE: 1, SPARK: 2, GRAIN: 3, WATER: 4, RING: 5, 
 const S = T.SURF;
 
 const VS = `attribute vec4 iA; attribute vec4 iB; attribute vec4 iC; attribute vec4 iD;
-uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGnd; uniform vec2 uFog;
+uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGnd; uniform vec2 uFogR;
 varying vec2 vUv; varying vec4 vCol; varying vec3 vInfo; varying vec3 vLight; varying float vFog; varying float vGH;
 void main(){
   float kind = iC.w, sz = iA.w, r = iD.x; vec3 wp = iA.xyz; vec2 c = position.xy; vUv = c;
@@ -44,7 +44,7 @@ void main(){
   else sun = 0.75;
   vLight = (amb + uSunCol * sun) * 0.3183;
   if (kind > 3.5 && kind < 4.5) vLight += uSky * 0.18;
-  vFog = smoothstep(uFog.x, uFog.y, dep);
+  vFog = smoothstep(uFogR.x, uFogR.y, dep);
 }`;
 const FS = `uniform sampler2D tNoise; uniform vec3 uFogCol; uniform float uTime;
 varying vec2 vUv; varying vec4 vCol; varying vec3 vInfo; varying vec3 vLight; varying float vFog; varying float vGH;
@@ -126,7 +126,7 @@ export class FX {
     this.uni = {
       uScale: { value: 600 }, uTime: { value: 0 }, tNoise: { value: TEX.noise },
       uSunDir: { value: new THREE.Vector3(0.4, 0.8, 0.3) }, uSunCol: { value: new THREE.Vector3(2, 2, 2) }, uSky: { value: new THREE.Vector3(0.6, 0.7, 0.9) }, uGnd: { value: new THREE.Vector3(0.4, 0.4, 0.35) },
-      uFog: { value: new THREE.Vector2(260, 5600) }, uFogCol: { value: new THREE.Color(0xbfd0e0) },
+      uFogR: { value: new THREE.Vector2(260, 5600) }, uFogCol: { value: new THREE.Color(0xbfd0e0) },
     };
     this.mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms: this.uni, transparent: true, depthWrite: false,
       side: THREE.DoubleSide, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor });
@@ -243,7 +243,7 @@ export class FX {
     U.uSunDir.value.copy(sun.position).sub(sun.target.position).normalize();
     U.uSunCol.value.set(sun.color.r, sun.color.g, sun.color.b).multiplyScalar(sun.intensity);
     if (hemi) { U.uSky.value.set(hemi.color.r, hemi.color.g, hemi.color.b).multiplyScalar(hemi.intensity); U.uGnd.value.set(hemi.groundColor.r, hemi.groundColor.g, hemi.groundColor.b).multiplyScalar(hemi.intensity); }
-    const f = this.scene.fog; if (f) { U.uFogCol.value.copy(f.color); if (f.isFog) U.uFog.value.set(f.near, f.far); }
+    const f = this.scene.fog; if (f) { U.uFogCol.value.copy(f.color); if (f.isFog) U.uFogR.value.set(f.near, f.far); }
   }
   // Transport effektlari: chang, shag'al/qum/qor sachrashi, loy, shina tutuni, izlar, suv, qo'nish, chiqindi gaz, nitro, uchqunlar
   vehicle(dt, car) {

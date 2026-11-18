@@ -180,10 +180,12 @@ export class GB {
 export const MAT = {};
 export const WIND = { value: 0 }; // shamol vaqti (o't va daraxtlar tebranishi uchun umumiy uniform)
 export function initMaterials() {
-  MAT.flat = new THREE.MeshLambertMaterial({ vertexColors: true });
-  MAT.terrain = new THREE.MeshLambertMaterial({ vertexColors: true });
+  // Standard (PBR): osmon atrof-muhit xaritasi (scene.environment) bilan yoritiladi
+  const std = (o = {}) => new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.9, metalness: 0 }, o));
+  MAT.flat = std();
+  MAT.terrain = std({ roughness: 0.95 });
   // Nusxali o'simliklar: instanceColor faqat aMask=1 uchlarga (barg) qo'llanadi
-  MAT.tree = new THREE.MeshLambertMaterial({ vertexColors: true });
+  MAT.tree = std({ roughness: 0.85 });
   MAT.tree.onBeforeCompile = (sh) => {
     sh.uniforms.uTime = WIND;
     sh.vertexShader = 'attribute float aMask;\nuniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -204,7 +206,7 @@ export function initMaterials() {
         vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aMask);
       #endif`);
   };
-  MAT.flatDS = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  MAT.flatDS = std({ side: THREE.DoubleSide });
   MAT.glass = new THREE.MeshStandardMaterial({ vertexColors: true, color: 0x16222e, metalness: 0.85, roughness: 0.12, envMapIntensity: 1.5 });
   MAT.glow = new THREE.MeshBasicMaterial({ vertexColors: true, fog: true }); // derazalar, chiroqlar (tunda yonadi)
   MAT.unlit = new THREE.MeshBasicMaterial({ vertexColors: true, fog: true });

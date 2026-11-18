@@ -21,6 +21,7 @@ import { initLiving } from './living.js';
 import { buildAds } from './ads.js';
 import { initGfx } from './gfx.js';
 import { bakeTextures, rebakeTextures } from './tex.js';
+import { initLook, LOOK } from './look.js';
 import * as COLL from './colliders.js';
 import { runKeys } from './controls.js';
 import { initNet } from './net.js';
@@ -45,6 +46,7 @@ async function boot() {
     // kechiksa (sheyder kompilyatsiyasi, og'ir kadr) ekran qora bo'lib turadi
     if (game.ready && !game.ctxLost) game.gfx.render(); };
   game.resize = resize; addEventListener('resize', resize);
+  initLook(game); // umumiy uniformlar, atmosfera tumani, materiallar yamog'i (initMaterials'dan oldin)
 
   await step(0.05, 'Orol relyefi yaratilmoqda…');
   T.initWorld();
@@ -105,6 +107,7 @@ async function boot() {
 // true — o'yin o'zi (sinov tariqasida) o'zgartiryapti: joriy aniqlik saqlanadi, taqiqlar tozalanmaydi
 game.applyQuality = (mode) => {
   const set = game.state.set, q = set.gfx, dpr = Math.min(devicePixelRatio || 1, 2), auto = mode === true;
+  LOOK.U.uQ.value = q; // sheyder sifat shoxlari (qayta kompilyatsiyasiz)
   // eng yuqori sifatda ekrandan ko'proq piksel (silliqroq qirralar); sekinlashsa adapt() o'zi pasaytiradi
   game.prCap = [Math.min(dpr, 1), Math.min(dpr, 1.5), Math.min(2, Math.max(1, dpr) * 1.5)][q]; game.pr = auto ? Math.min(game.pr || game.prCap, game.prCap) : game.prCap;
   qT = 0; ftAvg = 16; ftSum = 0; ftN = 0; ftT = 0; goodN = 0; calmN = 0; upAge = 99; prCeil = Infinity; ceilT = 0; desc = null; settle = 2;
@@ -168,7 +171,7 @@ function update(dt) {
     g.life.update(dt, g.time, g.mode === 'play' && !(g.act && g.act.def.type === 'race'));
     if (g.mode === 'play') g.updateGame(dt); else car.events.length = 0;
   }
-  g.sky.setHour(g.hour);
+  LOOK.U.uQ.value = g.state.set.gfx; g.sky.setHour(g.hour);
   syncCar(alpha);
   const night = g.sky.night, focus = foot ? g.footPos.set(pl.p[0], pl.p[1], pl.p[2]) : g.carPos;
   { const k = 0.25 + 1.5 * night; MAT.glow.color.setRGB(k, k * (0.9 + 0.1 * night), k * (0.75 + 0.25 * (1 - night))); for (const a of g.site.anim) a(dt, g.time, night); }
@@ -180,7 +183,7 @@ function update(dt) {
   g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt });
   g.sky.update(dt, g.camera, focus);
   g.terrain.update(g.camera); g.props.update(g.camera); g.detail.update(g.camera);
-  g.gfx.update(dt);
+  { let dh = Math.abs(g.hour - (g._envH == null ? -99 : g._envH)); if (dh > 12) dh = 24 - dh; const envF = g.state.set.gfx > 0 && dh > 0.1; if (envF) g._envH = g.hour; g.gfx.update(dt, envF); } // osmon yoritishi (PMREM) ~5 s da bir yangilanadi (0-darajada — gfx.js'ning o'z siyrak jadvali)
   g.fx.update(dt, g.camera);
   const surf = car.wheels[2].surf, bio = T.biomeAt(focus.x, focus.z);
   let fire = 0; if (g.site.fires) for (const f of g.site.fires) { const d = Math.hypot(f.x - focus.x, f.z - focus.z); if (d < 30) fire = Math.max(fire, 1 - d / 30); }
