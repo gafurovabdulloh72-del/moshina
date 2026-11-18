@@ -270,6 +270,8 @@ function initRoads() {
     limit(60);
     for (let it = 0; it < 30; it++) { for (let i = 1; i < m - 1; i++) tmp[i] = (ys[i - 1] + ys[i] * 2 + ys[i + 1]) * 0.25; for (let i = 1; i < m - 1; i++) ys[i] = tmp[i]; }
     limit(12);
+    // to'rtburchak maydon (aerodrom) ichida yo'l maydon sathida yotadi — silliqlash uni tuproq ostiga tortmasin
+    for (const p of PLACES) { if (!p.rect) continue; let hit = 0; for (let i = 1; i < m - 1; i++) { const w = padWeight(p, pts[i][0], pts[i][1]); if (w > 0) { ys[i] = lerp(ys[i], p.y, Math.min(1, w * 1.6)); hit = 1; } } if (hit) limit(12); }
     const hw = e.type === 0 ? 5.0 : 3.3;
     const edge = { id: ei, key: e.id, a: A.id, b: B.id, type: e.type, hw, start: all.length, count: m, len: s[m - 1], s };
     A.edges.push(ei); B.edges.push(ei);
@@ -367,6 +369,8 @@ function riverCarve(x, z, h) {
 
 function heightFull(x, z) {
   let h = base0(x, z);
+  // to'rtburchak maydon cheti avval, yo'l tekislash keyin — yo'l hech qachon tuproq ostida qolmaydi
+  for (let i = 0; i < PLACES.length; i++) { const p = PLACES[i]; if (!p.rect) continue; const c = Math.cos(p.rect.yaw), s = Math.sin(p.rect.yaw), dx = x - p.x, dz = z - p.z; const u = Math.abs(dx * c + dz * s) - p.rect.hl, v = Math.abs(-dx * s + dz * c) - p.rect.hw; const d = Math.hypot(Math.max(u, 0), Math.max(v, 0)); if (d < 16) h = lerp(h, p.y, smoothstep(16, 2, d)); }
   const rf = roadFlat(x, z);
   if (rf.i >= 0) {
     const W = zoneWeights(x, z, _w);
@@ -378,7 +382,6 @@ function heightFull(x, z) {
       h = lerp(rf.y - sink, h, t);
     }
   }
-  for (let i = 0; i < PLACES.length; i++) { const p = PLACES[i]; if (!p.rect) continue; const c = Math.cos(p.rect.yaw), s = Math.sin(p.rect.yaw), dx = x - p.x, dz = z - p.z; const u = Math.abs(dx * c + dz * s) - p.rect.hl, v = Math.abs(-dx * s + dz * c) - p.rect.hw; const d = Math.hypot(Math.max(u, 0), Math.max(v, 0)); if (d < 16) h = lerp(h, p.y, smoothstep(16, 2, d)); }
   if (riverReady) h = riverCarve(x, z, h);
   return h;
 }
