@@ -183,3 +183,27 @@ input[type=range]{width:200px;accent-color:var(--ac)}
 
 /* Boshqaruv oynasi 720p ekranga sig'sin */
 .on.help .win .keys{gap:4px 14px;font-size:13.5px;margin-top:4px}.on.help .win h4{margin:4px 0 0!important}.on.help .win h1{margin-bottom:0}.on.help .win .sub{margin:8px 0 10px!important}
+/* --- onlayn rejim --- */
+.netchip b{color:var(--blue)}
+.onl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px}
+@media(max-width:820px){.onl{grid-template-columns:1fr}}
+.onl .card p{flex:none}
+.onl-user{display:flex;gap:12px;align-items:center}.onl-user img,.onl-user i{width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--blue);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900;font-size:22px;color:#fff}
+.onl-user b{display:block;font-size:17px}.onl-user small{display:block;color:var(--mut);font-size:12.5px}
+.onl-cloud{font-size:13px;color:#cfd6e6}.onl-note{font-size:12.5px;color:var(--mut)!important;margin:4px 0 0}.onl-err{color:var(--bad)!important;font-weight:700}.onl-wait{color:var(--ac)!important;font-weight:700}
+.onl-tg{min-height:46px;margin:6px 0}.onl-site b{color:var(--ac)}
+.onl-join input,.onl-sel{flex:1;min-width:0;font:inherit;font-weight:700;color:var(--tx);background:rgba(255,255,255,.08);border:1px solid var(--bd);border-radius:11px;padding:10px 12px;-webkit-user-select:text;user-select:text}
+.onl-join input{text-transform:uppercase;letter-spacing:2px}.onl-sel option{color:#141824}
+.onl-code-big{display:flex;align-items:baseline;gap:12px}.onl-code-big span{color:var(--mut);font-size:13px}.onl-code-big b{font-size:34px;letter-spacing:6px;color:var(--ac);font-family:ui-monospace,Menlo,Consolas,monospace}
+.onl-players{display:flex;flex-direction:column;gap:6px;margin:6px 0}
+.onl-pl{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.05)}.onl-pl>i{width:12px;height:12px;border-radius:50%;flex:none}.onl-pl small{color:var(--mut)}.onl-pl button{padding:6px 10px;font-size:13px}
+.onl-race{margin-top:6px;display:flex;flex-direction:column;gap:6px}
+.onl-top table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}.onl-top th{text-align:left;color:var(--mut);font-weight:700;padding:6px 8px}.onl-top td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.08)}.onl-top tr.me td{background:rgba(255,200,58,.14);font-weight:800}
+#chat{position:absolute;left:16px;bottom:262px;width:min(380px,calc(100vw - 32px));pointer-events:none;display:none}
+#chat .feed{display:flex;flex-direction:column;gap:3px;font-size:13.5px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+#chat .feed>div{background:rgba(13,17,29,.55);padding:4px 9px;border-radius:9px;align-self:flex-start;max-width:100%;overflow-wrap:anywhere}
+#chat .feed .sys{color:#cfd6e6;font-style:italic;font-weight:500}#chat .feed .big{font-size:20px}
+#chat .in{display:none;margin-top:6px;pointer-events:auto}#chat.open .in{display:block}
+#chat input{width:100%;font:inherit;font-weight:600;color:var(--tx);background:rgba(13,17,29,.9);border:1px solid var(--ac);border-radius:11px;padding:9px 12px;outline:none;-webkit-user-select:text;user-select:text}
+#chat .emo{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}#chat .emo button{background:rgba(13,17,29,.85);border:1px solid var(--bd);padding:4px 8px;font-size:18px;border-radius:9px}
+@media(max-height:560px){#chat{bottom:16px;left:auto;right:16px}}

@@ -17,6 +17,8 @@ export const ACTIONS = [
   { key: 'Tab', codes: ['Tab', 'KeyJ'], top: 1, bar: () => 'Pasport', run: (g) => g.ui.open('progress') },
   { key: 'C', codes: ['KeyC'], top: 1, bar: () => 'Kamera', run: (g) => { g.cam.next(); g.toast('Kamera: ' + g.cam.modeName); } },
   { key: 'P', codes: ['KeyP'], top: 1, bar: () => 'Surat', run: (g) => g.ui.setHud(!g.hudOn) },
+  { key: 'O', codes: ['KeyO'], top: 1, bar: () => 'Onlayn', run: (g) => g.ui.open('online') },
+  { key: 'U', codes: ['KeyU'], ok: (g) => !!(g.coop && g.coop.room), bar: () => 'Chat', run: (g) => g.coop.openChat() }, // onlayn xonada chat
   { key: 'N', codes: ['KeyN'], run: (g) => { const s = g.state.set; s.music = !s.music; g.audio.setMusic(s.music); g.toast(s.music ? 'Musiqa yoqildi' : "Musiqa o'chirildi"); } },
   // --- vaziyatga qarab ---
   { key: 'X', codes: ['KeyX'], ok: (g) => !!g.act, bar: () => 'Bekor qilish', run: (g) => g.endAct(false, 'cancel') },

@@ -47,7 +47,7 @@ export function initGame(game) {
   const { scene, car, site } = game;
   const st = (game.state = loadState());
   const A = (game.acts = buildActs(site));
-  game.save = () => { try { const pl = game.player; st.pos = [car.p[0], car.p[2], car.yaw]; st.foot = pl && pl.onFoot ? [pl.p[0], pl.p[2], pl.yaw] : null; st.hour = game.hour; st.veh.dmg[st.veh.cur] = game.damage.save(); localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* saqlash imkoni yo'q */ } };
+  game.save = () => { if (game.noSave) return; try { const pl = game.player; st.pos = [car.p[0], car.p[2], car.yaw]; st.foot = pl && pl.onFoot ? [pl.p[0], pl.p[2], pl.yaw] : null; st.hour = game.hour; st.veh.dmg[st.veh.cur] = game.damage.save(); localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* saqlash imkoni yo'q */ } };
   game.resetSave = () => { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); };
   const ui = () => game.ui;
   game.toast = (m, k) => ui() && ui().toast(m, k);
@@ -209,11 +209,13 @@ export function initGame(game) {
       let acc = 0; for (let i = 1; i < pts.length; i++) { acc += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (acc >= 240 && i < pts.length - 12) { act.cps.push(i); acc = 0; } }
       act.cps.push(pts.length - 1);
       const yaw = Math.atan2(pts[4][0] - pts[0][0], pts[4][1] - pts[0][1]);
-      car.place(pts[1][0], pts[1][1], yaw); game.prevP = car.p.slice(); game.cam.snap();
+      // birga poyga (onlayn): har o'yinchi start chizig'ida o'z joyida (2 qator), sun'iy raqiblar yo'q
+      const cr = game.coopRace, gl = cr ? (cr.grid % 2 ? 2.7 : -2.7) : 0, gb = cr ? (cr.grid >> 1) * 8 : 0;
+      car.place(pts[1][0] + Math.cos(yaw) * gl - Math.sin(yaw) * gb, pts[1][1] - Math.sin(yaw) * gl - Math.cos(yaw) * gb, yaw); game.prevP = car.p.slice(); game.cam.snap();
       // raqiblar
       const lx = Math.cos(yaw), lz = -Math.sin(yaw), fx = Math.sin(yaw), fz = Math.cos(yaw);
       const base = a.route.runway ? 41 : 31 + Math.min(4, st.up.engine) * 1.7;
-      rivals.forEach((r, i) => {
+      if (!cr) rivals.forEach((r, i) => {
         const off = (i % 2 ? 2.7 : -2.7), ahead = 8 + i * 6;
         const rp = pts.map((q) => [q[0], q[1]]);
         const gi = Math.min(pts.length - 2, 1 + Math.round(ahead / 4)), gq = pts[gi], gn = pts[gi + 1], gy = Math.atan2(gn[0] - gq[0], gn[1] - gq[1]);
@@ -271,12 +273,12 @@ export function initGame(game) {
       act.tgt = { x: cp[0], z: cp[1] };
       if (Math.hypot(p[0] - cp[0], p[2] - cp[1]) < 13) {
         act.cpi++; game.audio.sfx('check');
-        if (act.cpi >= act.cps.length) { const pos = 1 + rivals.filter((r) => r.fin).length; const s = starsByTime(act.t, a._t); const tm = fmtTime(act.t); const key = a.id; if (!st.best[key] || act.t < st.best[key]) st.best[key] = +act.t.toFixed(2); game.endAct(s > 0, s > 0 ? 'done' : 'slow', s, `Vaqt: ${tm} · ${pos}-o'rin`); return; }
+        if (act.cpi >= act.cps.length) { const pos = game.coopRace ? 1 + (game.coopRace.done || 0) : 1 + rivals.filter((r) => r.fin).length; const s = starsByTime(act.t, a._t); const tm = fmtTime(act.t); const key = a.id; if (!st.best[key] || act.t < st.best[key]) st.best[key] = +act.t.toFixed(2); game.endAct(s > 0, s > 0 ? 'done' : 'slow', s, `Vaqt: ${tm} · ${pos}-o'rin`); return; }
       }
       // o'rin: raqiblarning marshrutdagi indeksi bilan solishtirish
       let my = 0, bd = 1e18; const lo = act.cpi ? act.cps[act.cpi - 1] : 0; for (let i = Math.max(0, lo - 5); i <= Math.min(pts.length - 1, ci + 5); i++) { const d = (pts[i][0] - p[0]) ** 2 + (pts[i][1] - p[2]) ** 2; if (d < bd) { bd = d; my = i; } }
-      act.place = 1 + rivals.filter((r) => r.active && (r.fin || r.ap.i > my)).length;
-      act.lines = [`Nazorat: ${act.cpi}/${act.cps.length}`, `O'rin: ${act.place}/4`, `Oltin: ${fmtTime(a._t[2])}`];
+      act.place = game.coopRace ? game.coopRace.place || 1 : 1 + rivals.filter((r) => r.active && (r.fin || r.ap.i > my)).length; act.my = my;
+      act.lines = [`Nazorat: ${act.cpi}/${act.cps.length}`, `O'rin: ${act.place}/${game.coopRace ? game.coopRace.n : 4}`, `Oltin: ${fmtTime(a._t[2])}`];
       act.timer = act.t; return;
     }
     act.timer = act.limit - act.t;
