@@ -410,13 +410,35 @@ export function buildPlaces(scene, game) {
     st.put(-9, 8, 0.5, (g) => { BK.sign(g); }); st.put(8, 6, 0, (g) => { BK.bench(g, 0, 0, 3.14); BK.person(g, 2.6, 0, 3.4, 0xf0b83a); });
     // lava ko'li
     const ly = T.gridHeight(T.VOLC.x, T.VOLC.z) + 9;
-    const lavaMat = new THREE.MeshBasicMaterial({ color: 0xff6a1a, fog: false });
-    const lava = new THREE.Mesh(new THREE.CircleGeometry(T.VOLC.crater * 0.82, 40).rotateX(-Math.PI / 2), lavaMat); lava.position.set(T.VOLC.x, ly, T.VOLC.z); scene.add(lava);
-    const crust = new GB(77); crust.jit = 0.1; const rg = mulberry32(5); for (let i = 0; i < 46; i++) { const a = rg() * 6.283, d = Math.sqrt(rg()) * T.VOLC.crater * 0.74; crust.color(0x2a2226).blob(3 + rg() * 9, 0, { cx: Math.cos(a) * d, cy: 0.1, cz: Math.sin(a) * d, sy: 0.12, jitter: 0.25 }); }
-    const cm = new THREE.Mesh(crust.build(), MAT.flat); cm.position.set(T.VOLC.x, ly, T.VOLC.z); scene.add(cm);
+    // lava: sheyderda shovqinli qobiq plitalari, orasida yorqin (HDR — bloom ushlaydi) oqayotgan yoriqlar, chetida qizigan hoshiya
+    const LR = T.VOLC.crater * 0.82, lavaU = { uT: { value: 0 }, uR: { value: LR } };
+    const lavaMat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
+    lavaMat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, lavaU);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vLp;\n').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position.xz;\n');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+uniform float uT; uniform float uR; varying vec2 vLp;
+float lh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float ln(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(lh(i), lh(i + vec2(1, 0)), f.x), mix(lh(i + vec2(0, 1)), lh(i + vec2(1, 1)), f.x), f.y); }
+float lf(vec2 p) { float a = 0.0, w = 0.5; for (int k = 0; k < 4; k++) { a += w * ln(p); p = p * 2.03 + 7.1; w *= 0.5; } return a; }
+float cell(vec2 p) { vec2 i = floor(p), f = fract(p); float d1 = 9.0, d2 = 9.0; for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) { vec2 o = vec2(float(x), float(y)); vec2 c = o + vec2(lh(i + o), lh(i + o + 3.7)) - f; float d = dot(c, c); if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; } return sqrt(d2) - sqrt(d1); }
+`).replace('#include <color_fragment>', `#include <color_fragment>
+{ vec2 q = vLp * 0.045; vec2 fl = vec2(lf(q * 0.7 + uT * 0.03), lf(q * 0.7 - uT * 0.025 + 5.0)) - 0.5;
+  float e = cell(q + fl * 1.3 + vec2(uT * 0.012, -uT * 0.008));
+  float crack = 1.0 - smoothstep(0.015, 0.1 + 0.07 * lf(q * 3.0), e);
+  float n = lf(vLp * 0.12 + uT * 0.05), r = length(vLp) / uR;
+  float rim = smoothstep(0.78, 1.0, r);
+  float hot = clamp(crack * (0.75 + 0.5 * n) + rim * 0.9, 0.0, 1.0);
+  float pulse = 0.85 + 0.15 * sin(uT * 1.7 + n * 6.0);
+  vec3 crust = mix(vec3(0.018, 0.012, 0.011), vec3(0.075, 0.022, 0.01), n * n) + vec3(0.25, 0.04, 0.0) * smoothstep(0.25, 0.0, e) * 0.5;
+  vec3 glow = mix(vec3(0.9, 0.2, 0.02), vec3(1.7, 0.75, 0.16), hot * hot) * pulse;
+  diffuseColor.rgb = mix(crust, glow, smoothstep(0.15, 0.75, hot)); }
+`);
+    };
+    const lava = new THREE.Mesh(new THREE.CircleGeometry(LR, 64).rotateX(-Math.PI / 2), lavaMat); lava.position.set(T.VOLC.x, ly, T.VOLC.z); scene.add(lava);
     out.lava = { x: T.VOLC.x, z: T.VOLC.z, y: ly, r: T.VOLC.crater * 0.82 };
     out.lights.push({ x: T.VOLC.x, y: ly + 12, z: T.VOLC.z, hex: 0xff5a10, power: 3 });
-    out.anim.push((dt, t) => { const k = 0.85 + 0.15 * Math.sin(t * 1.7); lavaMat.color.setRGB(1.0 * k, 0.36 * k + 0.05, 0.08); });
+    out.anim.push((dt, t) => { lavaU.uT.value = t; });
     done(st);
   }
 
