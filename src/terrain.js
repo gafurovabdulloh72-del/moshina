@@ -401,7 +401,7 @@ const C = {
   beach: [hexLin(0xf1e0aa), hexLin(0xead69c), hexLin(0xf6e8ba)],
   rock: [hexLin(0x8f929c), hexLin(0x83868f), hexLin(0x9da0a8)],
   redrock: [hexLin(0xa9553a), hexLin(0x9c4c35), hexLin(0xb86343)],
-  gravel: hexLin(0xa9a294), lavender: hexLin(0x9a7fd0), seabed: hexLin(0xc9c79a), riverbed: hexLin(0xb9b08c),
+  gravel: hexLin(0xa9a294), alpine: hexLin(0x8c9a6a), lavender: hexLin(0x9a7fd0), seabed: hexLin(0xc9c79a), riverbed: hexLin(0xb9b08c),
 };
 const QUARRY = PLACES.find((p) => p.quarry);
 const BCOL = [C.meadow, C.autumn, C.taiga, C.desert, C.canyon, null, null, C.sakura, C.savanna, C.volcanic];
@@ -433,6 +433,9 @@ export function groundColor(x, z, h, slope) {
   // karyer: o't emas — shag'al tubi, devorlarda qatlam-qatlam tosh
   const qw = QUARRY ? padWeight(QUARRY, x, z) : 0;
   if (qw > 0) { const k = smoothstep(0, 0.35, qw), v = 0.85 + 0.3 * noise(x * 0.05, z * 0.05), band = 0.9 + 0.12 * Math.sin(h * 2.3 + noise(x * 0.02, z * 0.02) * 2); const gr = C.gravel; r = lerp(r, gr[0] * v * band, k); g = lerp(g, gr[1] * v * band, k); b = lerp(b, gr[2] * v * band, k); _c.lav = 0; }
+  // tog' yonbag'ri (90–150 m): to'yingan o'tloq rangi xira alp o'tiga va toshga o'tadi (qor chegarasigacha neon yashil kamar qolmasin)
+  const alp = smoothstep(75, 135, h) * (1 - W[9]);
+  if (alp > 0) { const v = noise(x * 0.013 + 4, z * 0.013 - 8), a = C.alpine, rk2 = smoothstep(0.1, 0.45, v) * smoothstep(100, 150, h); let ar = lerp(a[0], C.rock[1][0], rk2), ag = lerp(a[1], C.rock[1][1], rk2), ab = lerp(a[2], C.rock[1][2], rk2); r = lerp(r, ar, alp); g = lerp(g, ag, alp); b = lerp(b, ab, alp); }
   const redness = Math.min(1, W[3] * 0.5 + W[4]);
   const rk = smoothstep(0.5, 0.85, slope);
   if (rk > 0) {
