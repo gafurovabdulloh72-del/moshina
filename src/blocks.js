@@ -115,7 +115,7 @@ export function stall(g, x, z, yaw, hex) {
 }
 export function board(g, gl, x, z, yaw) {
   g.push().translate(x, 0, z).rotY(yaw); g.color(PAL.woodD).box(-1.1, 1.3, 0, 0.16, 2.6, 0.16); g.box(1.1, 1.3, 0, 0.16, 2.6, 0.16);
-  g.color(PAL.wood).box(0, 1.7, 0, 2.4, 1.5, 0.1); g.color(PAL.roof[0]); g.gable(0.5, 2.9, 0.3, 2.6, 0.1);
+  g.color(PAL.wood).box(0, 1.7, 0, 2.4, 1.5, 0.1); g.color(PAL.roof[0]); g.push().rotY(Math.PI / 2); g.gable(0.5, 2.9, 0.3, 2.6, 0.1); g.pop();
   const cols = [0xfdf6e3, 0xffe9a8, 0xcfe8ff, 0xffd0d0];
   for (let i = 0; i < 5; i++) { g.color(cols[i % 4]).box(-0.8 + (i % 3) * 0.75, 1.95 - Math.floor(i / 3) * 0.6, 0.07, 0.5, 0.42, 0.02); }
   g.pop();
