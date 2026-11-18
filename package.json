@@ -16,13 +16,18 @@
     "test:hud": "NO_TEST=1 node tools/shot.mjs tools/s_hud.js",
     "test:adapt": "node tools/shot.mjs tools/s_adapt.js",
     "test:save": "node tools/shot.mjs tools/s_save.js",
-    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save"
+    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save",
+    "test:api": "node --test tools/api_test.mjs",
+    "test:online": "node tools/coop_test.mjs",
+    "dev": "node tools/dev-server.mjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",
+    "peerjs": "^1.5.5",
     "three": "^0.170.0"
   },
   "devDependencies": {
+    "peer": "^1.0.2",
     "playwright-core": "^1.65.0",
     "sharp": "^0.35.5"
   }

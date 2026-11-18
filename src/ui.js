@@ -22,7 +22,7 @@ export class UI {
     this.buildMap(); this.buildHud();
     this.photo = el('div', '', '📷 Surat rejimi — interfeysni qaytarish: <kbd>P</kbd>'); this.photo.id = 'photo'; this.photo.style.display = 'none'; this.root.appendChild(this.photo);
     this.screen = el('div'); this.screen.id = 'screen'; this.root.appendChild(this.screen);
-    this.screen.addEventListener('mousedown', (e) => { if (e.target === this.screen && this.screenName !== 'menu' && this.screenName !== 'result' && this.screenName !== 'confirm') this.close(); });
+    this.screen.addEventListener('mousedown', (e) => { if (e.target === this.screen && this.screenName !== 'menu' && this.screenName !== 'result' && this.screenName !== 'confirm' && this.screenName !== 'cloud' && !(this.screenData && this.screenData.back === 'menu')) this.close(); });
   }
   // ---------- xarita rasmi ----------
   buildMap() {
@@ -140,6 +140,7 @@ export class UI {
     for (const k2 of g.pick.kits) if (k2.cd <= 0 && Math.abs(k2.x - px) < vr && Math.abs(k2.z - pz) < vr) dot(k2.x, k2.z, 4.5, '#fff', '#e03a2a');
     for (const d of g.live.dots) if (Math.abs(d[0] - px) < vr && Math.abs(d[1] - pz) < vr) dot(d[0], d[1], d[3] ? 10 : 6, d[2], d[3] ? '#fff' : '#141824');
     if (foot) dot(car.p[0], car.p[2], 8, '#d8392b', '#fff');
+    if (g.netDots) for (const d of g.netDots) dot(d[0], d[1], 11, d[2], '#141824'); // onlayn do'stlar
     if (a) {
       if (a.items) for (const it of a.items) if (!it.got) dot(it.x, it.z, 8, '#fff', '#ff5aa0');
       if (a.path) { const ci = a.cps[a.cpi]; if (ci != null) dot(a.path[ci][0], a.path[ci][1], 11, '#ffe14a', '#141824'); }
@@ -162,7 +163,7 @@ export class UI {
   open(name, data) {
     const g = this.g; this.screenName = name; this.screenData = data; g.mode = name === 'menu' ? 'menu' : 'ui'; this.screen.className = 'on ' + name; this.screen.innerHTML = '';
     this.hud.style.visibility = name === 'menu' ? 'hidden' : '';
-    const small = ['pause', 'settings', 'help', 'result', 'rest', 'confirm'].includes(name);
+    const small = ['pause', 'settings', 'help', 'result', 'rest', 'confirm', 'coopres'].includes(name);
     // ✕ tugmasi oynaning o'zida emas, o'ramida turadi — oyna ichi qayta chizilganda ham o'chib ketmaydi
     const wrap = el('div', 'winwrap' + (small ? ' small' : '')), w = el('div', 'win'); wrap.appendChild(w);
     if (name !== 'menu') this.screen.appendChild(wrap);
@@ -188,6 +189,7 @@ export class UI {
         <div class="m-btns">
           <button data-a="play" class="m-main"><span>▶</span>${fresh ? "O'yinni boshlash" : 'Davom etish'}</button>
           ${fresh ? '' : `<button data-a="new" class="sec"><span>↺</span>Yangi o'yin</button>`}
+          <button data-a="online" class="sec"><span>🌐</span>Onlayn — do'stlar bilan</button>
           <button data-a="help" class="sec"><span>⌨</span>Boshqaruv</button>
           <button data-a="set" class="sec"><span>⚙</span>Sozlamalar</button>
           <button data-a="full" class="sec"><span>⛶</span>To'liq ekran</button>
@@ -199,6 +201,7 @@ export class UI {
     m.onclick = (e) => { const b = e.target.closest('[data-a]'); if (!b) return; g.audio.init(); g.audio.sfx('click'); const a = b.dataset.a;
       if (a === 'play') { st.fresh = false; this.screenName = null; this.close(); g.startPlay(); }
       else if (a === 'new') this.confirm("Yangi o'yin", "Barcha yutuqlar, pul, transportlar va uy o'chiriladi. Rostdan ham boshidan boshlaysizmi?", "Ha, yangidan boshlash", () => g.resetSave(), 'menu');
+      else if (a === 'online') this.open('online', { back: 'menu' });
       else if (a === 'help') this.open('help', { back: 'menu' }); else if (a === 'set') this.open('settings', { back: 'menu' });
       else if (a === 'full') { const d = document; if (d.fullscreenElement) d.exitFullscreen(); else d.documentElement.requestFullscreen && d.documentElement.requestFullscreen().catch(() => {}); } };
   }
@@ -206,6 +209,7 @@ export class UI {
     const g = this.g; x(); w.innerHTML = `<h1>Pauza</h1><p class="sub">${g.levelName()} · ★ ${g.totalStars()}/${g.maxStars} · Muhrlar ${g.stampCount()}/12 · ❤ ${Math.floor(g.state.karma)}</p>`;
     const col = el('div'); col.style.cssText = 'display:flex;flex-direction:column;gap:8px'; w.appendChild(col);
     col.appendChild(btn('▶  Davom etish', () => this.close()));
+    col.appendChild(btn("🌐 Onlayn — do'stlar bilan", () => this.open('online'), 'sec'));
     col.appendChild(btn('Xarita', () => this.open('map'), 'sec')); col.appendChild(btn('Sumka va topshiriqlar', () => this.open('bag'), 'sec')); col.appendChild(btn('Sayohat pasporti', () => this.open('progress'), 'sec'));
     col.appendChild(btn('Vaqtni almashtirish (dam olish)', () => this.open('rest'), 'sec'));
     col.appendChild(btn("Ustaxonaga evakuatsiya (200 so'm)", () => { this.close(); g.tow(); }, 'sec'));
@@ -218,7 +222,7 @@ export class UI {
     const rows = (list) => list.map(([k, t]) => `<div>${K(k)}</div><div>${t}</div>`).join('');
     w.innerHTML = `<h1>Boshqaruv</h1><div class="grid2"><div><h4 style="margin:8px 0 2px">Transportda</h4><div class="keys">${rows([[['W', 'S'], 'Gaz / tormoz va orqaga'], [['A', 'D'], 'Burilish'], [['Probel'], "Qo'l tormozi — drift"], [['Shift'], 'Nitro'], [['F'], 'Transportdan tushish'], [['R'], "Yo'lga qaytarish"], [['H', 'L'], 'Signal · faralar'], [['T'], 'Evakuator (motor o\'chganda)'], [['E'], "Taxta / ustaxona / yo'lovchi olish"]])}</div></div>
       <div><h4 style="margin:8px 0 2px">Piyoda</h4><div class="keys">${rows([[['W', 'A', 'S', 'D'], 'Yurish'], [['Shift'], 'Yugurish'], [['Probel'], 'Sakrash'], [['F'], 'Transportga chiqish'], [['V'], 'Transportni chaqirish'], [['E'], 'Harakat (silkitish, gaplashish, terish…)'], [['Q', 'G', 'Y'], "O't yulish · gul ekish · yeyish"], [['B'], 'Harakatlar menyusi'], [['1', '2', '3'], 'Raqs · dutor · salom'], [['L', 'Z'], 'Fonar · durbin']])}</div></div></div>
-      <div class="keys" style="margin-top:10px">${rows([[['M'], 'Xarita va GPS'], [['I'], 'Sumka, topshiriqlar, albom'], [['Tab'], 'Sayohat pasporti'], [['C'], 'Kamera · sichqoncha bilan aylantirish'], [['X'], 'Chellenjni bekor qilish'], [['N', 'P'], 'Musiqa · surat rejimi'], [['Esc'], 'Pauza']])}</div>
+      <div class="keys" style="margin-top:10px">${rows([[['M'], 'Xarita va GPS'], [['I'], 'Sumka, topshiriqlar, albom'], [['Tab'], 'Sayohat pasporti'], [['C'], 'Kamera · sichqoncha bilan aylantirish'], [['X'], 'Chellenjni bekor qilish'], [['N', 'P'], 'Musiqa · surat rejimi'], [['O', 'K'], 'Onlayn (do\'stlar bilan) · chat'], [['Esc'], 'Pauza']])}</div>
       <p class="sub" style="margin-top:12px">Geympad ham ishlaydi: RT/LT — gaz/tormoz, chap stik — rul, A — qo'l tormozi, X — nitro.</p>`;
     w.appendChild(btn('Orqaga', () => this.open(d.back)));
   }
@@ -386,6 +390,7 @@ export class UI {
       for (const id in g.site.places) { const p = g.site.places[id]; const nm = st.places[id] || id === 'uy' ? p.name : '?'; c.lineWidth = 4; c.strokeStyle = 'rgba(10,14,24,.85)'; c.strokeText(nm, P(p.x), P(p.z) - 13); c.fillStyle = st.places[id] ? '#fff' : '#ffd0a0'; c.fillText(nm, P(p.x), P(p.z) - 13); }
       if (g.way) dot(g.way.x, g.way.z, 8, '#35e0ff', '#141824');
       if (pl.onFoot) dot(g.car.p[0], g.car.p[2], 6, '#d8392b', '#fff');
+      if (g.netDots) for (const d of g.netDots) { dot(d[0], d[1], 9, d[2], '#141824'); c.lineWidth = 4; c.strokeStyle = 'rgba(10,14,24,.85)'; c.strokeText(d[3], P(d[0]), P(d[1]) - 14); c.fillStyle = d[2]; c.fillText(d[3], P(d[0]), P(d[1]) - 14); }
       c.save(); c.translate(P(me[0]), P(me[2])); c.rotate(Math.PI - myYaw); c.beginPath(); c.moveTo(0, -13); c.lineTo(9, 10); c.lineTo(0, 5); c.lineTo(-9, 10); c.closePath(); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 3; c.strokeStyle = '#d8392b'; c.stroke(); c.restore();
     };
     draw();

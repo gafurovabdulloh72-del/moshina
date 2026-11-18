@@ -22,6 +22,9 @@ import { buildAds } from './ads.js';
 import { initGfx } from './gfx.js';
 import { bakeTextures } from './tex.js';
 import * as COLL from './colliders.js';
+import { initNet } from './net.js';
+import { initCoop } from './coop.js';
+import { initOnlineUI } from './onlineui.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -75,6 +78,7 @@ async function boot() {
   game.prevP = car.p.slice(); game.carPos.fromArray(car.p); game.acc = 0;
   if (st.foot && !st.fresh) { game.live.dismount(true); game.player.place(st.foot[0], st.foot[1], st.foot[2]); }
   game.ui = new UI(game);
+  initNet(game); initCoop(game); initOnlineUI(game); // onlayn rejim (faqat saytda; faylda — "mavjud emas")
   game.applyQuality('boot'); resize();
   game.sky.setHour(game.hour);
   await step(1, 'Tayyor!');
@@ -86,6 +90,7 @@ async function boot() {
   addEventListener('pointerdown', unlock); addEventListener('keydown', unlock);
   addEventListener('beforeunload', () => game.save());
   requestAnimationFrame(frame);
+  game.net.start();
 }
 
 // mode: (bo'sh) — o'yinchi Sozlamalarda o'zgartirdi; 'boot' — o'yin ochilishi;
@@ -140,6 +145,8 @@ function keys() {
   if (g.mode !== 'play') return;
   const foot = pl.onFoot;
   if (inp.hit('KeyM')) ui.open('map');
+  if (inp.hit('KeyO')) ui.open('online');
+  if (inp.hit('KeyK')) g.coop.openChat();
   if (inp.hit('Tab', 'KeyJ')) ui.open('progress');
   if (inp.hit('KeyC')) { g.cam.next(); g.toast('Kamera: ' + g.cam.modeName); }
   if (inp.hit('KeyN')) { const s = g.state.set; s.music = !s.music; g.audio.setMusic(s.music); g.toast(s.music ? 'Musiqa yoqildi' : "Musiqa o'chirildi"); }
