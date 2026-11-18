@@ -27,7 +27,7 @@ const P = UI.prototype;
 P.s_online = function (w, d, btn, x) {
   const g = this.g, net = g.net, C = g.coop; d = d || {};
   if (d.back !== 'menu') x();
-  w.innerHTML = `<h1>Onlayn <small>do'stlar bilan birga</small></h1><p class="sub">Telegram orqali kiring — yutuqlaringiz bulutda saqlanadi. Xona oching va do'stlaringizni kod yoki havola bilan chaqiring (2–4 kishi): birga sayohat, birga poyga, chat.</p>`;
+  w.innerHTML = `<h1>Onlayn <small>do'stlar bilan birga</small></h1><p class="sub">Telegram orqali kiring — yutuqlaringiz bulutda saqlanadi. Xona oching va do'stlaringizni kod yoki havola bilan chaqiring (2–4 kishi): birga sayohat, birga poyga, chat.<br>Do'stingiz havolasi orqali kirsangiz — uning uyida yashaysiz va uni birga rivojlantirasiz.</p>`;
   const grid = el('div', 'onl'); w.appendChild(grid);
   const acct = el('div', 'card onl-acct'), room = el('div', 'card onl-room'); grid.appendChild(acct); grid.appendChild(room);
   const foot = el('div', 'row'); foot.style.marginTop = '14px'; w.appendChild(foot);
@@ -90,6 +90,7 @@ P.s_online = function (w, d, btn, x) {
       list.appendChild(row);
     }
     if (!C.members.size) list.appendChild(el('p', 'onl-note', "Hozircha yolg'izsiz. Kodni yoki havolani do'stingizga yuboring."));
+    else list.appendChild(el('p', 'onl-note', g.visit && g.visit.on ? `🏠 Siz ${esc(g.visit.owner)}ning uyida yashayapsiz — uy belgisida [E] bilan uni birga rivojlantiring` : "🏠 Do'stlaringiz sizning uyingizda yashaydi va uni siz bilan birga rivojlantiradi"));
     const rc = el('div', 'onl-race'); room.appendChild(rc);
     if (R.isHost) {
       rc.innerHTML = `<b>🏁 Birga poyga</b><div class="row"><select class="onl-sel">${C.races().map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('')}</select></div>`;
