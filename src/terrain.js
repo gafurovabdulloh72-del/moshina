@@ -424,7 +424,12 @@ export function groundColor(x, z, h, slope) {
     if (i > 0 && w > dw) { dw = w; dom = i; }
   }
   // lavanda dalalari (o'tloqda)
-  if (W[0] > 0.6) { const lv = smoothstep(0.52, 0.66, noise(x * 0.0021 + 100, z * 0.0021 + 60)) * W[0] * (1 - smoothstep(0.1, 0.3, slope)); if (lv > 0) { r = lerp(r, C.lavender[0], lv * 0.8); g = lerp(g, C.lavender[1], lv * 0.8); b = lerp(b, C.lavender[2], lv * 0.8); if (lv > 0.5) _c.lav = 1; else _c.lav = 0; } else _c.lav = 0; } else _c.lav = 0;
+  // lavanda dalalari (o'tloqda): aniq chegarali, manzillar va yo'llardan uzoqda; yaqinda gullar qator-qator
+  _c.lav = 0;
+  if (W[0] > 0.6 && slope < 0.3) { let lv = smoothstep(0.585, 0.615, noise(x * 0.0021 + 100, z * 0.0021 + 60)) * smoothstep(0.6, 0.8, W[0]) * (1 - smoothstep(0.12, 0.25, slope));
+    if (lv > 0) { for (let i = 0; i < PLACES.length; i++) { const p = PLACES[i]; const d = p.rect ? (padWeight(p, x, z) > 0 ? 0 : 1e9) : Math.hypot(x - p.x, z - p.z) - p.r - p.blend; if (d < 110) { lv *= smoothstep(40, 110, d); if (lv <= 0) break; } } }
+    if (lv > 0 && roads.grid) { const nr = nearestRoad(x, z, 2); if (nr.edge >= 0) lv *= smoothstep(14, 26, nr.d - nr.hw); }
+    if (lv > 0) { const k = lv * 0.75; r = lerp(r, C.lavender[0], k); g = lerp(g, C.lavender[1], k); b = lerp(b, C.lavender[2], k); _c.lav = lv > 0.5 ? 1 : 0; } }
   // karyer: o't emas — shag'al tubi, devorlarda qatlam-qatlam tosh
   const qw = QUARRY ? padWeight(QUARRY, x, z) : 0;
   if (qw > 0) { const k = smoothstep(0, 0.35, qw), v = 0.85 + 0.3 * noise(x * 0.05, z * 0.05), band = 0.9 + 0.12 * Math.sin(h * 2.3 + noise(x * 0.02, z * 0.02) * 2); const gr = C.gravel; r = lerp(r, gr[0] * v * band, k); g = lerp(g, gr[1] * v * band, k); b = lerp(b, gr[2] * v * band, k); _c.lav = 0; }

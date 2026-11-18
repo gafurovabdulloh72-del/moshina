@@ -213,7 +213,7 @@ export function buildProps(scene, game) {
 
 // --- Yaqin atrofdagi o't va gullar: zich o'tloq (yaqin halqa — egri poyali zich yamoqlar, uzoq halqa — siyrakroq), shamolda tebranadi, chetida yer rangiga singib yo'qoladi ---
 export function buildDetail(scene) {
-  const NN = 900, N = 2600, NF = 1400;
+  const NN = 900, N = 2600, NF = 2000;
   const gm = grassMaterial();
   const gSparse = grassPatch(6, 40, false), gLite = grassPatch(8, 16, false, 6); // gLite — 0-daraja uchun arzon yamoq (22 uchburchak, eski o't narxida); geometriya almashtirish sheyderni qayta kompilyatsiya qilmaydi
   const near = new THREE.InstancedMesh(grassPatch(5, 90, true), gm, NN), grass = new THREE.InstancedMesh(gSparse, gm, N), flowers = new THREE.InstancedMesh(flowerGeo(7), gm, NF);
@@ -265,9 +265,11 @@ export function buildDetail(scene) {
         // gullar (o'tga qo'shimcha, o'rnini egallamaydi)
         const hf = hash2(i, j, 31), fc = lav ? LAV : FC[bio];
         const fp = fc && !lav ? smoothstep(-0.1, 0.6, noise(x * 0.045 + 3.1, z * 0.045 - 7.7)) : 0; // gullar to'p-to'p (dog'lar) bo'lib o'sadi
-        if (fc && nf < NF && d < RD * 0.8 && (hf < (0.06 + 0.5 * fp) * fk || (lav && hf < 0.55 * fk))) {
-          for (let q = 0; q < (lav ? 3 : 1 + ((hf * 37) % 1 < fp ? 2 : 0)) && nf < NF; q++) {
-            const fx = x + (hash2(i, j, 32 + q) - 0.5) * 1.3, fz = z + (hash2(i, j, 35 + q) - 0.5) * 1.3, fsc = (0.75 + hash2(i, j, 38 + q) * 0.6) * (0.3 + 0.7 * fade) * (lav ? 1.4 : 1);
+        if (fc && nf < NF && d < RD * 0.8 && (hf < (0.06 + 0.5 * fp) * fk || (lav && hf < 0.85 * fk))) {
+          for (let q = 0; q < (lav ? 4 : 1 + ((hf * 37) % 1 < fp ? 2 : 0)) && nf < NF; q++) {
+            let fx = x + (hash2(i, j, 32 + q) - 0.5) * 1.3, fz = z + (hash2(i, j, 35 + q) - 0.5) * 1.3;
+            if (lav) { const u = fx * 0.8 + fz * 0.6, du = Math.round(u / 1.7) * 1.7 - u; fx += du * 0.8; fz += du * 0.6; } // lavanda tekis qatorlarda
+            const fsc = (0.75 + hash2(i, j, 38 + q) * 0.6) * (0.3 + 0.7 * fade) * (lav ? 1.4 : 1);
             dummy.position.set(fx, T.gridHeight(fx, fz) - 0.02, fz); dummy.rotation.set((hash2(i, j, 41 + q) - 0.5) * 1.1, hf * 50 + q, (hash2(i, j, 44 + q) - 0.5) * 1.1); dummy.scale.set(fsc, fsc * (lav ? 1.5 : 1), fsc); dummy.updateMatrix();
             flowers.setMatrixAt(nf, dummy.matrix); col.setHex(fc[(hash2(i, j, 25 + q) * fc.length) | 0]); flowers.setColorAt(nf, col); nf++;
           }
