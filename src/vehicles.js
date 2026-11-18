@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { VB, vmats, paintMaterial, lampMat, wheelGeo, wheelInto, bikeWheelGeo, caliperGeo, riderGeo2, makeBody, emitBody, emitInner, endPatch, sidePatch, topPatch, lerp3 } from './carkit.js';
 import { JEEP, jeepExtras } from './carmodel.js';
 import { DEF_SPEC } from './physics.js';
+import { makeRider, poseRider } from './rig.js';
 
 const DARK = 0x2b2d33, GREY = 0x4a4d57, GLASS = 0x1e3246, STEEL = 0xb9bec8, TYRE = 0x1c1d22, SKIN = 0xe8b990;
 const S = (o) => Object.assign({}, DEF_SPEC, o);
@@ -840,13 +841,14 @@ function cloneModel(src) {
 // Ichida hamma koordinatalar x=0 atrofida, x siljishi o'rovchi guruhda — suyakli odam (rig.js makeRider) bilan almashtirish oson
 function attachRider(src, m) {
   const o = src._rd; if (!o) return null;
+  if (!LITE) { const rr = makeRider(o), w = new THREE.Group(); w.position.x = o.x || 0; rr.root.userData.rig = rr; rr.root.visible = false; w.add(rr.root); m.tilt.add(w); return rr.root; } // o'yinchi transportida — jonli skeletli haydovchi
   const g = src._riderGeo || (src._riderGeo = riderGeo2(o)), r = new THREE.Mesh(g, vmats().trim), w = new THREE.Group();
   r.castShadow = true; r.receiveShadow = true; r.visible = false; w.position.x = o.x || 0; w.add(r); m.tilt.add(w); return r;
 }
 export function buildVehicle(id, opt = {}) {
   const v = vehById[id] || vehById.jip, key = v.id + (opt.lite ? ':L' : '');
   if (!TPL[key]) TPL[key] = buildVehicle0(v, opt);
-  const m = cloneModel(TPL[key]); m.paintMat.color.setHex(v.hex);
+  LITE = !!opt.lite; const m = cloneModel(TPL[key]); m.paintMat.color.setHex(v.hex);
   return m;
 }
 function buildVehicle0(v, opt) {
@@ -876,5 +878,6 @@ export function syncWheels(m, car, flat) {
   }
   if (m.fork) m.fork.rotation.y = car.steer;
   if (m.crank) m.crank.rotation.x = W[2].spin * 0.42;
+  if (m.rider && m.rider.visible && m.rider.userData.rig) poseRider(m.rider.userData.rig, m.crank ? m.crank.rotation.x : null, car.steer);
   if (m.bike) { const lean = Math.max(-0.6, Math.min(0.6, -car.steer * Math.abs(car.fwd) * Math.abs(car.fwd) * 0.11 / 9.81 * 2.2)); m.tilt.rotation.z += (lean - m.tilt.rotation.z) * 0.15; }
 }

@@ -77,7 +77,7 @@ export function buildLife(scene, game) {
     return { F, R: Rr, HF: [Math.max(0.2, F[0] - 0.16), F[1], F[2] + 0.04], HR: [Math.max(0.2, Rr[0] - 0.12), Rr[1], Rr[2] - 0.04] };
   };
   const mkCar = (id, i) => {
-    const m = buildVehicle(id), sp = m.spec, heavy = id === 'yuk' || id === 'avtobus' || id === 'furgon';
+    const m = buildVehicle(id, { lite: true }), sp = m.spec, heavy = id === 'yuk' || id === 'avtobus' || id === 'furgon';
     if (id !== 'yuk' && id !== 'avtobus') m.paintMat.color.setHex(PAINT[(rnd() * PAINT.length) | 0]);
     m.root.remove(m.spot); m.root.remove(m.spot.target); m.root.visible = false; scene.add(m.root);
     const f = fake(); f.wheels.forEach((w, k) => { w.len = sp.free - sp.sag; w.ly = (k < 2 ? sp.rF : sp.rR) + (sp.free - sp.sag) - sp.com; });
@@ -309,7 +309,7 @@ export function buildLife(scene, game) {
   // =================== MANZILLAR YONIDA TO'XTAB TURGAN MASHINALAR ===================
   const parked = [];
   const PARK_AT = [['bogiston', 2], ['bandargoh', 1], ['karvon', 1], ['qala', 1], ['mayoq', 1], ['tegirmon', 1]], PTYPES = ['sedan', 'xetch', 'pikap', 'furgon', 'xetch', 'sedan', 'pikap'];
-  const pmodels = PTYPES.map((id) => { const m = buildVehicle(id); m.paintMat.color.setHex(PAINT[(rnd() * PAINT.length) | 0]); m.root.remove(m.spot); m.root.remove(m.spot.target); m.root.visible = false; return m; });
+  const pmodels = PTYPES.map((id) => { const m = buildVehicle(id, { lite: true }); m.paintMat.color.setHex(PAINT[(rnd() * PAINT.length) | 0]); m.root.remove(m.spot); m.root.remove(m.spot.target); m.root.visible = false; return m; });
   const placeParked = () => {
     let mi = 0; const uy = T.placeBy.uy;
     for (const [pid, n] of PARK_AT) {
