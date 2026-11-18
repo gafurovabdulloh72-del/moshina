@@ -10,6 +10,7 @@ import * as T from './terrain.js';
 const near = (g) => { const c = g.car.p, p = g.player.p; return Math.hypot(c[0] - p[0], c[2] - p[2]) < g.car.spec.len / 2 + 2.4; };
 const counting = (g) => g.act && g.act.state === 'count';
 const free = (g) => g.player.lock <= 0;
+const outdoor = (g) => free(g) && !(g.interior && g.interior.inside); // uy/do'kon ichida tashqi harakat tugmalari chiqmaydi
 export const ACTIONS = [
   // --- umumiy (yuqori o'ngdagi qator) ---
   { key: 'M', codes: ['KeyM'], top: 1, bar: () => 'Xarita', run: (g) => g.ui.open('map') },
@@ -25,15 +26,15 @@ export const ACTIONS = [
   { key: 'T', codes: ['KeyT'], ok: (g) => g.damage.wrecked, bar: (g) => (g.player.onFoot ? null : 'Evakuator'), run: (g) => g.tow() },
   { key: 'E', codes: ['KeyE', 'Enter'], run: (g) => { // [E] — yaqindagi narsaga mos harakat (yozuvi pastdagi katta tugmada)
     const pt = g.nearPoint, ui = g.ui;
-    if (pt && g.player.lock <= 0) { if (pt.kind === 'board') { if (!g.act) ui.open('board', pt.place); } else if (pt.kind === 'garage') ui.open('garage', pt); else if (pt.kind === 'home') ui.open('home'); }
+    if (pt && g.player.lock <= 0) { if (pt.kind === 'board') { if (!g.act) ui.open('board', pt.place); } else if (pt.kind === 'garage') ui.open('garage', pt); else if (pt.kind === 'home') { if (g.player.onFoot && g.hayot) g.hayot.enterHome(); else ui.open('home'); } }
     else g.live.useE(); } },
   { key: 'F', codes: ['KeyF'], ok: (g) => !counting(g), bar: (g) => (g.player.onFoot ? (near(g) ? 'Transportga chiqish' : null) : 'Tushish'), run: (g) => { if (g.player.onFoot) g.live.tryMount(); else g.live.dismount(); } },
   // --- piyoda ---
-  { key: 'V', codes: ['KeyV'], on: 'foot', one: 1, ok: free, bar: (g) => (near(g) ? null : 'Chaqirish'), run: (g) => g.live.doAction('whistle') },
-  { key: 'Q', codes: ['KeyQ'], on: 'foot', one: 1, ok: free, bar: () => "O't yulish", run: (g) => g.live.doAction('pull') },
-  { key: 'G', codes: ['KeyG'], on: 'foot', one: 1, ok: free, bar: (g) => (g.state.inv.seed > 0 ? `Gul ekish · ${g.state.inv.seed}` : null), run: (g) => g.live.doAction('plant') },
+  { key: 'V', codes: ['KeyV'], on: 'foot', one: 1, ok: outdoor, bar: (g) => (near(g) ? null : 'Chaqirish'), run: (g) => g.live.doAction('whistle') },
+  { key: 'Q', codes: ['KeyQ'], on: 'foot', one: 1, ok: outdoor, bar: () => "O't yulish", run: (g) => g.live.doAction('pull') },
+  { key: 'G', codes: ['KeyG'], on: 'foot', one: 1, ok: outdoor, bar: (g) => (g.state.inv.seed > 0 ? `Gul ekish · ${g.state.inv.seed}` : null), run: (g) => g.live.doAction('plant') },
   { key: 'Y', codes: ['KeyY'], on: 'foot', one: 1, ok: free, bar: () => 'Yeyish', run: (g) => g.live.doAction('eat') },
-  { key: 'K', codes: ['KeyK'], on: 'foot', one: 1, ok: free, run: (g) => g.live.doAction('sapling') },
+  { key: 'K', codes: ['KeyK'], on: 'foot', one: 1, ok: outdoor, run: (g) => g.live.doAction('sapling') },
   { key: '1', codes: ['Digit1'], on: 'foot', one: 1, ok: free, run: (g) => g.live.doAction('dance') },
   { key: '2', codes: ['Digit2'], on: 'foot', one: 1, ok: free, run: (g) => g.live.doAction('dutor') },
   { key: '3', codes: ['Digit3'], on: 'foot', one: 1, ok: free, run: (g) => g.live.doAction('wave') },

@@ -57,7 +57,8 @@ export class Player {
     if (moving && this.grounded) { const gy1 = T.ground(nx, nz, p[1] + 0.7).y, step = Math.hypot(nx - p[0], nz - p[2]); if (gy1 - p[1] > step * 1.5 + 0.02 && gy1 - p[1] > 0.02) { nx = p[0]; nz = p[2]; v[0] *= 0.5; v[2] *= 0.5; } }
     // to'siqlar
     const near = COL.query(nx, nz, 1.6);
-    for (let it = 0; it < 2; it++) for (let i = 0; i < near.length; i++) {
+    const seated = this.sit || this.lockAnim === 'lie' || this.lockAnim === 'eat'; // mebelda o'tirgan/yotgan — mebel to'sig'i itarmaydi
+    if (!seated) for (let it = 0; it < 2; it++) for (let i = 0; i < near.length; i++) {
       const o = near[i]; if (o.dead || o.y1 < p[1] + 0.35 || o.y0 > p[1] + 1.7) continue;
       let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = clamp(((nx - o.x) * sx + (nz - o.z) * sz) / (sx * sx + sz * sz || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz * t; }
       let dx = nx - qx, dz = nz - qz; const d = Math.hypot(dx, dz), pen = o.r + 0.32 - d; if (pen <= 0) continue;

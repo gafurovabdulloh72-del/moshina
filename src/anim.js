@@ -35,8 +35,8 @@ const V3 = () => new THREE.Vector3(), Q4 = () => new THREE.Quaternion();
 const _e = new THREE.Euler(), _q = Q4(), _q2 = Q4(), _q3 = Q4(), _v = V3(), _v2 = V3(), _v3 = V3(), _v4 = V3(), _m = new THREE.Matrix4(), _Y = new THREE.Vector3(0, 1, 0);
 const qE = (q, x, y, z, o) => q.setFromEuler(_e.set(x, y, z, o));
 
-const STATES = ['loco', 'air', 'swim', 'sit', 'bend', 'shake', 'dance', 'wave', 'talk', 'play', 'fish', 'swing', 'fall', 'pet'];
-const BLEND = { loco: 0.16, air: 0.07, swim: 0.3, sit: 0.35, bend: 0.2, shake: 0.18, dance: 0.3, wave: 0.2, talk: 0.3, play: 0.3, fish: 0.25, swing: 0.15, fall: 0.08, pet: 0.25 };
+const STATES = ['loco', 'air', 'swim', 'sit', 'bend', 'shake', 'dance', 'wave', 'talk', 'play', 'fish', 'swing', 'fall', 'pet', 'lie', 'eat', 'cook', 'drink', 'wash', 'shower', 'read'];
+const BLEND = { loco: 0.16, air: 0.07, swim: 0.3, sit: 0.35, bend: 0.2, shake: 0.18, dance: 0.3, wave: 0.2, talk: 0.3, play: 0.3, fish: 0.25, swing: 0.15, fall: 0.08, pet: 0.25, lie: 0.45, eat: 0.35, cook: 0.25, drink: 0.2, wash: 0.25, shower: 0.3, read: 0.3 };
 const MAP = { idle: 'loco', walk: 'loco', run: 'loco', jump: 'air' };
 const IVAR = ['look', 'stretch', 'watch', 'scratch', 'hips', 'cross', 'shrug', 'look'];
 const IVAR_M = ['look', 'roll', 'watch', 'neck', 'cross', 'look', 'stretch', 'roll', 'scratch', 'hips']; // erkak: yelka aylantirish, bo'yin cho'zish, atrofga qarash
@@ -371,6 +371,55 @@ function sFall(rig, A, o, t, dt) {
   o[CH.KX] -= 0.6 * down; o[CH.SX] += 0.1 * down; o[CH.LOOK] = 0;
 }
 
+// ---- uy hayoti: yotish, stolda ovqatlanish, ovqat pishirish, suv ichish, qo'l yuvish, dush, gazeta o'qish ----
+// Chalqancha yotish (karavotda): gavda gorizontal, bosh -Z tomonda, oyoqlar to'g'ri, sekin chuqur nafas
+function sLie(rig, A, o, t, dt) {
+  const s = rig.s, br = sn(t * 1.25);
+  o[CH.BX] = -PI / 2; o[CH.PY] = (0.66 - A.H0) / s; o[CH.PZ] = 0; o[CH.HX] = 0; o[CH.SX] = 0.03 * br; o[CH.CX] = 0.02 + 0.03 * br; o[CH.NX] = 0.25; o[CH.KX] = 0.12; o[CH.KY] = 0.18 * sn(t * 0.09 + 1);
+  arm(o, AL, { uf: 0.05, ua: 0.16, ur: 0.1, ef: 0.35, ep: 0.5, wf: 0, fg: 0.45 }); arm(o, AR, { uf: 0.6, ua: 0.22, ur: 0.9, ef: 1.6, ep: 0.3, wf: 0, fg: 0.45 }); // o'ng qo'l ko'krakda
+  legFK(o, LL, 0.04, 0.12, -0.5, 0.06); legFK(o, LR, 0.1, 0.22, -0.5, 0.03, -0.15); o[CH.LIKL] = o[CH.LIKR] = 0; o[CH.LOOK] = 0;
+}
+// Stolda o'tirib ovqatlanish: o'tirish holati + qoshiqni og'izga olib borish (ritmik), bosh biroz egilgan
+function sEat(rig, A, o, t, dt, rq) {
+  sSit(rig, A, o, t + 2, dt, rq); const c = fr(t / 2.1), up = sm(0.15, 0.4, c) * (1 - sm(0.62, 0.85, c)), e = sm(0, 0.4, t);
+  o[CH.HX] += 0.18 * e; o[CH.SX] += 0.12 * e; o[CH.KX] += 0.15 * e - 0.12 * up * e; o[CH.KY] *= 1 - e;
+  armMix(o, AR, { uf: lerp(0.75, 1.35, up), ua: lerp(0.25, 0.42, up), ur: lerp(0.2, 0.75, up), ef: lerp(1.1, 2.3, up), ep: 0.2, wf: 0.15, fg: 0.6 }, e);
+  armMix(o, AL, { uf: 0.6, ua: 0.2, ur: 0.35, ef: 1.25, ep: 0.6, wf: 0.1, fg: 0.5 }, e); o[CH.LOOK] = 0.2;
+}
+// Plita oldida: ikki qo'l oldinda, o'ng qo'l qozonni aylana bo'ylab kavlaydi, nigoh pastda
+function sCook(rig, A, o, t, dt) {
+  const e = sm(0, 0.35, t), a = t * 4.2, s2 = sn(t * 0.7);
+  armMix(o, AR, { uf: 0.95 + 0.12 * sn(a), ua: 0.25 + 0.1 * cs(a), ur: 0.35, ef: 1.25 + 0.15 * cs(a), ep: 0.1, wf: 0.1, fg: 0.85 }, e);
+  armMix(o, AL, { uf: 0.7, ua: 0.18, ur: 0.4, ef: 1.35, ep: 0.6, wf: 0.1, fg: 0.6 }, e);
+  o[CH.HX] += 0.08 * e; o[CH.SX] += 0.08 * e; o[CH.KX] += 0.35 * e; o[CH.KY] += 0.12 * s2 * e; o[CH.CY] += 0.06 * sn(a) * e; o[CH.LOOK] = 0.15;
+  idleLayer(rig, A, o, 0.5, t, dt, false);
+}
+// Suv ichish: stakan og'izga ko'tariladi, bosh orqaga engashadi, so'ng tushiriladi (davomiylik — actDur)
+function sDrink(rig, A, o, t, dt) {
+  const d = A.actDur, e = sm(0, 0.35, t) * (1 - sm(d - 0.35, d, t)), sip = sm(0.35, 0.65, t) * (1 - sm(d - 0.55, d - 0.25, t));
+  armMix(o, AR, { uf: lerp(0.7, 1.15, sip), ua: lerp(0.2, 0.4, sip), ur: lerp(0.3, 0.7, sip), ef: lerp(1.3, 2.35, sip), ep: -0.2, wf: lerp(0, -0.35, sip), fg: 0.9 }, e);
+  o[CH.KX] -= 0.38 * sip; o[CH.NX] -= 0.12 * sip; o[CH.CX] -= 0.04 * sip; o[CH.LOOK] = 0.3 * (1 - sip);
+  idleLayer(rig, A, o, 0.6, t, dt, false);
+}
+// Qo'l yuvish (rakovina): ikki kaft oldinda past, bir-biriga ishqalanadi, nigoh pastda
+function sWash(rig, A, o, t, dt) {
+  const e = sm(0, 0.3, t), r = sn(t * 11);
+  for (const [b, sd] of [[AL, 1], [AR, -1]]) armMix(o, b, { uf: 0.78 + 0.05 * r * sd, ua: 0.05, ur: 0.75, ef: 1.25 + 0.08 * r * sd, ep: -0.5, wf: 0.2, fg: 0.2 }, e);
+  o[CH.HX] += 0.18 * e; o[CH.SX] += 0.1 * e; o[CH.KX] += 0.42 * e; o[CH.LOOK] = 0.1; idleLayer(rig, A, o, 0.5, t, dt, false);
+}
+// Dush: qo'llar bosh ustida — sochni ishqalash, bosh biroz orqada
+function sShower(rig, A, o, t, dt) {
+  const e = sm(0, 0.4, t), r = sn(t * 8);
+  for (const [b, sd] of [[AL, 1], [AR, -1]]) armMix(o, b, { uf: 0.65, ua: 1.75 + 0.12 * r * sd, ur: 0.2, ef: 2.15 + 0.12 * r * sd, ep: 0.2, wf: 0.2, fg: 0.3 }, e);
+  o[CH.KX] -= 0.22 * e; o[CH.KY] += 0.1 * sn(t * 1.3) * e; o[CH.LOOK] = 0; idleLayer(rig, A, o, 0.5, t, dt, false);
+}
+// Gazeta o'qish: ikki qo'l ko'krak oldida qog'ozni tutadi, nigoh pastda, vaqti-vaqti bilan varaqlaydi
+function sRead(rig, A, o, t, dt) {
+  const e = sm(0, 0.35, t), flip = sm(0, 0.2, fr(t / 3.4)) * (1 - sm(0.2, 0.4, fr(t / 3.4)));
+  armMix(o, AR, { uf: 0.95, ua: 0.3, ur: 0.55, ef: 1.55 + 0.25 * flip, ep: -0.7, wf: 0.1, fg: 0.7 }, e); armMix(o, AL, { uf: 0.95, ua: 0.3, ur: 0.55, ef: 1.55, ep: -0.7, wf: 0.1, fg: 0.7 }, e);
+  o[CH.KX] += 0.42 * e; o[CH.KY] += 0.1 * sn(t * 0.8) * e; o[CH.LOOK] = 0.1; idleLayer(rig, A, o, 0.6, t, dt, false);
+}
+
 // ===================== ASOSIY =====================
 export function animate(rig, anim, dt, speed, ctl) {
   const A = rig.A, root = rig.root;
@@ -438,6 +487,13 @@ export function animate(rig, anim, dt, speed, ctl) {
       case 'swing': sSwing(rig, A, o, A.stT, dt, rq); break;
       case 'fall': sFall(rig, A, o, A.stT, dt); break;
       case 'pet': sPet(rig, A, o, A.stT, dt, rq); break;
+      case 'lie': sLie(rig, A, o, A.stT, dt); break;
+      case 'eat': sEat(rig, A, o, A.stT, dt, rq); break;
+      case 'cook': sCook(rig, A, o, A.stT, dt); break;
+      case 'drink': sDrink(rig, A, o, A.stT, dt); break;
+      case 'wash': sWash(rig, A, o, A.stT, dt); break;
+      case 'shower': sShower(rig, A, o, A.stT, dt); break;
+      case 'read': sRead(rig, A, o, A.stT, dt); break;
     }
     for (let i = 0; i < NCH; i++) acc2[i] += o[i] * w;
     for (let i = 0; i < 12; i++) rqa[i] += rq[i] * w;
@@ -475,7 +531,7 @@ function look(rig, A, o, ctl, dt) {
   // bosh barqarorligi: yurishda tana tebransa ham nigoh gorizontda qoladi
   const stab = 0.8;
   const tp = o[CH.HX] + o[CH.SX] + o[CH.CX] + o[CH.BX], tyaw = o[CH.HY] + o[CH.SY] + o[CH.CY], tr = o[CH.HZ] + o[CH.SZ] + o[CH.CZ];
-  const kst = stab * (1 - A.w.swim) * (1 - A.w.fall) * (1 - A.w.dance * 0.7);
+  const kst = stab * (1 - A.w.swim) * (1 - A.w.fall) * (1 - A.w.lie) * (1 - A.w.dance * 0.7);
   o[CH.NX] -= tp * 0.3 * kst * (tp > 0.6 ? 0.5 : 1); o[CH.KX] -= tp * 0.32 * kst * (tp > 0.6 ? 0.5 : 1); o[CH.NY] -= tyaw * 0.4 * kst; o[CH.KY] -= tyaw * 0.45 * kst; o[CH.KZ] -= tr * 0.6 * kst;
   o[CH.CY] += A.lookX * 0.18 * w; o[CH.NY] += A.lookX * 0.34 * w; o[CH.KY] += A.lookX * 0.48 * w; o[CH.NX] += A.lookY * 0.35 * w; o[CH.KX] += A.lookY * 0.55 * w;
 }

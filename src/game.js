@@ -27,10 +27,11 @@ function defState() {
   return { v: 2, money: 300, xp: 0, stars: {}, best: {}, up: { engine: 0, nitro: 0, tires: 0, susp: 0, armor: 0, brake: 0 }, paint: 'qizil', paints: ['qizil'], coins: [], chests: [], places: {},
     stats: { dist: 0, top: 0, jump: 0, smashed: 0, crashes: 0, time: 0, drift: 0, air: 0, walk: 0 }, set: { vol: 0.8, music: true, gfx: 2, damage: true }, hour: 9.5, pos: null, dmg: null, fresh: true,
     veh: { own: ['jip', 'velo'], cur: 'jip', dmg: {}, paint: {} }, foot: null,
-    inv: { seed: 3, sapling: 0, fruit: 0, berry: 0, veg: 0, bread: 1, mush: 0, shell: 0, flower: 0, wood: 0, hay: 0, fish: 0, bigfish: 0, egg: 0, ore: 0, gem: 0, kit: 0 },
+    inv: { seed: 3, sapling: 0, fruit: 0, berry: 0, veg: 0, bread: 1, mush: 0, shell: 0, flower: 0, wood: 0, hay: 0, fish: 0, bigfish: 0, egg: 0, ore: 0, gem: 0, kit: 0, water: 1, juice: 0, sweets: 0, snack: 0, canister: 0, friedfish: 0, kabob: 0, soup: 0, omlet: 0, salad: 0, dimlama: 0, tea: 0 },
     tools: {}, hats: [], hat: null, karma: 0, sat: 100, energy: 100,
     home: { lvl: 0, decor: {}, beds: [0, 0, 0, 0, 0, 0], wat: [0, 0, 0, 0, 0, 0], eggT: 0, mailT: 0, incT: 0 },
-    flowers: [], trees: [], flags: [], tasks: [], cnt: {}, seen: {}, peaks: {} };
+    flowers: [], trees: [], flags: [], tasks: [], cnt: {}, seen: {}, peaks: {},
+    thirst: 100, fuel: {}, fridge: {}, alarm: 6.5 }; // kundalik hayot (hayot.js): chanqoq, transport yoqilg'isi (%), muzlatkich, budilnik soati
 }
 function loadState() {
   const d = defState(); let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* saqlangan o'yin yo'q */ }
