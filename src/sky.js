@@ -274,7 +274,7 @@ export class Sky {
     if (this.lightDir.y < 0.08) { this.lightDir.y = 0.08; this.lightDir.normalize(); }
     // osmon yoritishi: Lambert materiallar uchun yarim shar chirog'i (Standard'lar atrof-muhit xaritasidan oladi)
     const gAlb = G_ALB, sunIrr = this.sun.intensity * Math.max(this.lightDir.y, 0) / SUNK;
-    const flo = dark * 0.55 + 0.03; // tunda o'ynash uchun minimal yorug'lik (oy nuri ostidagi ko'z moslashuvi)
+    const flo = dark * 1.25 + 0.04 + 0.5 * smoothstep(-0.2, -0.02, sunEl) * (1 - smoothstep(-0.02, 0.06, sunEl)); // + tong/shom oralig'i (oy botgan, quyosh hali chiqmagan payt) qorong'i chuqur bo'lmasin // tunda o'ynash uchun minimal yorug'lik (oy nuri ostidagi ko'z moslashuvi)
     const fl = this._fl; fl[0] = 0.05 * flo; fl[1] = 0.058 * flo; fl[2] = 0.15 * flo;
     this.du.uEnvFloor.value.setRGB(fl[0], fl[1], fl[2]);
     const g = this.du.uGround.value.setRGB(gAlb[0] * (sunIrr * this.sun.color.r + amb.r * 1.0), gAlb[1] * (sunIrr * this.sun.color.g + amb.g * 1.0), gAlb[2] * (sunIrr * this.sun.color.b + amb.b * 1.0));

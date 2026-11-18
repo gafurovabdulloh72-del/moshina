@@ -143,8 +143,9 @@ function syncCar(alpha) {
   m.root.position.copy(game.carPos); m.root.quaternion.set(car.q[0], car.q[1], car.q[2], car.q[3]);
   syncWheels(m, car, dm.tires);
   const night = game.sky.night;
-  const on = ((night > 0.35 && !foot) || game.lightsForced) && dm.zone.front > 12 && !(dm.wrecked && m.v.eng > 0);
-  m.spot.intensity = on ? (dm.zone.front < 35 ? 130 : 280) : 0;
+  // faralar oldi qattiq urilgandagina so'nadi (butunlay o'chmaydi — tunda yo'l ko'rinmay qolardi); xira bo'lsa biroz miltillaydi
+  const on = ((night > 0.3 && !foot) || game.lightsForced) && !(dm.wrecked && m.v.eng > 0), fr = dm.zone.front;
+  m.spot.intensity = on ? 560 * (fr < 12 ? 0.45 * (0.85 + 0.15 * Math.sin(game.time * 23)) : fr < 35 ? 0.75 : 1) : 0;
   if (on) m.headMat.color.setRGB(2.6, 2.4, 1.9); else m.headMat.color.setHex(0xb8b8b0);
   const braking = !foot && ((game.input.state.brake > 0.1 && car.fwd > 1) || game.input.state.handbrake);
   if (braking) m.tailMat.color.setRGB(2.4, 0.22, 0.12); else m.tailMat.color.setHex(on ? 0xa81810 : 0x6a1410);

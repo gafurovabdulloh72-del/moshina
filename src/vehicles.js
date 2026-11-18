@@ -124,7 +124,7 @@ function assemble(v, B) {
     if (!LITE && !o.thin && !o.noCal && o.style !== 'steel' && o.style !== 'disc') { const ck = 'c' + key, c = new THREE.Mesh(geos[ck] || (geos[ck] = caliperGeo(w.r, w.w, o)), M.trim); if (w.x < 0) c.scale.x = -1; pivot.add(c); }
     wheels.push({ pivot, mesh: sq, spin, src: w.src, x: w.x, z: w.z, front: !!w.front, r: w.r });
   }
-  const spot = new THREE.SpotLight(0xfff0d0, 0, 120, 0.62, 0.55, 1.0);
+  const spot = new THREE.SpotLight(0xfff0d0, 0, 160, 0.62, 0.55, 1.0);
   spot.position.set(0, B.lampY != null ? B.lampY : 0.3, s.len / 2 - 0.1); spot.target.position.set(0, -1.6 - s.com + 0.79, s.len / 2 + 20); root.add(spot); root.add(spot.target);
   const rider = null; // haydovchi nusxada qo'shiladi (attachRider)
   const out = { id: v.id, v, spec: s, root, tilt, body, trimMesh, deform: [], _dm: dm, parts, paintMat, headMat, tailMat, brakeMat, revMat, sigLMat, sigRMat, wheels, spot, rider, _rd: B.rider || null, open: !!B.rider, fork: null, crank: null, bike: !!s.bike, _seam: B.seam, _partPaint: partPaint };
