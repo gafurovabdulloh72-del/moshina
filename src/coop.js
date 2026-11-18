@@ -113,7 +113,7 @@ const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _v = new THREE
 // ---------- xona ----------
 export function initCoop(game) {
   const net = game.net;
-  const C = (game.coop = { room: null, members: new Map(), status: 'idle', msg: '', chat: [], listeners: new Set(), race: null });
+  const C = (game.coop = { room: null, members: new Map(), status: 'idle', msg: '', chat: [], listeners: new Set(), race: null, errs: [] }); // errs — tashxis uchun oxirgi ulanish xatolari
   let peer = null, hostPeer = null, acc = 0, hourT = 0, lastPing = 0, joinTimer = null;
   const changed = () => { for (const f of C.listeners) { try { f(); } catch (e) { console.error(e); } } };
   C.onChange = (f) => { C.listeners.add(f); return () => C.listeners.delete(f); };
@@ -134,14 +134,14 @@ export function initCoop(game) {
   function setupConn(conn) {
     conn.on('open', () => { try { conn.send(hello()); } catch { /* */ } });
     conn.on('data', (d) => { try { onData(conn, d); } catch (e) { console.error(e); } });
-    conn.on('close', () => onClose(conn));
-    conn.on('error', () => onClose(conn));
+    conn.on('close', () => { (C.errs.length > 30 && C.errs.shift(), C.errs).push('yopildi: ' + conn.peer); onClose(conn); });
+    conn.on('error', (e) => { (C.errs.length > 30 && C.errs.shift(), C.errs).push('conn ' + conn.peer + ': ' + (e && e.message)); onClose(conn); });
   }
   function connectTo(pid) { if (!peer || peer.destroyed || pid === peer.id) return; const c = peer.connect(pid, { reliable: true, serialization: 'json', metadata: { room: C.room && C.room.code } }); setupConn(c); }
   const memberOf = (conn) => { for (const m of C.members.values()) if (m.conn === conn) return m; return null; };
   function addMember(conn, d) {
     const pid = String(d.pid || conn.peer); let m = C.members.get(pid);
-    if (m && m.conn !== conn) { if (m.conn && m.conn.open) { try { conn.close(); } catch { /* */ } return null; } m.conn = conn; return m; }
+    if (m && m.conn !== conn) { if (m.conn && m.conn.open && !m.lost) { try { conn.close(); } catch { /* */ } return null; } const old = m.conn; m.conn = conn; m.last = performance.now(); if (m.lost) { m.lost = 0; (C.errs.length > 30 && C.errs.shift(), C.errs).push('tiklandi: ' + pid); } if (old && old !== conn) { try { old.close(); } catch { /* */ } } return m; }
     if (!m) { m = { pid, name: cleanName(d.name), uid: String(d.uid || '').slice(0, 20), slot: d.slot | 0, conn, last: performance.now(), remote: null, ping: 0 }; C.members.set(pid, m); m.remote = new Remote(game, m); }
     return m;
   }
@@ -182,8 +182,21 @@ export function initCoop(game) {
     if (!Array.isArray(list)) return;
     for (const r of list.slice(0, MAX_PLAYERS)) { const pid = String(r.pid); if (pid === peer.id) { C.room.slot = r.slot | 0; continue; } const m = C.members.get(pid); if (m) { m.slot = r.slot | 0; m.name = cleanName(r.name); m.remote.drawTag(); } else if (peer.id > pid) connectTo(pid); }
   }
+  // Kutilmagan uzilish (Wi-Fi uzilib qoldi, kompyuter qotdi): darhol chiqarib yubormaymiz — 12 soniya qayta ulanishga urinamiz (kattaroq id'li tomon ulanadi)
   function onClose(conn) {
     const m = memberOf(conn); if (!m || m.conn !== conn) return;
+    if (!m.bye && C.room && !C.room.joining && peer && !peer.destroyed) { if (!m.lost) { m.lost = performance.now(); retry(m); } return; }
+    drop(m);
+  }
+  function retry(m) {
+    if (!m.lost || C.members.get(m.pid) !== m || !C.room) return;
+    if (m.conn && m.conn.open) { m.lost = 0; return; }
+    if (performance.now() - m.lost > 12000) { drop(m); return; }
+    if (peer.id > m.pid) connectTo(m.pid);
+    setTimeout(() => retry(m), 3000);
+  }
+  function drop(m) {
+    if (C.members.get(m.pid) !== m) return;
     C.members.delete(m.pid); m.remote.dispose();
     if (C.room) sysMsg(`${m.name} ${m.bye ? 'xonadan chiqdi' : 'bilan aloqa uzildi'}`);
     if (C.room && C.room.joining) { fail("Xonaga ulanib bo'lmadi"); return; }
@@ -215,7 +228,7 @@ export function initCoop(game) {
       const code = newCode(); const p = new Peer(roomPeerId(code), peerOpts()); peer = p;
       p.on('open', () => { C.room = { code, isHost: true, slot: 0, hostPid: p.id, joining: false }; C.status = 'room'; C.msg = ''; sysMsg(`Xona ochildi. Kod: ${code}`); game.audio.sfx('check'); changed(); resolve(true); });
       p.on('connection', (c) => setupConn(c));
-      p.on('error', (e) => { if (e.type === 'unavailable-id' && ++tries < 4 && !C.room) { p.destroy(); attempt(); return; } if (!C.room) { fail(PEER_ERR[e.type] || 'Ulanishda xatolik'); resolve(false); } });
+      p.on('error', (e) => { (C.errs.length > 30 && C.errs.shift(), C.errs).push(e.type + ': ' + e.message); if (e.type === 'unavailable-id' && ++tries < 4 && !C.room) { p.destroy(); attempt(); return; } if (!C.room) { fail(PEER_ERR[e.type] || 'Ulanishda xatolik'); resolve(false); } });
       p.on('disconnected', () => { if (C.room && !p.destroyed) setTimeout(() => { try { p.reconnect(); } catch { /* */ } }, 1500); });
     };
     attempt();
@@ -233,7 +246,7 @@ export function initCoop(game) {
       const off = C.onChange(() => { if (C.status === 'room') { off(); resolve(true); } else if (C.status === 'error') { off(); resolve(false); } });
     });
     p.on('connection', (c) => setupConn(c));
-    p.on('error', (e) => { if (C.status === 'room') return; /* xonadamiz: bitta ulanish xatosi xonani buzmaydi */ fail(PEER_ERR[e.type] || 'Ulanishda xatolik'); resolve(false); });
+    p.on('error', (e) => { (C.errs.length > 30 && C.errs.shift(), C.errs).push(e.type + ': ' + e.message); if (C.status === 'room') return; /* xonadamiz: bitta ulanish xatosi xonani buzmaydi */ fail(PEER_ERR[e.type] || 'Ulanishda xatolik'); resolve(false); });
     p.on('disconnected', () => { if (C.room && !p.destroyed) setTimeout(() => { try { p.reconnect(); } catch { /* */ } }, 1500); });
   });
   function teardown() {
@@ -364,7 +377,7 @@ export function initCoop(game) {
   setInterval(() => {
     if (!C.room || !peer) return; const ms = performance.now();
     if (ms - lastPing > 3000) { lastPing = ms; bcast({ t: 'pi', x: ms }); }
-    for (const m of [...C.members.values()]) if (ms - m.last > 45000) { try { m.conn.close(); } catch { /* */ } onClose(m.conn); }
+    for (const m of [...C.members.values()]) if (!m.lost && ms - m.last > 45000) { (C.errs.length > 30 && C.errs.shift(), C.errs).push('jim: ' + m.pid); try { m.conn.close(); } catch { /* */ } onClose(m.conn); }
   }, 1000);
 
   // taklif havolasi: ?xona=KOD — sahifa ochilganda xonaga qo'shilish taklif qilinadi
