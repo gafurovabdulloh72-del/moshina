@@ -367,6 +367,7 @@ export function buildPlaces(scene, game) {
       st.g.pop();
       const [x, z] = st.w(lx, lz); T.addPatch(x, z, st.yaw + yaw, len, wid, p.y, p.y + h, T.SURF.WOOD);
       out.ramps.push({ x, z, yaw: st.yaw + yaw, y: p.y + h, y0: p.y, len, wid, h });
+      const fx = Math.sin(yaw), fz = Math.cos(yaw); st.take(lx, lz, len / 2 + 2); st.take(lx + fx * (len / 2 + 10), lz + fz * (len / 2 + 10), 9); st.take(lx - fx * (len / 2 + 5), lz - fz * (len / 2 + 5), 4); // tramplin, qo'nish va yugurish joyi bo'sh
     };
     T.surfZones.push({ x: p.x, z: p.z, r: p.r + 18, surf: T.SURF.ROCK }); // shag'al tub: o't o'smaydi
     ramp(0, 10, 0, 16, 7, 3.6); ramp(-34, -20, 0.9, 14, 7, 2.8, 0xe2572f); ramp(36, -30, -0.7, 20, 8, 5.2, 0x2f7fd0); ramp(-10, -56, 2.4, 12, 6, 2.2, 0x3f9a58); ramp(52, 30, 2.0, 16, 7, 3.8, 0xb84ac8);

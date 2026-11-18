@@ -168,7 +168,9 @@ export function buildDetails(scene, game, site) {
     const A = P(-w / 2, -h / 2), B = P(w / 2, -h / 2), C = P(w / 2, h / 2), D = P(-w / 2, h / 2);
     for (const [p, uu, vv] of [[A, u.u0, u.v0], [B, u.u1, u.v0], [C, u.u1, u.v1], [A, u.u0, u.v0], [C, u.u1, u.v1], [D, u.u0, u.v1]]) { PP.push(p[0] + nx * o, p[1], p[2] + nz * o); PN.push(nx, 0, nz); PU.push(uu, vv); } };
   // bo'sh joymi: yo'l ustida emas, suvda emas, to'qnashuv jismlari bilan kesishmaydi
-  const solidNear = (x, z, r) => { for (const o of COL.query(x, z, r + 2)) { let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = clamp(((x - o.x) * sx + (z - o.z) * sz) / (sx * sx + sz * sz || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz * t; } if (Math.hypot(x - qx, z - qz) < o.r + r) return true; } return false; };
+  const solidNear = (x, z, r) => { for (const o of COL.query(x, z, r + 2)) { let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = clamp(((x - o.x) * sx + (z - o.z) * sz) / (sx * sx + sz * sz || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz * t; } if (Math.hypot(x - qx, z - qz) < o.r + r) return true; } return rampNear(x, z, r); };
+  // tramplin ustiga (va uchish yo'liga) ustun/belgi qo'yilmasin
+  const rampNear = (x, z, r) => { for (const q of site.ramps || []) { const dx = x - q.x, dz = z - q.z, fs = Math.sin(q.yaw), fc = Math.cos(q.yaw), u = dx * fs + dz * fc, w = dx * fc - dz * fs; if (Math.abs(w) < q.wid / 2 + r + 1.5 && u > -q.len / 2 - r - 2 && u < q.len / 2 + r + (q.road ? 30 : 4)) return true; } return false; };
   const roadClear = (x, z, m) => { const nr = T.nearestRoad(x, z, 2); return nr.edge < 0 || nr.d - nr.hw > m; };
   const dry = (x, z) => T.gridHeight(x, z) > T.waterY(x, z) + 0.25;
   const inPlace = (x, z, pad = 0) => { for (const p of T.PLACES) { if (p.rect) { if (Math.abs(x - p.x) < p.rect.hl + pad && Math.abs(z - p.z) < p.rect.hw + pad) return p; } else if (Math.hypot(x - p.x, z - p.z) < p.r + pad) return p; } return null; };
