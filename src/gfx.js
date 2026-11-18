@@ -218,7 +218,7 @@ void main(){ vec2 st = (uSun - vUv) * uLen / 20.0, uv = vUv + st * ign(gl_FragCo
   float r = s / ws; gl_FragColor = vec4(r, r, r, 1.0); }`;
 // yakuniy kompozit: keskinlik (piksel nisbati < 1), AO, bloom, nurlar, tone mapping, rang, vinyetka, sRGB, dither
 const COMP_FS = `uniform sampler2D tScene; uniform sampler2D tDepth; uniform sampler2D tAO; uniform sampler2D tBloom; uniform sampler2D tShaft;
-uniform vec2 uTexel; uniform vec2 uAOTexel; uniform vec2 uPZ; uniform float uAOk; uniform float uBloom; uniform float uSharp; uniform float uShaftK; uniform vec3 uShaftCol; uniform float uVig; uniform float uSat; uniform float uCon; uniform vec3 uWB; uniform int uTM; uniform int uDbg;
+uniform vec2 uTexel; uniform vec2 uAOTexel; uniform vec2 uPZ; uniform float uAOk; uniform float uBloom; uniform float uSharp; uniform float uShaftK; uniform vec3 uShaftCol; uniform float uVig; uniform float uSat; uniform float uCon; uniform vec3 uWB; uniform int uTM; uniform int uDbg; uniform float uVib; uniform float uSplit; uniform float uLift;
 varying vec2 vUv;
 #include <tonemapping_pars_fragment>
 ${IGN}
@@ -236,6 +236,11 @@ void main(){
   c = clamp(c, 0.0, 1.0);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = max(mix(vec3(l), c, uSat), 0.0);
   float l2 = max((l - 0.18) * uCon + 0.18, 0.0); c = clamp(c * (l2 / max(l, 1e-4)), 0.0, 1.0); // kontrast faqat yorqinlikka (to'yinganlik oshmasin)
+  // jonlilik: kam to'yingan ranglar ko'proq kuchayadi (teri va osmon kuyib ketmaydi); soyalar biroz ko'tariladi (qora bo'lib ezilmasin)
+  { float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), sat = mx - mn; float l3 = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = max(mix(vec3(l3), c, 1.0 + uVib * (1.0 - sat)), 0.0);
+    c = c + uLift * (1.0 - c) * (1.0 - smoothstep(0.0, 0.16, l3)) * 0.35;
+  // kinematografik tus: yorug' joylar iliq (quyosh), soyalar salqin ko'kish — kayfiyat beradi
+    float t = smoothstep(0.05, 0.75, l3); c *= mix(vec3(1.0 - 0.04 * uSplit, 1.0, 1.0 + 0.07 * uSplit), vec3(1.0 + 0.06 * uSplit, 1.0 + 0.01 * uSplit, 1.0 - 0.07 * uSplit), t); c = clamp(c, 0.0, 1.0); }
   vec2 q = (vUv - 0.5) * vec2(1.0, 0.8); c *= 1.0 - uVig * smoothstep(0.2, 0.75, length(q));
   gl_FragColor = vec4(c, 1.0);
   #include <colorspace_fragment>
@@ -245,7 +250,7 @@ void main(){
 export function initGfx(game) {
   const { renderer, scene, camera, sky } = game;
   // tone mapping operatori bir marta (0-daraja materiallari ham shuni ishlatadi) — o'yin davomida almashtirilmaydi
-  const TM = [THREE.NeutralToneMapping, THREE.ACESFilmicToneMapping, THREE.AgXToneMapping], post = { tm: 1, exposure: 0.74, nightExp: 1.75, sat: 1.0, con: 1.04, vig: 0.14, bloom: 0.9, ao: 0.85, shafts: 1.0 };
+  const TM = [THREE.NeutralToneMapping, THREE.ACESFilmicToneMapping, THREE.AgXToneMapping], post = { tm: 1, exposure: 0.8, nightExp: 1.65, sat: 1.12, con: 1.1, vig: 0.18, vib: 0.6, split: 1.0, lift: 0, bloom: 0.9, ao: 0.85, shafts: 1.0 };
   renderer.toneMapping = TM[post.tm]; renderer.toneMappingExposure = post.exposure;
 
   // ---------- relyef: mayda tekstura (rang shovqini) ----------
@@ -321,7 +326,7 @@ export function initGfx(game) {
   const maskMat = pmat(MASK_FS, { tSrc: F1(null), tDepth: F1(null), uSun: V2(), uAsp: F1(1) });
   const radMat = pmat(RAD_FS, { tSrc: F1(null), uSun: V2(), uLen: F1(1) });
   const compMat = pmat(COMP_FS, { tScene: F1(null), tDepth: F1(null), tAO: F1(null), tBloom: F1(null), tShaft: F1(null), uTexel: V2(), uAOTexel: V2(), uPZ: V2(), uAOk: F1(0), uBloom: F1(0.9), uSharp: F1(0), uShaftK: F1(0), uShaftCol: F1(new THREE.Color()),
-    uVig: F1(0.14), uSat: F1(1), uCon: F1(1), uWB: F1(new THREE.Vector3(1, 1, 1)), uTM: F1(post.tm), uDbg: F1(0) });
+    uVig: F1(0.14), uSat: F1(1), uCon: F1(1), uWB: F1(new THREE.Vector3(1, 1, 1)), uTM: F1(post.tm), uDbg: F1(0), uVib: F1(0), uSplit: F1(0), uLift: F1(0) });
   const fsq = new FullScreenQuad(null), size = new THREE.Vector2(), sunP = new THREE.Vector3(), camF = new THREE.Vector3();
   let quality = -1, R = null, shaftOn = false;
   const free = () => { if (!R) return; for (const k in R) { const v = R[k]; if (Array.isArray(v)) v.forEach((t) => t.dispose()); else if (v && v.dispose) v.dispose(); } R = null; };
@@ -399,7 +404,7 @@ export function initGfx(game) {
       u.uAOk.value = aoOn ? post.ao : 0; if (aoOn) { u.tAO.value = post.dbg >= 3 ? R.aoA.texture : R.aoB.texture; texel(u.uAOTexel, R.aoB); }
       u.uShaftK.value = shaftOn ? 1 : 0; if (shaftOn) { u.tShaft.value = R.sA.texture; u.uShaftCol.value.copy(sky.sun.color).multiplyScalar(shK * 0.55); }
       u.uBloom.value = lite ? 0 : post.bloom / 6; const pr = renderer.getPixelRatio(); u.uSharp.value = pr < 0.999 ? Math.min(0.7, (1 - pr) * 1.6) : 0;
-      u.uTM.value = post.tm; u.uDbg.value = post.dbg | 0; u.uSat.value = post.sat * (1 - 0.3 * n); u.uCon.value = post.con; u.uVig.value = post.vig + 0.08 * n;
+      u.uTM.value = post.tm; u.uDbg.value = post.dbg | 0; u.uSat.value = post.sat * (1 - 0.3 * n); u.uVib.value = post.vib * (1 - 0.5 * n); u.uSplit.value = post.split; u.uLift.value = post.lift; u.uCon.value = post.con; u.uVig.value = post.vig + 0.08 * n;
       pass(compMat, null);
     },
   };
