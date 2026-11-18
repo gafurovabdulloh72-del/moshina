@@ -16,6 +16,7 @@ const WHY = { time: 'Vaqt tugadi', cargo: 'Yuk sindi', comfort: "Yo'lovchi tushi
 const VICON = { velo: '🚲', skuter: '🛵', kart: '🏎', moto: '🏍', kvadro: '🛺', xetch: '🚗', traktor: '🚜', sedan: '🚘', pikap: '🛻', jip: '🚙', furgon: '🚐', bagi: '🏜', ralli: '🏁', yuk: '🚚', avtobus: '🚌', kupe: '🚗', otochar: '🚒', muskul: '💪', limuzin: '🎩', monstr: '👹', super: '⚡', bolid: '🏎' };
 const MPX = 0.25; // xarita: 1 m = 0.25 px (1600 px)
 const som = (n) => Math.round(n).toLocaleString('ru-RU');
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export class UI {
   constructor(game) {
@@ -316,6 +317,7 @@ export class UI {
   }
   s_home(w, d, btn, x) {
     const g = this.g, st = g.state, L = g.live, hm = g.site.places.uy.home; x();
+    if (g.visit && g.visit.on) return this.homeVisit(w, btn);
     const render = () => {
       const lv = st.home.lvl, cur = HOME_LEVELS[lv], nx = HOME_LEVELS[lv + 1], inc = L.income();
       w.innerHTML = `<h1>🏠 Mening uyim <small>${lv + 1}/5 · ${cur.name} · 💰 ${som(st.money)} so'm</small></h1>
@@ -335,6 +337,25 @@ export class UI {
         veh: (id) => { g.pickVehicle(id, [hm.park[0], hm.park[1], hm.parkYaw]); g.audio.sfx('buy'); g.toast(`${vehById[id].name} uy oldida turibdi`, 'good'); render(); } });
     };
     render();
+  }
+  // onlayn xonada mehmon: xona egasining uyi — hissa qo'shish (egasi tasdiqlagach pulingizdan olinadi), bezak sovg'a qilish, dam olish
+  homeVisit(w, btn) {
+    const g = this.g, st = g.state, V = g.visit, L = g.live, h = st.home, lv = h.lvl, cur = HOME_LEVELS[lv], nx = HOME_LEVELS[lv + 1], fund = h.fund || 0, money = V.money(), need = nx ? Math.max(0, nx.cost - fund) : 0;
+    const amt = nx ? [100, 500, 1000, 5000].filter((n) => n < need) : [];
+    w.innerHTML = `<h1>🏠 ${esc(V.owner)}ning uyi <small>${lv + 1}/5 · ${cur.name} · sizda 💰 ${som(money)} so'm</small></h1>
+      <p class="sub">Siz mehmonsiz: bu uyda yashaysiz va uni egasi bilan birga rivojlantirasiz. Qo'shgan pulingiz va sovg'alaringiz ${esc(V.owner)}ning saqlovida qoladi; o'z uyingiz o'zgarmaydi.</p>
+      <div class="grid2"><div>
+        <div class="card"><h4>${nx ? `Keyingi daraja: ${nx.name}` : 'Uy eng yuqori darajada! 🏆'}</h4><p>${nx ? nx.desc : cur.desc}</p>${nx ? `<div class="meta"><span>Jamg'arma: ${som(fund)} / ${som(nx.cost)} so'm</span></div>
+          <div class="row" style="flex-wrap:wrap">${amt.map((n) => `<button class="sec" data-a="fund:${n}" ${money < n ? 'disabled' : ''}>+${som(n)}</button>`).join('')}<button data-a="fund:${need}" ${money < need || need < 1 ? 'disabled' : ''}>${money < need ? `Qolgani: ${som(need)} so'm` : `Qolganini to'lash: ${som(need)} so'm`}</button></div>` : ''}</div>
+        <div class="card" style="margin-top:8px"><h4>Dam olish va ovqatlanish</h4><p>Kuch ${Math.round(st.energy)}% · to'qlik ${Math.round(st.sat)}% · kun vaqtini xona egasi boshqaradi</p><button class="sec" data-a="rest">😴 Dam olish</button>
+          <div class="row" style="flex-wrap:wrap;margin-top:6px">${['fruit', 'berry', 'veg', 'bread'].map((id) => `<button class="sec" data-a="eat:${id}" ${st.inv[id] > 0 ? '' : 'disabled'}>${ITEMS[id][1]} ${ITEMS[id][0]} (${st.inv[id]})</button>`).join('')}</div></div>
+        <div class="row" style="margin-top:10px"><button data-a="shop">🛒 Bozor</button><button class="sec" data-a="bag">🎒 Sumka</button></div>
+      </div><div>
+        <h4 style="margin:0 0 6px">Hovliga sovg'a</h4>${DECOR.map((q) => `<div class="card" style="margin-bottom:6px;flex-direction:row;align-items:center"><div class="grow"><h4>${q.name}</h4><p>${q.desc}</p></div><button data-a="dec:${q.id}" class="${h.decor[q.id] ? 'sec' : ''}" ${h.decor[q.id] || money < q.cost || lv < 1 ? 'disabled' : ''}>${h.decor[q.id] ? '✓ Bor' : lv < 1 ? 'Kulba kerak' : som(q.cost) + " so'm"}</button></div>`).join('')}
+        <p class="sub" style="margin-top:8px">Polizga urug' ekish, sug'orish va hosil yig'ish, hovliga gul ekish — piyoda borib [E] / [G]. Tuxum va pochtani uy egasi oladi.</p>
+      </div></div>`;
+    this.on({ fund: (n) => V.contribute(+n), dec: (id) => V.decor(id), rest: () => { this.fade.style.opacity = 1; setTimeout(() => { L.sleep(12); this.close(); this.fade.style.opacity = 0; }, 380); },
+      eat: (id) => { L.eat(id); this.open('home'); }, shop: () => this.open('shop', { back: ['home'] }), bag: () => this.open('bag') });
   }
   s_shop(w, d, btn, x) {
     const g = this.g, st = g.state, L = g.live; x();

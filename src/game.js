@@ -29,7 +29,7 @@ function defState() {
     veh: { own: ['jip', 'velo'], cur: 'jip', dmg: {}, paint: {} }, foot: null,
     inv: { seed: 3, sapling: 0, fruit: 0, berry: 0, veg: 0, bread: 1, mush: 0, shell: 0, flower: 0, wood: 0, hay: 0, fish: 0, bigfish: 0, egg: 0, ore: 0, gem: 0, kit: 0, water: 1, juice: 0, sweets: 0, snack: 0, canister: 0, friedfish: 0, kabob: 0, soup: 0, omlet: 0, salad: 0, dimlama: 0, tea: 0 },
     tools: {}, hats: [], hat: null, karma: 0, sat: 100, energy: 100,
-    home: { lvl: 0, decor: {}, beds: [0, 0, 0, 0, 0, 0], wat: [0, 0, 0, 0, 0, 0], eggT: 0, mailT: 0, incT: 0 },
+    home: { lvl: 0, decor: {}, beds: [0, 0, 0, 0, 0, 0], wat: [0, 0, 0, 0, 0, 0], eggT: 0, mailT: 0, incT: 0, fund: 0 }, // fund — onlayn xonada do'stlar qo'shgan pul (keyingi darajaga)
     flowers: [], trees: [], flags: [], tasks: [], cnt: {}, seen: {}, peaks: {},
     thirst: 100, fuel: {}, fridge: {}, alarm: 6.5 }; // kundalik hayot (hayot.js): chanqoq, transport yoqilg'isi (%), muzlatkich, budilnik soati
 }

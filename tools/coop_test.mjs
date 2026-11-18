@@ -1,6 +1,6 @@
 // Onlayn rejimning brauzer sinovi: mahalliy "Vercel" (tools/dev-server.mjs: api/ + soxta Redis + mahalliy PeerJS brokeri) va ekransiz Chrome'da bir nechta o'yinchi.
 // Tekshiradi: Telegram orqali kirish (sinov tokeni bilan imzolangan ma'lumot), bulutli saqlov (yuklash, boshqa qurilmada olish, tanlov oynasi), reyting,
-// xona ochish va kod bilan qo'shilish, bir-birini ko'rish (skrinshot), chat, birga poyga va natija, xona egasi chiqib ketganda egalik o'tishi, yuklab olingan faylda "mavjud emas".
+// xona ochish va kod bilan qo'shilish, mehmon xona egasining uyida yashashi (hissa, bezak, poliz, o'z uyi tiklanishi), bir-birini ko'rish (skrinshot), chat, birga poyga va natija, xona egasi chiqib ketganda egalik o'tishi, yuklab olingan faylda "mavjud emas".
 // Ishlatish: npm run build && npm run test:online      (skrinshotlar: shots/online_*.jpg)
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -21,11 +21,15 @@ const tg = (id, first_name) => { const d = { id, first_name, username: first_nam
 const redis = await startFakeRedis(); Object.assign(process.env, { KV_REST_API_URL: redis.url, KV_REST_API_TOKEN: redis.token });
 const dev = await startDev({ port: 0, peerPort: 0, quiet: true });
 const exe = [process.env.CHROME_PATH, '/usr/bin/google-chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', 'C:/Program Files/Google/Chrome/Application/chrome.exe'].find((p) => p && fs.existsSync(p));
-const browser = await chromium.launch({ ...(exe ? { executablePath: exe } : { channel: 'chrome' }), headless: true,
+const launch = () => chromium.launch({ ...(exe ? { executablePath: exe } : { channel: 'chrome' }), headless: true,
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--no-sandbox', '--disable-dev-shm-usage', '--disable-features=WebRtcHideLocalIpsWithMdns', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await launch(), browsers = [browser];
 const pages = [];
+// har o'yinchi — alohida brauzer jarayoni: dasturiy videokarta (SwiftShader) bitta GPU jarayonida yangi ochilgan sahifaning sheyderlarini kompilyatsiya qilayotganda
+// boshqa sahifalar o'nlab soniya qotib qolardi (45 soniyalik jimlik nazorati ulanishni uzardi) — haqiqiy kompyuterlarda bunday umumiy jarayon yo'q
 async function player(name, { save } = {}) {
-  const ctx = await browser.newContext({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
+  const br = await launch(); browsers.push(br);
+  const ctx = await br.newContext({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
   await ctx.addInitScript(() => { window.__TEST = true; });
   if (save) await ctx.addInitScript((s) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('safar_save_v2', s); sessionStorage.setItem('seeded', '1'); } }, JSON.stringify(save));
   const page = await ctx.newPage(); page.tag = name; page.setDefaultTimeout(120000); // ekransiz Chrome dasturiy chizadi: bir nechta sahifa birga sekin
@@ -74,12 +78,49 @@ try {
   await B.evaluate(() => G.ui.close());
 
   // ---------- 2. Xona: ochish, qo'shilish, bir-birini ko'rish ----------
+  // A ning uyi — hovli uy (2-daraja); B ning o'z uyi — kulba (1-daraja)
+  await A.evaluate(() => { G.state.home.lvl = 2; G.live.applyHome(); G.save(); });
   const code = await A.evaluate(async () => { await G.coop.create(); return G.coop.room && G.coop.room.code; });
   ok(/^[A-Z2-9]{6}$/.test(code || ''), 'xona ochildi', code);
   const joined = await B.evaluate((c) => G.coop.join(c), code);
   ok(joined, 'B kod bilan qo\'shildi');
-  ok(await until(A, () => { const m = [...G.coop.members.values()][0]; return m && m.remote.shown; }, null, 20, B), 'A B ni ko\'radi');
+  ok(await until(A, () => { const m = [...G.coop.members.values()][0]; return m && m.remote.shown; }, null, 60, B), 'A B ni ko\'radi');
   ok(await until(B, () => { const m = [...G.coop.members.values()][0]; return m && m.remote.shown && m.name === 'Jasur'; }, null, 20, A), 'B A ni ko\'radi (Jasur)');
+
+  // ---------- 2b. Mehmon xona egasining uyida ----------
+  ok(await until(B, () => G.visit.on && G.visit.owner === 'Jasur', null, 15, A), 'B Jasurning uyida mehmon');
+  const bAt = await B.evaluate(() => { const h = G.site.places.uy.home, p = G.player.onFoot ? G.player.p : G.car.p; return Math.hypot(p[0] - h.x, p[2] - h.z); });
+  ok(bAt < 40, 'B xona egasining uyi oldida paydo bo\'ldi', bAt.toFixed(1) + ' m');
+  ok(await B.evaluate(() => G.state.home.lvl === 2 && G.site.places.uy.home.lvl === 2), 'B egasining uyini ko\'radi (2-daraja, o\'ziniki 1)');
+  ok(await B.evaluate(() => JSON.parse(localStorage.getItem('safar_save_v2')).home.lvl === 1), 'B saqlovida o\'z uyi (1) qoldi');
+  // skrinshot: mehmon egasining uyi oldida
+  await B.evaluate(() => { const h = G.site.places.uy.home; G.view(h.x + Math.sin(h.yaw) * 26 + Math.cos(h.yaw) * 10, h.y + 9, h.z + Math.cos(h.yaw) * 26 - Math.sin(h.yaw) * 10, h.x, h.y + 2, h.z); G.ui.open('home'); });
+  await shot(B, 'online_guest_home_window'); await B.evaluate(() => G.ui.close());
+  await B.evaluate(() => { const h = G.site.places.uy.home, p = G.car.p; G.view(p[0] + Math.sin(h.yaw) * 14 - 6, h.y + 6, p[2] + Math.cos(h.yaw) * 14, h.x, h.y + 2, h.z); G.gfx.render(); });
+  await shot(B, 'online_guest_at_host_home');
+  // hissa: 500 so'm — egasining jamg'armasiga, mehmon pulidan egasi tasdiqlagach olinadi
+  const mB0 = await B.evaluate(() => G.state.money);
+  await B.evaluate(() => G.visit.contribute(500));
+  ok(await until(A, () => (G.state.home.fund | 0) === 500 && G.coop.chat.some((c) => c.text === "Malika uyingizga 500 so'm qo'shdi"), null, 15, B), 'A ning uyiga 500 so\'m qo\'shildi (A saqlovida)');
+  ok(await until(B, (m0) => G.state.money === m0 - 500 && G.state.home.fund === 500, mB0, 10, A), 'B puli 500 ga kamaydi, jamg\'arma ko\'rinadi');
+  // egasidagi xabar (skrinshot): yana 100 so'm — xabar paydo bo'lishi bilan suratga olinadi
+  await B.evaluate(() => G.visit.contribute(100));
+  for (let i = 0; i < 100 && !(await A.evaluate(() => document.body.innerText.includes("Malika uyingizga 100 so'm qo'shdi"))); i++) await sleep(100);
+  await A.evaluate(() => { G.gfx.render(); }); await shot(A, 'online_host_contribution_toast');
+  ok(await until(B, (m0) => G.state.money === m0 - 600 && G.state.home.fund === 600, mB0, 10, A), 'ikkinchi hissa (100) ham hisoblandi');
+  // bezak sovg'asi va poliz
+  await B.evaluate(() => G.visit.decor('gulzor'));
+  ok(await until(A, () => G.state.home.decor.gulzor === 1 && JSON.parse(localStorage.getItem('safar_save_v2')).home.decor.gulzor === 1, null, 15, B), 'gulzor A ning saqlovida');
+  ok(await until(B, (m0) => G.state.money === m0 - 1100 && G.state.home.decor.gulzor === 1, mB0, 10, A), 'B gulzor uchun to\'ladi va uni ko\'radi');
+  const seed0 = await B.evaluate(() => G.state.inv.seed);
+  await B.evaluate(() => G.visit.act('bed', { i: 0 }, () => { G.state.inv.seed--; }));
+  ok(await until(A, () => G.state.home.beds[0] > 0, null, 15, B), 'B ekkan urug\' A ning polizida');
+  ok(await until(B, (s0) => G.state.inv.seed === s0 - 1 && G.state.home.beds[0] > 0, seed0, 10, A), 'B urug\'i sarflandi, jo\'yak ko\'rinadi');
+  // noto'g'ri so'rov rad etiladi
+  await B.evaluate(() => { const m = [...G.coop.members.values()][0]; m.conn.send({ t: 'ha', id: 999, k: 'boom' }); m.conn.send({ t: 'ha', id: 998, k: 'fund', n: -50 }); });
+  await run(1, A, B);
+  ok(await A.evaluate(() => (G.state.home.fund | 0) === 600 && G.state.home.lvl === 2), 'noto\'g\'ri so\'rovlar uyni o\'zgartirmadi');
+  ok(await B.evaluate(() => { G.save(); const s = JSON.parse(localStorage.getItem('safar_save_v2')); return s.home.lvl === 1 && !s.home.decor.gulzor && !s.home.beds[0]; }), 'B saqlovi: o\'z uyi o\'zgarmagan');
   // B do'sti yoniga ko'chadi, keyin ikkalasi yonma-yon haydaydi
   const apid = await A.evaluate(() => G.coop.myId());
   await B.evaluate((p) => G.coop.teleportTo(p), apid);
@@ -88,8 +129,7 @@ try {
   ok(dist > 4 && dist < 20, 'B A ning yonida', dist.toFixed(1) + ' m');
   // A tushib piyoda yuradi (B uni piyoda ko'rishi kerak)
   await A.evaluate(() => { G.live.dismount(); });
-  await run(1.2, A, B);
-  ok(await B.evaluate(() => { const m = [...G.coop.members.values()][0]; return m.remote.foot && m.remote.rig.root.visible; }), 'B A ni piyoda ko\'radi');
+  ok(await until(B, () => { const m = [...G.coop.members.values()][0]; return m && m.remote.foot && m.remote.rig.root.visible; }, null, 60, A), 'B A ni piyoda ko\'radi');
   // skrinshotlar: har ikki ekranda — do'st transporti/qahramoni va ism yorlig'i
   for (const [p, name] of [[A, 'online_A_sees_B'], [B, 'online_B_sees_A']]) {
     await p.evaluate(() => { const m = [...G.coop.members.values()][0], w = m.remote.where(), me = G.player.onFoot ? G.player.p : G.car.p; const dx = w[0] - me[0], dz = w[1] - me[2], d = Math.hypot(dx, dz) || 1; const y = G.T.ground(me[0], me[2], 1e9).y; G.view(me[0] - dx / d * 7 + dz / d * 3, y + 3.2, me[2] - dz / d * 7 - dx / d * 3, (me[0] + w[0]) / 2, y + 1, (me[2] + w[1]) / 2); });
@@ -128,7 +168,8 @@ try {
 
   // ---------- 5. Uchinchi o'yinchi, egasi chiqib ketishi ----------
   const C3 = await player('C');
-  ok(await C3.evaluate((c) => G.coop.join(c), code), 'C qo\'shildi (mehmon)');
+  let cj = false; for (let i = 0; i < 4 && !cj; i++) { cj = await C3.evaluate((c) => G.coop.join(c), code); if (!cj) { console.log('C urinish', i + 1, await C3.evaluate(() => G.coop.msg + ' ' + JSON.stringify(G.coop.errs.slice(-4)))); await run(1.5, A, B); } }
+  ok(cj, 'C qo\'shildi (mehmon)');
   ok(await until(B, () => G.coop.members.size === 2, null, 60, A, C3), 'B C ni ham ko\'radi (to\'r)', await B.evaluate(() => JSON.stringify(G.coop.errs.slice(-6))));
   await A.evaluate(() => G.coop.leave());
   ok(await until(B, () => G.coop.members.size === 1 && (G.coop.room.isHost || G.coop.room.hostPid !== null), null, 15, C3), 'A chiqdi');
@@ -141,7 +182,9 @@ try {
   let dj = false; for (let i = 0; i < 6 && !dj; i++) { dj = await D.evaluate((c) => G.coop.join(c), code); if (!dj) await run(1.5, B, C3); }
   ok(dj, 'egasi almashgandan keyin ham kod ishlaydi');
   ok(await until(D, () => G.coop.members.size === 2, null, 60, B, C3), 'D ikkalasini ko\'radi', await D.evaluate(() => JSON.stringify(G.coop.errs.slice(-6))));
+  ok(await B.evaluate(() => G.coop.room.isHost ? !G.visit.on && G.state.home.lvl === 1 : G.visit.on && G.state.home.lvl === 0), 'egasi almashgach B ko\'rinishi to\'g\'ri (o\'z uyi yoki yangi egasining uyi)');
   await D.evaluate(() => G.coop.leave()); await C3.evaluate(() => G.coop.leave()); await B.evaluate(() => G.coop.leave());
+  ok(await until(B, () => !G.visit.on && G.state.home.lvl === 1 && !G.state.home.decor.gulzor && G.site.places.uy.home.lvl === 1, null, 10), 'B xonadan chiqdi — o\'z uyi qaytdi');
 
   // ---------- 6. Yuklab olingan fayl: onlayn "mavjud emas", o'yin ishlaydi ----------
   const fctx = await browser.newContext({ viewport: { width: 960, height: 540 } }); await fctx.addInitScript(() => { window.__TEST = true; });
@@ -153,6 +196,6 @@ try {
   ok(await F.evaluate(() => /Davom etish|O'yinni boshlash/.test(document.body.innerText) || G.mode === 'ui'), 'o\'yin ishlayapti');
   await fctx.close();
 } catch (e) { failed++; console.log('SCENARIO ERROR', e.stack || e.message); }
-await browser.close(); await dev.close(); await redis.close();
+for (const b of browsers) await b.close().catch(() => {}); await dev.close(); await redis.close();
 console.log(failed ? `TEST online FAIL (${failed})` : 'TEST online ALL OK');
 process.exit(failed ? 1 : 0);

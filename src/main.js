@@ -211,9 +211,12 @@ function frame(t) {
   if (!game.ready || game.paused) return;
   update(dt);
   if (game.ctxLost) return;
+  // onlayn xonada fokussiz oyna (masalan, bitta kompyuterda ikki oyna) ~20 kadr/s chiziladi — fokusdagi oynaga videokarta qoladi; o'yin hisobi to'xtamaydi
+  if (game.bgRender && game.bgRender()) { bgAcc += raw; if (bgAcc < 0.05) return; bgAcc = 0; game.gfx.render(); return; }
   game.gfx.render();
   adapt(raw);
 }
+let bgAcc = 0;
 
 // Moslashuvchan grafika. Qoidalar:
 //  1) kadr sekinlashsa — piksel zichligini kamaytiramiz, ravonlashsa — asta-sekin qaytaramiz
