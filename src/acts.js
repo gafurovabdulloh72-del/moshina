@@ -73,6 +73,8 @@ const ZONES = [
 ];
 // Reyting uchun chellenj turi (server ham shundan foydalanadi — api/top.js): poyga — vaqt, zonalar — ochko; radar/tramplin id'lari prefiksdan aniqlanadi
 export function actKinds() { const o = {}; for (const r of RACES) o[r[0]] = 'race'; for (const z of ZONES) o[z[0]] = z[2]; return o; }
+// Haftalik chellenj hovuzi (haftalik.js va api/hafta.js): yakuniy «KATTA SAFAR»dan boshqa poygalar va drift/sindirish zonalari — tartibi o'zgarsa, haftalar boshqacha taqsimlanadi
+export const weeklyPool = () => RACES.filter((r) => !(r[6] && r[6].final)).map((r) => r[0]).concat(ZONES.map((z) => z[0]));
 // Radarlar: [qirra, ulush, [bronza,kumush,oltin] km/soat]
 export const RADARS = [['e1', 0.58, [85, 105, 122]], ['e3', 0.3, [85, 105, 122]], ['e3b', 0.55, [85, 105, 122]], ['e4b', 0.35, [80, 100, 118]], ['e5', 0.45, [60, 78, 95]], ['e6', 0.62, [85, 108, 128]], ['e7', 0.5, [85, 105, 122]], ['e8', 0.3, [85, 105, 122]], ['e8', 0.72, [80, 100, 118]], ['e9', 0.5, [85, 105, 122]], ['e10', 0.5, [85, 105, 122]], ['e11', 0.4, [80, 100, 118]], ['e11c', 0.5, [85, 105, 122]], ['e2', 0.5, [85, 105, 122]], ['t3', 0.5, [70, 90, 108]]];
 // Yo'l yoqasidagi tramplinlar: [qirra, ulush, tomon]

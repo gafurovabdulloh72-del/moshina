@@ -252,7 +252,7 @@ export function initHayot(game) {
     this.on({ put: (id) => { mv(id, st.inv, fr); render(); }, take: (id) => { mv(id, fr, st.inv); render(); }, putall: () => { for (const id of FOODISH) while (st.inv[id] > 0) mv(id, st.inv, fr); render(); }, takeall: () => { for (const id of FOODISH) while (fr[id] > 0) mv(id, fr, st.inv); render(); } });
     render();
   };
-  HY.buy = (id) => { const it = SHOP2.find((q) => q[0] === id); if (!it || st.money < it[2]) return false; game.addMoney(-it[2]); give(id); sfx('buy'); return true; };
+  HY.buy = (id) => { const it = SHOP2.find((q) => q[0] === id); if (!it || st.money < it[2]) return false; game.addMoney(-it[2], 'Do\'kon: ' + it[1]); give(id); sfx('buy'); return true; };
   ui.s_dokon = function (w, d, btn, x) {
     x(); const gr = GREET[(HY.greetI = ((HY.greetI || 0) + 1)) % GREET.length];
     const render = () => { w.innerHTML = `<h1>🛒 Do'kon <small>💰 ${som(st.money)} so'm · 💧 ${Math.round(st.thirst)}% · ⛽ ${FU.uses() ? Math.round(FU.get()) + '%' : '—'}</small></h1>

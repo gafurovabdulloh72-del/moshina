@@ -58,6 +58,12 @@ try {
   const top = await A.evaluate(() => G.net.top('r1'));
   ok(top.rows.length === 1 && top.rows[0].name === 'Jasur' && top.rows[0].value === 101.25, 'reyting r1', JSON.stringify(top.rows));
   ok(JSON.parse(redis.kv.get('save:1001')).money === 7777, 'bulutdagi pul yangilandi');
+  // hafta reytingi (hafta.js → net.submitWeek → /api/hafta) va «Hafta» oynasidagi jadval
+  const wk = await A.evaluate(async () => { const h = G.state.hafta; h.best = G.hafta.kind() === 'race' ? 98.5 : 4321; h.s.money = 2500; h.s.km = 12000; await G.net.submitWeek(); const r = await G.net.week('ch', h.w), m = await G.net.week('money', h.w); return { ch: r.rows.map((x) => [x.name, x.value]), money: m.rows.map((x) => [x.name, x.value]), best: h.best }; });
+  ok(wk.ch.length === 1 && wk.ch[0][0] === 'Jasur' && wk.ch[0][1] === wk.best && wk.money[0][1] === 2500, 'hafta reytingi: yuborish va jadval', JSON.stringify(wk));
+  await A.evaluate(() => G.ui.open('hafta'));
+  ok(await until(A, () => document.querySelectorAll('.hf-top tr.me').length === 1), "hafta oynasi: jadvalda o'yinchi belgilangan");
+  await shot(A, 'online_hafta'); await A.evaluate(() => G.ui.close());
 
   // boshqa qurilma (yangi o'yin) shu hisobga kiradi — bulutdagi saqlov olinadi (noldan boshlanmaydi)
   const A2 = await player('A2');

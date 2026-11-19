@@ -6,7 +6,7 @@ import crypto from 'node:crypto';
 import { startFakeRedis } from './fake-redis.mjs';
 
 const BOT = '7777777:TEST-token-for-unit-tests';
-let R, L, auth, save, top, config;
+let R, L, auth, save, top, config, hafta, HW;
 const now = () => Math.floor(Date.now() / 1000);
 // Telegram widget ma'lumotini sinov tokeni bilan imzolash (haqiqiy Telegram qanday imzolasa, shunday)
 export function tgSign(d, bot = BOT) { const dcs = Object.keys(d).sort().map((k) => `${k}=${d[k]}`).join('\n'); const sec = crypto.createHash('sha256').update(bot).digest(); return Object.assign({}, d, { hash: crypto.createHmac('sha256', sec).update(dcs).digest('hex') }); }
@@ -22,7 +22,7 @@ const login = async (id, first_name, extra = {}) => (await call(auth, { method: 
 test.before(async () => {
   R = await startFakeRedis();
   Object.assign(process.env, { KV_REST_API_URL: R.url, KV_REST_API_TOKEN: R.token, TELEGRAM_BOT_TOKEN: BOT, TELEGRAM_BOT_USERNAME: '@safar_test_bot', SESSION_SECRET: 's3cret' });
-  L = await import('../api/_lib.js'); auth = (await import('../api/auth.js')).default; save = (await import('../api/save.js')).default; top = (await import('../api/top.js')).default; config = (await import('../api/config.js')).default;
+  L = await import('../api/_lib.js'); auth = (await import('../api/auth.js')).default; save = (await import('../api/save.js')).default; top = (await import('../api/top.js')).default; config = (await import('../api/config.js')).default; hafta = (await import('../api/hafta.js')).default; HW = await import('../src/haftalik.js');
 });
 test.after(async () => { await R.close(); });
 
@@ -98,6 +98,51 @@ test('/api/top — natija yuborish, chegaralar, tartib', async () => {
   const lv = await call(top, { query: { id: 'level' } }); assert.ok(lv.json.rows.some((x) => x.name === 'Malika' && x.value === 3));
 });
 
+test('haftalik.js — hafta raqami va chellenj hamma joyda bir xil', () => {
+  assert.equal(HW.weekIndex(new Date(2026, 10, 16)), HW.weekIndex(new Date(2026, 10, 22, 23, 59))); // dushanba..yakshanba — bitta hafta
+  assert.equal(HW.weekIndex(new Date(2026, 10, 23)), HW.weekIndex(new Date(2026, 10, 22)) + 1);
+  assert.deepEqual(HW.weekLabel(HW.weekIndex(new Date(2026, 10, 19))), { n: 47, y: 2026, from: '16.11', to: '22.11' });
+  assert.equal(HW.weekLabel(HW.weekIndex(new Date(2027, 0, 1))).n, 53); // 2026-yil 53 haftali
+  const seen = new Set(); let prev = null;
+  for (let w = 3000; w < 3020; w++) { const id = HW.weeklyId(w); assert.notEqual(id, prev); prev = id; seen.add(id); assert.ok(['race', 'drift', 'smash'].includes(HW.weeklyKind(w))); }
+  assert.equal(seen.size, 20); // 20 haftada hovuzdagi hamma chellenj bir martadan
+  assert.ok(![...seen].includes('r15')); // yakuniy poyga haftalikka tushmaydi
+});
+
+test('/api/hafta — natija, chegaralar, eng yaxshisi, jadval', async () => {
+  const w = HW.weekIndexUTC(), kind = HW.weeklyKind(w), asc = kind === 'race', [lo, hi] = HW.CH_LIM[kind];
+  const good = asc ? 150.5 : Math.min(hi, 4000), better = asc ? 120.25 : Math.min(hi, 5000), worse = asc ? 200 : 100;
+  const a = await login(5001, 'Akmal'), b = await login(5002, 'Barno'), c = await login(5003, 'Sardor');
+  assert.equal((await call(hafta, { method: 'POST', body: { w, ch: good } })).status, 401);
+  let r = await call(hafta, { method: 'POST', token: a.token, body: { w, ch: good, s: { money: 2500, km: 42000, jobs: 4, wins: 1 } } });
+  assert.equal(r.status, 200); assert.deepEqual(r.json.accepted, { ch: good, money: 2500, km: 42000, jobs: 4, wins: 1 });
+  await call(hafta, { method: 'POST', token: b.token, body: { w, ch: better, s: { money: 1200, km: 90000, jobs: 1 } } });
+  // yomonroq natija va kichikroq ko'rsatkich eskisini almashtirmaydi
+  await call(hafta, { method: 'POST', token: a.token, body: { w, ch: worse, s: { money: 10, km: 5 } } });
+  // aqlga sig'maydigan qiymatlar: chellenj — rad, ko'rsatkich — hafta boshidan o'tgan vaqtga qarab qirqiladi
+  r = await call(hafta, { method: 'POST', token: c.token, body: { w, ch: asc ? 3 : hi * 10, s: { money: 9e15, km: 'ko\'p', jobs: -5, wins: 9e9, xyz: 1 } } });
+  assert.equal(r.status, 200); assert.equal(r.json.accepted.ch, undefined); assert.equal(r.json.accepted.km, undefined); assert.equal(r.json.accepted.jobs, undefined); assert.equal(r.json.accepted.xyz, undefined);
+  const secs = (Date.now() - HW.weekStartMs(w)) / 1000 + 14 * 3600;
+  assert.ok(r.json.accepted.money <= 5e6 && r.json.accepted.money <= HW.statCap('money', secs + 2) && r.json.accepted.money >= HW.statCap('money', secs - 60));
+  assert.ok(r.json.accepted.wins <= HW.statCap('wins', secs + 2) && r.json.accepted.wins < 20000);
+  // boshqa hafta qabul qilinmaydi
+  assert.equal((await call(hafta, { method: 'POST', token: a.token, body: { w: w - 5, ch: good } })).status, 400);
+  assert.equal((await call(hafta, { method: 'POST', token: a.token, body: { w: 'x', ch: good } })).status, 400);
+  assert.equal((await call(hafta, { query: { t: 'ch', w: String(w + 9) } })).status, 400);
+  // jadvallar
+  const g = await call(hafta, { query: { t: 'ch' }, token: a.token });
+  assert.equal(g.json.ch, HW.weeklyId(w)); assert.equal(g.json.kind, kind); assert.equal(g.json.asc, asc);
+  assert.deepEqual(g.json.rows.map((x) => [x.name, x.value]), [['Barno', better], ['Akmal', good]]);
+  assert.deepEqual(g.json.me, { rank: 2, value: good }); assert.equal(g.json.rows[1].me, true);
+  const km = await call(hafta, { query: { t: 'km' } });
+  assert.deepEqual(km.json.rows.map((x) => [x.name, x.value]), [['Barno', 90000], ['Akmal', 42000]]); assert.equal(km.json.me, null); assert.equal(km.json.asc, false);
+  const mo = await call(hafta, { query: { t: 'money' }, token: c.token });
+  assert.equal(mo.json.rows[0].name, 'Sardor'); assert.equal(mo.json.rows[1].value, 2500); assert.equal(mo.json.me.rank, 1);
+  assert.equal((await call(hafta, { query: { t: 'nope' } })).status, 404);
+  assert.equal((await call(hafta, { method: 'PUT', token: a.token, body: {} })).status, 405);
+  assert.ok(R.log.includes('EXPIRE'));
+});
+
 test('tezlik cheklovi va sozlanmagan muhit', async () => {
   let last; for (let i = 0; i < 22; i++) last = await call(auth, { method: 'POST', ip: '9.9.9.9', body: { id: 1 } });
   assert.equal(last.status, 429);
@@ -105,6 +150,6 @@ test('tezlik cheklovi va sozlanmagan muhit', async () => {
   try { assert.equal((await call(auth, { method: 'POST', body: {} })).status, 503); assert.equal((await call(config)).json.login, false); }
   finally { process.env.TELEGRAM_BOT_TOKEN = keep; process.env.SESSION_SECRET = ss; }
   const ku = process.env.KV_REST_API_URL; delete process.env.KV_REST_API_URL;
-  try { const { token } = await login(4001, 'Nodir'); assert.equal((await call(save, { token })).status, 503); assert.equal((await call(config)).json.save, false); }
+  try { const { token } = await login(4001, 'Nodir'); assert.equal((await call(save, { token })).status, 503); assert.equal((await call(hafta, { query: { t: 'ch' } })).status, 503); assert.equal((await call(config)).json.save, false); }
   finally { process.env.KV_REST_API_URL = ku; }
 });

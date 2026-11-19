@@ -125,6 +125,19 @@ export function initNet(game) {
   net.top = (id) => net.api('/api/top?id=' + encodeURIComponent(id));
   setInterval(() => { if (net.token && game.mode === 'play') net.submitTop(); }, 20000);
 
+  // ---------- hafta reytingi (hafta.js: haftalik chellenj natijasi va hafta ko'rsatkichlari) ----------
+  // faqat kirgan o'yinchida; o'zgarmagan bo'lsa qayta yuborilmaydi
+  let wkBusy = false;
+  net.submitWeek = async () => {
+    if (!net.token || !net.cfg || !net.cfg.top || wkBusy || !game.hafta) return;
+    const p = game.hafta.payload(), sig = JSON.stringify(p), key = SENT + 'hafta:' + net.user.id; if (ls.get(key) === sig) return;
+    wkBusy = true;
+    try { await net.api('/api/hafta', { method: 'POST', body: p }); ls.set(key, sig); }
+    catch (e) { if (e.status === 401) net.logout(true); }
+    finally { wkBusy = false; }
+  };
+  net.week = (t, w) => net.api('/api/hafta?t=' + encodeURIComponent(t) + '&w=' + encodeURIComponent(w));
+
   // o'yin saqlanganda bulutni ham yangilash
   const save0 = game.save; game.save = () => { save0(); if (!game.noSave) net.queue(); };
   return net;

@@ -104,7 +104,7 @@ export function initFuel(game) {
     const f = FU.fill;
     if (f) { const n = FU.pumpNear(car.p[0], car.p[2], 5);
       if (foot || !n || car.speed > 1.2) FU.stop("to'xtatildi");
-      else { f.t += dt; const add = Math.min(14 * dt, 100 - FU.get(), (st.money - 0) / FUEL_PRICE); if (add > 0) { FU.set(FU.get() + add); f.acc = (f.acc || 0) + add * FUEL_PRICE; const pay = Math.floor(f.acc); if (pay > 0) { game.addMoney(-pay); f.paid += pay; f.acc -= pay; } }
+      else { f.t += dt; const add = Math.min(14 * dt, 100 - FU.get(), (st.money - 0) / FUEL_PRICE); if (add > 0) { FU.set(FU.get() + add); f.acc = (f.acc || 0) + add * FUEL_PRICE; const pay = Math.floor(f.acc); if (pay > 0) { game.addMoney(-pay, 'Yoqilg\'i'); f.paid += pay; f.acc -= pay; } }
         if (FU.get() >= 99.9) FU.stop("bak to'ldi"); else if (st.money < FUEL_PRICE) FU.stop('pul tugadi'); } }
     // xodimlar
     const fp = foot ? game.player.p : car.p;
