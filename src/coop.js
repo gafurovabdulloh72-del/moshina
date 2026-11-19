@@ -8,7 +8,8 @@ import * as THREE from 'three';
 import { Peer } from 'peerjs';
 import * as T from './terrain.js';
 import { buildVehicle, syncWheels, vehById } from './vehicles.js';
-import { makeRig, poseRig, setHat, HAT_LIST } from './rig.js';
+import { makeRig, poseRig, setHat, HAT_LIST, HAT_SHOP } from './rig.js';
+import { lookRigOpts, STYLES, BEARDS } from './hayot2.js';
 import { fmtTime } from './game.js';
 import { HOME_LEVELS, DECOR } from './home.js';
 
@@ -16,7 +17,10 @@ export const MAX_PLAYERS = 4;
 const RATE_MOVE = 1 / 20, RATE_IDLE = 1 / 5, FAST_ID = 1001, HOME_R = 48, ALPH = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', PFX = 'safarxona-';
 export const SLOT_COLORS = ['#ffd23a', '#4fb0ff', '#ff6aa0', '#6ee07a'];
 const SHIRTS = [0xf0b83a, 0x2f7fd0, 0xd8406a, 0x3f9a58], EMOJI = ['👋', '😂', '👍', '🔥', '😎', '🏁', '❤️', '😮'];
-const HATS = new Set(HAT_LIST.map((h) => h[0]));
+const HATS = new Set([...HAT_LIST, ...HAT_SHOP].map((h) => h[0]));
+// kiyim-soch ko'rinishi tarmoqda ixcham: [ko'ylak, uslub №, shim, soch turmagi, soch rangi, soqol №] (hayot2.js)
+const lookCode = (lk) => (lk ? [lk.shirt | 0, Math.max(0, STYLES.findIndex((q) => q[0] === lk.style)), lk.pants | 0, lk.hs | 0, lk.hair | 0, Math.max(0, BEARDS.findIndex((q) => q[0] === lk.beard))] : null);
+const lookFrom = (a) => (num(a, 6) && a.length === 6 ? { shirt: a[0] & 0xffffff, style: (STYLES[a[1] | 0] || STYLES[0])[0], pants: a[2] & 0xffffff, hs: Math.max(0, Math.min(3, a[3] | 0)), hair: a[4] & 0xffffff, beard: (BEARDS[a[5] | 0] || BEARDS[0])[0] } : null);
 export const QUICK_EMOJI = EMOJI;
 export const roomPeerId = (code) => PFX + code.toLowerCase();
 export function newCode() { const a = new Uint8Array(6); (globalThis.crypto || window.crypto).getRandomValues(a); return [...a].map((x) => ALPH[x % ALPH.length]).join(''); }
@@ -52,6 +56,12 @@ class Remote {
     c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, 256 + mic / 2, 62, 470 - mic); this.tagTex.needsUpdate = true;
   }
   emote(e) { this._em = e; this.drawTag(); clearTimeout(this._et); this._et = setTimeout(() => { this._em = null; this.drawTag(); }, 4000); }
+  // do'stning kiyimi va sochi: o'zgarganda model qayta quriladi (shapka, joy saqlanadi)
+  setLook(lk) {
+    if (!lk) return; const key = JSON.stringify(lk); if (key === this.lkK) return; this.lkK = key; const old = this.rig, r = makeRig(lookRigOpts(lk));
+    r.root.visible = old.root.visible; r.root.position.copy(old.root.position); r.root.rotation.copy(old.root.rotation); this.g.scene.add(r.root); this.g.scene.remove(old.root); old.mesh.geometry.dispose(); old.mesh.skeleton.dispose();
+    this.rig = r; setHat(r, this.hat); this.lod = -1;
+  }
   setVoice(vt) { if (vt !== (this.vt | 0)) { this.vt = vt; this.drawTag(); } } // 0 — ovozli chatda emas, 1 — jim, 2/3 — gapiryapti (navbatma-navbat — "nafas")
   setVeh(id, paint) {
     if (!vehById[id]) id = 'jip';
@@ -77,6 +87,7 @@ class Remote {
       if (this.lastMs != null && !d.i && !this.lastIdle) { const gp = sm - this.lastMs; if (gp > 0 && gp < 0.5) this.gap += (gp - this.gap) * 0.1; } this.lastMs = sm; this.lastIdle = !!d.i; }
     if (d.v != null || !this.veh) this.setVeh(String(d.v || 'jip'), d.k);
     if (typeof d.hat === 'string' || d.hat === null) { const h = HATS.has(d.hat) ? d.hat : null; if (h !== this.hat) { this.hat = h; setHat(this.rig, h); } }
+    if (d.lk) this.setLook(lookFrom(d.lk));
     this.anim = typeof d.a === 'string' && /^[a-z]{2,12}$/.test(d.a) ? d.a : 'idle';
     this.rp = +d.rp || 0; this.lastPkt = d;
     const b = this.buf; if (b.length && t - b[b.length - 1].t < 0.005) b.pop(); b.push({ t, c: d.c, h: d.h || null, f: d.f | 0 }); if (b.length > 40) b.shift();
@@ -572,7 +583,7 @@ export function initCoop(game) {
     const g = game, c = g.car, pl = g.player, foot = pl.onFoot, a = g.act;
     const d = { t: 's', n: ++seq, ms: Math.round(performance.now()), c: [r2(c.p[0]), r2(c.p[1]), r2(c.p[2]), r3(c.q[0]), r3(c.q[1]), r3(c.q[2]), r3(c.q[3]), r2(c.v[0]), r2(c.v[1]), r2(c.v[2]), r3(c.steer || 0), r2(c.fwd || 0)], f: flags() };
     if (idle) d.i = 1;
-    const v = g.carModel.id, k = g.carModel.paintMat.color.getHex(), hat = g.state.hat || null, mk = v + k + hat; if (mk !== metaK || ++metaN >= 10) { metaK = mk; metaN = 0; d.v = v; d.k = k; d.hat = hat; }
+    const v = g.carModel.id, k = g.carModel.paintMat.color.getHex(), hat = g.state.hat || null, lk = lookCode(g.state.look), mk = v + k + hat + lk; if (mk !== metaK || ++metaN >= 10) { metaK = mk; metaN = 0; d.v = v; d.k = k; d.hat = hat; if (lk) d.lk = lk; }
     if (foot) { d.h = [r2(pl.p[0]), r2(pl.p[1]), r2(pl.p[2]), r3(pl.yaw), r2(pl.v[0]), r2(pl.v[2]), r2(pl.v[1]), pl.grounded ? 1 : 0, pl.swim ? 1 : 0]; d.a = pl.anim || 'idle'; }
     if (g.coopRace && a && a.def.type === 'race') d.rp = (a.my || 0) + a.cpi * 0.001;
     return d;

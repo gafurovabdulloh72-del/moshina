@@ -253,8 +253,8 @@ export function setTool(rig, id) {
 }
 export function poseRig(rig, anim, dt, speed = 0, ctl) { animate(rig, anim, dt, speed, ctl); }
 // Transportdagi haydovchi (velosiped, skuter, mototsikl...): vehicles.js B.rider ma'lumotidan to'liq odam; har kadr poseRider bilan pedal/rulga moslanadi
-export function makeRider(o) {
-  const rig = makeRig({ shirt: o.shirt || 0x2f7fd0, pants: o.pants || 0x3a3f4c, seed: 4242, sleeve: 1, stache: false, height: 1, build: 1 });
+export function makeRider(o, look) { // look — o'yinchining kiyim-soch ko'rinishi (makeRig opsiyalari; hayot3.js), yo'q bo'lsa transportning standart haydovchisi
+  const rig = makeRig(look ? Object.assign({ sleeve: 1, height: 1, build: 1 }, look) : { shirt: o.shirt || 0x2f7fd0, pants: o.pants || 0x3a3f4c, seed: 4242, sleeve: 1, stache: false, height: 1, build: 1 });
   rig.root.position.set(0, o.hip[1] - rig.J[B.body][1], o.hip[2]);
   if (o.helmet) { const g = new GB(555); g.jit = 0.02; g.color(o.helmet).blob(0.122, 1, { cy: 0.085, sy: 0.92, sz: 1.12 }); g.color(0x15161a).box(0, 0.055, 0.1, 0.17, 0.06, 0.05); const m = new THREE.Mesh(g.build(), MAT.flat); m.castShadow = true; m.scale.setScalar(rig.s); rig.hatG.add(m); }
   rig.isRider = true; rig.riderData = o; poseRiderAnim(rig, o, null, 0); return rig;

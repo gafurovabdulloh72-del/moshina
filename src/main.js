@@ -20,6 +20,7 @@ import { Player } from './player.js';
 import { initLiving } from './living.js';
 import { initHayot } from './hayot.js';
 import { initHayot2 } from './hayot2.js';
+import { initHayot3 } from './hayot3.js';
 import { buildAds } from './ads.js';
 import { initGfx } from './gfx.js';
 import { bakeTextures, rebakeTextures } from './tex.js';
@@ -87,6 +88,7 @@ async function boot() {
   initHayot(game); // kundalik hayot: uy ichi, do'kon, yoqilg'i, chanqoq, suhbatlar (UI'ga keyin ulanadi)
   initHayot2(game); // kundalik hayot 2: choyxona, kiyim do'koni, sartarosh, ishlar, telefon, ko'cha mayda narsalari
   initObhavo(game); initShahar(game); initTadbir(game); // ob-havo va taqvim, gavjum ko'chalar (svetofor, piyodalar), tadbirlar (to'y, bozor, Navro'z)
+  initHayot3(game); // kundalik hayot 3: biznes, uy kengaytmalari va garaj, charchoq va kun rejasi, qishloq topshiriqlari
   // boshlang'ich joy: yangi o'yin — uy oldida
   if (st.pos && !st.fresh) { car.place(st.pos[0], st.pos[1], st.pos[2]); game.hour = st.hour || 9.5; }
   else car.place(home.park[0], home.park[1], home.parkYaw);

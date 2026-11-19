@@ -34,7 +34,8 @@ function defState() {
     thirst: 100, fuel: {}, fridge: {}, alarm: 6.5, // kundalik hayot (hayot.js): chanqoq, transport yoqilg'isi (%), muzlatkich, budilnik soati
     look: null, clothes: [], income: [], jobs: {}, // hayot2/ish: kiyim-soch ko'rinishi, sotib olingan kiyimlar, pul tarixi, ishlar hisobi
     dunyo: { day: 1, toy: -1, nav: -1 }, // obhavo/tadbir: o'yin kuni, oxirgi to'y/Navro'z sovg'asi olingan kun
-    hafta: { w: -1, best: null, stars: 0, paid: 0, tries: 0, s: { money: 0, km: 0, jobs: 0, wins: 0 }, hist: [], badges: {}, done: 0, weeks: 0 } }; // hafta.js: joriy hafta raqami, haftalik chellenj rekordi/yulduzi/to'langan mukofot, hafta ko'rsatkichlari (km — metrda), o'tgan haftalar, nishonlar
+    hafta: { w: -1, best: null, stars: 0, paid: 0, tries: 0, s: { money: 0, km: 0, jobs: 0, wins: 0 }, hist: [], badges: {}, done: 0, weeks: 0 }, // hafta.js: joriy hafta raqami, haftalik chellenj rekordi/yulduzi/to'langan mukofot, hafta ko'rsatkichlari (km — metrda), o'tgan haftalar, nishonlar
+    biz: {}, home2: {}, tetik: 100, hurmat: 0, errands: {}, soat: 0 }; // hayot3: biznes (biznes.js), uy kengaytmalari (uy2.js), tetiklik — charchoq va o'tgan o'yin soatlari (kun.js), hurmat va topshiriqlar (topshiriq.js)
 }
 function loadState() {
   const d = defState(); let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* saqlangan o'yin yo'q */ }
