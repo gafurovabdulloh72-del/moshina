@@ -158,7 +158,8 @@ export function buildPlaces(scene, game) {
     for (let i = 0; i < 12; i++) { const q = st.spot(40, 150, 2.5, 5); if (q) smashL(st, 'hay', q[0], q[1], st.rng() * 3); }
     for (let i = 0; i < 6; i++) { const q = st.spot(50, 145, 14, 4); if (q) { const a = st.rng() * 3; fenceLine(st, q[0] - Math.cos(a) * 12, q[1] - Math.sin(a) * 12, q[0] + Math.cos(a) * 12, q[1] + Math.sin(a) * 12); } }
     for (let i = 0; i < 8; i++) { const q = st.spot(15, 120, 2, 3.5); if (q) smashL(st, st.rng() < 0.5 ? 'crate' : 'barrel', q[0], q[1], st.rng() * 3); }
-    done(st, { garage: gar, home: true });
+    const wy = (lx, lz, a) => { const [x, z] = st.w(lx, lz); return { x, z, yaw: st.yaw + a }; };
+    done(st, { garage: gar, home: true, qorgon: wy(e[0], e[1], ey), square: wy(pl[0], pl[1], 0) }); // tadbir.js: to'y hovlisi va bozor maydoni
   }
 
   // ===== 2. Mayoq =====

@@ -203,6 +203,22 @@ void yerGround(vec3 wp, vec3 nW, float dist, vec4 b0, vec4 b1, vec4 ax){
   yNf = ((Nf.rg * 2.0 - 1.0) * (0.18 - 0.1 * veg + 0.15 * be) + (Nf.ba * 2.0 - 1.0) * (pb * 0.4 + rs * 0.3)) * nearK * yKf(0.8) * (1.0 - stp * 0.85);
   yAO = mix(1.0 - clamp(curv * 1.6, 0.0, 0.3) + clamp(-curv, 0.0, 0.2) * 0.3, 1.0, snow * 0.6) * (1.0 - 0.5 * snow);   // qorda yoyilgan yorug'lik kamroq
 }
+// ob-havo (obhavo.js): uWet — nam yer/yo'l (to'qroq, yaltiroq) va tekis joyda ko'lmaklar (osmon aksi), uSnowC — yog'gan qor qoplami (qiyalikda va yo'l izlarida kamroq)
+void yWx(vec3 wp, float road){
+  float up = normalize(vWN).y;
+  if (uWet > 0.003) {
+    float pn = yTexL(tYN, wp.xz, 0.11, YR3, vec2(0.17, 0.61)).r;
+    float pud = smoothstep(0.64 - 0.1 * uWet, 0.7 - 0.1 * uWet, pn + road * 0.05) * smoothstep(0.93, 0.985, up) * smoothstep(0.35, 0.9, uWet) * (1.0 - yS);
+    float w = uWet * (1.0 - yS * 0.8);
+    yA *= 1.0 - w * mix(0.3, 0.42, road); yR = mix(yR, mix(0.38, 0.2, road), w); ySpec = mix(ySpec, 1.0, w * 0.8);
+    yA = mix(yA, yA * 0.55, pud); yR = mix(yR, 0.04, pud); ySpec = mix(ySpec, 1.0, pud); yH *= 1.0 - pud; yNf *= 1.0 - pud;
+  }
+  if (uSnowC > 0.003) {
+    float n = yTexL(tYN, wp.xz, 0.05, YR2, vec2(0.4, 0.2)).r;
+    float sn = smoothstep(0.25, 0.6, uSnowC * 1.25 + (n - 0.58) * 1.2) * smoothstep(0.45, 0.8, up) * (1.0 - road * 0.45);
+    yA = mix(yA, vec3(0.8, 0.82, 0.86) * (0.95 + 0.1 * n), sn); yR = mix(yR, 0.72, sn); ySpec = mix(ySpec, 0.45, sn); yS = max(yS, sn); yAO = mix(yAO, 1.0, sn * 0.5);
+  }
+}
 // Arzon yo'l (0-daraja): rang uchlarda hisoblanadi (yerLoV, vertex sheyderi), pikselda faqat bitta mayda tekstura — eski Lambert relyef narxida
 void yerGroundLo(float dr){
   yA = vLo.rgb * mix(0.84 + 0.32 * dr, 1.0, vLo2.y * 0.8); yR = vLo.a; ySpec = vLo2.x; yS = vLo2.y; yWet = vLo2.z; yAO = vLo2.w;
@@ -378,8 +394,8 @@ void yWood(vec3 wp, vec3 nW, inout vec3 col, out float rough, out float H){
 // yo'l: avval yo'l sirti, yer faqat yo'l yerga qo'shiladigan chetlarda hisoblanadi (rm < 1). uYQ — bir xil (uniform) shart: hosilalar xavfsiz
 const FMAIN = [
   `yerBegin(vWP); vec3 yN0 = normalize(vWN); float yDist = length(cameraPosition - vWP); vec3 yNW = yN0;
-  if (uYQ > 0.5) { yerBeginHi(vWP); yerGround(vWP, yN0, yDist, vB0, vB1, vAx); yNW = normalize(yerBump(yN0, yH * yGraze(yN0)) + vec3(yNf.x, 0.0, yNf.y)); }
-  else yerGroundLo(yTexL(tYN, vWP.xz, 0.077, YR2, vec2(0.5)).r);
+  if (uYQ > 0.5) { yerBeginHi(vWP); yerGround(vWP, yN0, yDist, vB0, vB1, vAx); yWx(vWP, 0.0); yNW = normalize(yerBump(yN0, yH * yGraze(yN0)) + vec3(yNf.x, 0.0, yNf.y)); }
+  else { yerGroundLo(yTexL(tYN, vWP.xz, 0.077, YR2, vec2(0.5)).r); yWx(vWP, 0.0); }
   diffuseColor.rgb = yA;
 `,
   `yerBegin(vWP); vec3 yN0 = normalize(vWN); float yDist = length(cameraPosition - vWP); vec3 yNW = yN0;
@@ -394,7 +410,7 @@ const FMAIN = [
       yS = vLo2.y; float dr; rm = yRoadLo(vWP, rA, rR, dr);
       if (rm < 0.999) yerGroundLo(dr); else { yA = rA; yR = rR; yH = 0.0; yNf = vec2(0.0); ySp = 0.0; yAO = 1.0; ySpec = 0.5; }
     }
-    yA = mix(yA, rA, rm); yR = mix(yR, rR, rm); ySpec = mix(ySpec, mix(0.5, 0.45, yS), rm); yH = mix(yH, rH, rm); yNf *= 1.0 - rm * 0.7; ySp *= 1.0 - rm; yAO = mix(yAO, 1.0, rm); }
+    yA = mix(yA, rA, rm); yR = mix(yR, rR, rm); ySpec = mix(ySpec, mix(0.5, 0.45, yS), rm); yH = mix(yH, rH, rm); yNf *= 1.0 - rm * 0.7; ySp *= 1.0 - rm; yAO = mix(yAO, 1.0, rm); yWx(vWP, rm); }
   if (uYQ > 0.5) yNW = normalize(yerBump(yN0, yH * yGraze(yN0)) + vec3(yNf.x, 0.0, yNf.y));
   diffuseColor.rgb = yA;
 `,
@@ -406,7 +422,7 @@ function patch(sh, kind) {
   for (const k in YER.U) sh.uniforms[k] = YER.U[k];
   sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + VDECL[kind])
     .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal); ' + VSET[kind] + '\n');
-  sh.fragmentShader = sh.fragmentShader.replace('#include <clipping_planes_pars_fragment>', '#include <clipping_planes_pars_fragment>\n' + FDECL[kind] + GLSL + (kind === 1 ? ROAD : kind === 2 ? WOOD : '') + '\n')
+  sh.fragmentShader = '#define LK_NO_WX\n' + sh.fragmentShader.replace('#include <clipping_planes_pars_fragment>', '#include <clipping_planes_pars_fragment>\n' + FDECL[kind] + GLSL + (kind === 1 ? ROAD : kind === 2 ? WOOD : '') + '\n')
     .replace('#include <color_fragment>', '#include <color_fragment>\n' + FMAIN[kind] + '\n')
     .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = yR;\n')
     .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize((viewMatrix * vec4(yNW, 0.0)).xyz);\n')

@@ -198,6 +198,8 @@ export function buildLife(scene, game) {
         const tot = c.a * (1 - (c.v / Math.max(0.6, v0)) ** 4) + a;
         if (tot < acc) { acc = tot; blk = o.car; byPlayer = o.player; }
       }
+      // tashqi to'xtash chizig'i (shahar.js: svetofor qizil, piyodalar o'tish joyida) — oldindagi masofa (m) yoki null
+      if (out.stopFor) { const sg = out.stopFor(c, locate); if (sg != null) { const tot = c.a * (1 - (c.v / Math.max(0.6, v0)) ** 4) + idm(c, sg, 0, 1.0, 0.8); if (tot < acc) acc = tot; } }
       // yo'l chetiga to'xtash nuqtasi
       if (c.mode === 1 && c.route[c.ri] === c.stopSeg) { const d = c.stopS - c.s, vt = Math.sqrt(2 * 1.3 * Math.max(0, d - 0.4)), a = clamp((vt - c.v) * 1.6, -4.5, c.a); if (a < acc) acc = a; } // bir tekis sekinlab to'xtash
       // o'zaro tiqilib qolish (chorrahada ikkalasi bir-birini kutsa) — bittasi yo'l beradi

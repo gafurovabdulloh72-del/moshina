@@ -232,6 +232,7 @@ export function buildDetail(scene) {
     for (let c = 0; c < 3; c++) gc3[c] = (C[k + c] * (1 - u) + C[k + 3 + c] * u) * (1 - v) + (C[k2 + c] * (1 - u) + C[k2 + 3 + c] * u) * v; return gc3; };
   const api = {
     dens: 1,
+    excl: [], // o't o'smaydigan to'rtburchaklar {x, z, yaw, hx, hz} (masalan, bug'doy dalasi — ish.js) — qo'shilgach lx = 1e9 qiling
     cut(x, z) { cuts.push([x, z]); if (cuts.length > 80) cuts.shift(); lx = 1e9; },
     update(cam, force) {
       const cx = cam.position.x, cz = cam.position.z;
@@ -252,6 +253,7 @@ export function buildDetail(scene) {
         if (y < T.waterY(x, z) + 0.25) continue;
         const nr = T.nearestRoad(x, z, 1); if (nr.edge >= 0 && nr.d < nr.hw + 1.5) continue;
         const sf = T.ground(x, z, 1e9).surf; if (sf !== T.SURF.GRASS && sf !== T.SURF.SAND) continue;
+        let ex = false; for (let k = 0; k < api.excl.length; k++) { const q = api.excl[k], dx = x - q.x, dz = z - q.z, c = Math.cos(q.yaw), sn = Math.sin(q.yaw); if (Math.abs(dx * c - dz * sn) < q.hx && Math.abs(dx * sn + dz * c) < q.hz) { ex = true; break; } } if (ex) continue;
         let cutHere = false; for (let k = 0; k < cuts.length; k++) { const q = cuts[k]; if ((q[0] - x) * (q[0] - x) + (q[1] - z) * (q[1] - z) < 2.2) { cutHere = true; break; } } if (cutHere) continue;
         let inPl = false, pf = 1; for (let k = 0; k < PL.length; k++) { const q = PL[k], dd = (q[0] - x) * (q[0] - x) + (q[1] - z) * (q[1] - z); if (dd < q[2] && hash2(i, j, 27) >= q[3]) { inPl = true; break; } if (q[3] === 0 && dd < q[2] + 600) pf = Math.min(pf, (Math.sqrt(dd) - Math.sqrt(q[2])) / 9); } if (inPl) continue; // joy chegarasida o'tlar asta-sekin pasayadi
         const lav = bio === B.MEADOW && T.lavAt(x, z), d = Math.sqrt(d2), fade = (1 - smoothstep(0.55 * RD, RD, d)) * smoothstep(0, 1, pf), h4 = hash2(i, j, 24), s = 0.75 + h4 * 0.6;
