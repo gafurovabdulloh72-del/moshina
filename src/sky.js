@@ -168,7 +168,7 @@ void main(){
 }`;
 
 const OCC = 256, G_ALB = [0.16, 0.15, 0.1]; // relyef soyasi xaritasi o'lchami
-const ENV_K = 0.8; // osmon yoritishi kuchi (quyosh va soya qarama-qarshiligi uchun)
+const ENV_K = 1.5; // osmon yoritishi kuchi (quyosh va soya qarama-qarshiligi uchun)
 export class Sky {
   constructor(scene, opts = {}) {
     this.scene = scene;

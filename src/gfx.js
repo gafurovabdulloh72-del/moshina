@@ -250,7 +250,7 @@ void main(){
 export function initGfx(game) {
   const { renderer, scene, camera, sky } = game;
   // tone mapping operatori bir marta (0-daraja materiallari ham shuni ishlatadi) — o'yin davomida almashtirilmaydi
-  const TM = [THREE.NeutralToneMapping, THREE.ACESFilmicToneMapping, THREE.AgXToneMapping], post = { tm: 1, exposure: 0.8, nightExp: 1.65, sat: 1.12, con: 1.1, vig: 0.18, vib: 0.6, split: 1.0, lift: 0, bloom: 0.9, ao: 0.85, shafts: 1.0 };
+  const TM = [THREE.NeutralToneMapping, THREE.ACESFilmicToneMapping, THREE.AgXToneMapping], post = { tm: 1, exposure: 1.02, nightExp: 1.55, sat: 1.18, con: 1.0, vig: 0.12, vib: 0.5, split: 0.6, lift: 0, bloom: 0.9, ao: 0.85, shafts: 1.0 };
   renderer.toneMapping = TM[post.tm]; renderer.toneMappingExposure = post.exposure;
 
   // ---------- relyef: mayda tekstura (rang shovqini) ----------

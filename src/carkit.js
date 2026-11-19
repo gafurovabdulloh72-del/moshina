@@ -163,7 +163,7 @@ export function vmats() {
 }
 // Kuzov bo'yog'i: lak qatlami (clearcoat) + panel chiziqlari (eshik, kapot, yukxona) obyekt fazosida — geometriyasiz
 export function paintMaterial(hex, seam = {}) {
-  const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, color: hex, metalness: 0.45, roughness: 0.34, clearcoat: 1, clearcoatRoughness: 0.04 });
+  const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, color: hex, metalness: 0.12, roughness: 0.38, clearcoat: 1, clearcoatRoughness: 0.04 });
   const v4 = (a) => new THREE.Vector4(...(a || [-99, -99, -99, -99]).concat([-99, -99, -99, -99]).slice(0, 4));
   const U = { uSeamA: { value: v4(seam.a) }, uSeamB: { value: v4(seam.b) }, uSeamC: { value: v4(seam.c) } };
   m.userData.seam = U;
