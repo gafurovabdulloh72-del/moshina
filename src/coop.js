@@ -42,13 +42,17 @@ class Remote {
     this.tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tagTex, transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, fog: false, toneMapped: false }));
     this.tag.scale.set(0.26, 0.065, 1); this.tag.renderOrder = 999; this.tag.visible = false; game.scene.add(this.tag); this.drawTag();
   }
-  drawTag(emoji) {
-    const c = this.tagC.getContext('2d'), m = this.m, col = SLOT_COLORS[m.slot % 4]; c.clearRect(0, 0, 512, 128);
-    const txt = (emoji ? emoji + ' ' : '') + m.name; c.font = '800 52px system-ui, sans-serif'; const w = Math.min(500, c.measureText(txt).width + 56), x = 256 - w / 2;
+  // ism yorlig'i: emoji (4 s) + ism; ovozli chatda chap tomonda mikrofon belgisi (kulrang — jim, yashil va "nafas oladi" — gapiryapti)
+  drawTag() {
+    const c = this.tagC.getContext('2d'), m = this.m, col = SLOT_COLORS[m.slot % 4], vt = this.vt | 0, emoji = this._em; c.clearRect(0, 0, 512, 128);
+    const txt = (emoji ? emoji + ' ' : '') + m.name; c.font = '800 52px system-ui, sans-serif'; const mic = vt ? 64 : 0, w = Math.min(500, c.measureText(txt).width + 56 + mic), x = 256 - w / 2;
     c.fillStyle = 'rgba(12,16,28,.78)'; c.beginPath(); c.roundRect(x, 20, w, 80, 40); c.fill(); c.lineWidth = 6; c.strokeStyle = col; c.stroke();
-    c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, 256, 62, 470); this.tagTex.needsUpdate = true;
+    if (vt) { const cx = x + 44, r = vt === 1 ? 24 : vt === 2 ? 27 : 33; c.fillStyle = vt === 1 ? 'rgba(150,160,180,.45)' : vt === 2 ? '#3ccf6e' : '#5ef08c'; c.beginPath(); c.arc(cx, 60, r, 0, 6.283); c.fill();
+      c.fillStyle = '#fff'; c.beginPath(); c.roundRect(cx - 7, 42, 14, 24, 7); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(cx, 56, 13, 0.15, Math.PI - 0.15); c.stroke(); c.beginPath(); c.moveTo(cx, 69); c.lineTo(cx, 77); c.stroke(); }
+    c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, 256 + mic / 2, 62, 470 - mic); this.tagTex.needsUpdate = true;
   }
-  emote(e) { this.drawTag(e); clearTimeout(this._et); this._et = setTimeout(() => this.drawTag(), 4000); }
+  emote(e) { this._em = e; this.drawTag(); clearTimeout(this._et); this._et = setTimeout(() => { this._em = null; this.drawTag(); }, 4000); }
+  setVoice(vt) { if (vt !== (this.vt | 0)) { this.vt = vt; this.drawTag(); } } // 0 — ovozli chatda emas, 1 — jim, 2/3 — gapiryapti (navbatma-navbat — "nafas")
   setVeh(id, paint) {
     if (!vehById[id]) id = 'jip';
     if (id !== this.veh) {
@@ -147,7 +151,7 @@ export function initCoop(game) {
   C.roster = () => (C.room ? roster() : []);
   const sendTo = (m, d) => { try { if (m.conn && m.conn.open) m.conn.send(d); } catch { /* ulanish yopilgan */ } };
   const bcast = (d) => { for (const m of C.members.values()) sendTo(m, d); };
-  const hello = () => ({ t: 'hi', pid: peer.id, name: C.myName(), uid: net.user ? net.user.id : '', slot: C.room ? C.room.slot : null, code: C.room ? C.room.code : null, v: 2 });
+  const hello = () => ({ t: 'hi', pid: peer.id, name: C.myName(), uid: net.user ? net.user.id : '', slot: C.room ? C.room.slot : null, code: C.room ? C.room.code : null, v: 2, vo: VC.on ? 1 : 0 });
   // holat paketlari uchun qo'shimcha kanal o'sha WebRTC ulanishida (kelishilgan id — qo'shimcha signal kerak emas): tartibsiz va qayta yuborilmaydi.
   // Ikkala tomondan xabar kelgandan keyingina ishlatiladi; ishlamasa (eski versiya, tarmoq) holat asosiy ishonchli kanaldan ketadi.
   function openFast(conn) {
@@ -172,7 +176,7 @@ export function initCoop(game) {
     const pid = String(d.pid || conn.peer); let m = C.members.get(pid);
     if (m && m.conn !== conn) { if (m.conn && m.conn.open && !m.lost) { try { conn.close(); } catch { /* */ } return null; } const old = m.conn; m.conn = conn; m.last = performance.now(); if (m.lost) { m.lost = 0; (C.errs.length > 30 && C.errs.shift(), C.errs).push('tiklandi: ' + pid); } if (old && old !== conn) { try { old.close(); } catch { /* */ } } return m; }
     if (!m) { m = { pid, name: cleanName(d.name), uid: String(d.uid || '').slice(0, 20), slot: d.slot | 0, conn, last: performance.now(), remote: null, ping: 0, v: d.v | 0 }; C.members.set(pid, m); m.remote = new Remote(game, m); }
-    m.v = d.v | 0; return m;
+    m.v = d.v | 0; m.vr = !!d.vo; setTimeout(() => reconcile(m), 0); return m;
   }
   function onData(conn, d) {
     if (!d || typeof d !== 'object' || typeof d.t !== 'string') return;
@@ -205,6 +209,7 @@ export function initCoop(game) {
       case 'rf': onFinish(m.pid, d); break;
       case 'rr': if (m.pid === C.room.hostPid) showResults(d); break;
       case 'bye': m.bye = true; break;
+      case 'vo': m.vr = !!d.on; reconcile(m); changed(); break; // do'st ovozli chatni yoqdi/o'chirdi
       case 'hm': if (!C.room.isHost && m.pid === C.room.hostPid) visitApply(d); break; // xona egasining uyi
       case 'ha': if (C.room.isHost) hostAct(m, d); break; // mehmon uyda biror narsa qildi
       case 'hr': if (m.pid === C.room.hostPid) visitDone(d.id | 0, d); break; // egasining javobi
@@ -229,7 +234,7 @@ export function initCoop(game) {
   }
   function drop(m) {
     if (C.members.get(m.pid) !== m) return;
-    C.members.delete(m.pid); m.remote.dispose();
+    C.members.delete(m.pid); endCall(m); m.remote.dispose();
     if (C.room) sysMsg(`${m.name} ${m.bye ? 'xonadan chiqdi' : 'bilan aloqa uzildi'}`);
     if (C.room && C.room.joining) { fail("Xonaga ulanib bo'lmadi"); return; }
     if (C.room && m.pid === C.room.hostPid) migrate();
@@ -259,7 +264,7 @@ export function initCoop(game) {
     const attempt = () => {
       const code = newCode(); const p = new Peer(roomPeerId(code), peerOpts()); peer = p;
       p.on('open', () => { C.room = { code, isHost: true, slot: 0, hostPid: p.id, joining: false }; C.status = 'room'; C.msg = ''; sysMsg(`Xona ochildi. Kod: ${code}`); game.audio.sfx('check'); changed(); resolve(true); });
-      p.on('connection', (c) => setupConn(c));
+      p.on('connection', (c) => setupConn(c)); p.on('call', (c) => onCall(c));
       p.on('error', (e) => { (C.errs.length > 30 && C.errs.shift(), C.errs).push(e.type + ': ' + e.message); if (e.type === 'unavailable-id' && ++tries < 4 && !C.room) { p.destroy(); attempt(); return; } if (!C.room) { fail(PEER_ERR[e.type] || 'Ulanishda xatolik'); resolve(false); } });
       p.on('disconnected', () => { if (C.room && !p.destroyed) setTimeout(() => { try { p.reconnect(); } catch { /* */ } }, 1500); });
     };
@@ -277,13 +282,13 @@ export function initCoop(game) {
       joinTimer = setTimeout(() => { if (C.room && C.room.joining) { fail("Xona javob bermadi. Kodni tekshiring yoki qayta urining"); resolve(false); } }, 15000);
       const off = C.onChange(() => { if (C.status === 'room') { off(); resolve(true); } else if (C.status === 'error') { off(); resolve(false); } });
     });
-    p.on('connection', (c) => setupConn(c));
+    p.on('connection', (c) => setupConn(c)); p.on('call', (c) => onCall(c));
     p.on('error', (e) => { (C.errs.length > 30 && C.errs.shift(), C.errs).push(e.type + ': ' + e.message); if (C.status === 'room') return; /* xonadamiz: bitta ulanish xatosi xonani buzmaydi */ fail(PEER_ERR[e.type] || 'Ulanishda xatolik'); resolve(false); });
     p.on('disconnected', () => { if (C.room && !p.destroyed) setTimeout(() => { try { p.reconnect(); } catch { /* */ } }, 1500); });
   });
   function teardown() {
-    clearTimeout(joinTimer);
-    for (const m of C.members.values()) { try { m.conn.close(); } catch { /* */ } m.remote.dispose(); }
+    clearTimeout(joinTimer); voiceOff(true);
+    for (const m of C.members.values()) { endCall(m); try { m.conn.close(); } catch { /* */ } m.remote.dispose(); }
     C.members.clear(); C.room = null; C.race = null; game.coopRace = null; visitEnd();
     for (const p of [hostPeer, peer]) if (p && !p.destroyed) { try { p.destroy(); } catch { /* */ } }
     peer = hostPeer = null; game.netDots = null;
@@ -458,6 +463,98 @@ export function initCoop(game) {
   };
   // ism yorlig'i sheyderi yuklanishda tayyor bo'lsin (do'st qo'shilganda o'yin qotmasin): yashirin namuna, precompile uni ham kompilyatsiya qiladi
   { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(document.createElement('canvas')), transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, fog: false, toneMapped: false })); sp.visible = false; sp.position.set(0, -500, 0); game.scene.add(sp); }
+  // ---- ovozli chat ----
+  // Mikrofon faqat o'yinchi o'zi yoqqanda so'raladi. Ovoz yoqqanlar orasida PeerJS media qo'ng'iroqlari (har kim har kim bilan; kattaroq id'li tomon qo'ng'iroq qiladi,
+  // o'chirsa — {t:'vo'} xabari va qo'ng'iroq yopiladi). Do'st ovozi WebAudio'da: MediaStreamSource → Gain (masofa: 15 m gacha to'liq, 150 m va undan uzoqda 25%;
+  // "hamma eshitsin" — masofasiz) → karnay; Analyser — gapirayotgan belgisi. Chrome'da WebRTC ovozi WebAudio'ga oqishi uchun oqim ovozsiz <audio> ga ham ulanadi.
+  const VC = (C.voice = { on: false, busy: false, mute: false, ptt: false, pttDown: false, all: false, stream: null, err: '', lvl: 0, talk: false, proc: true }); // proc — aks-sado/shovqin/balandlik ishlovi (sinovda o'chiriladi: soxta mikrofon ohangi shovqin deb o'chirilmasin)
+  const VNEAR = 15, VFAR = 150, VFLOOR = 0.25, VTALK = 0.012;
+  const vErr = (e) => { const n = e && e.name; return n === 'NotAllowedError' || n === 'SecurityError' ? "Mikrofonga ruxsat berilmadi — brauzer manzil satridagi 🔒 belgisidan ruxsat bering" : n === 'NotFoundError' || n === 'OverconstrainedError' ? 'Mikrofon topilmadi — ulang va qayta urining' : n === 'NotReadableError' || n === 'AbortError' ? "Mikrofon band (boshqa dastur ishlatyapti) yoki ishlamayapti" : 'Mikrofonni yoqib bo\'lmadi'; };
+  VC.canUse = () => (window.isSecureContext === false ? "Ovozli chat faqat xavfsiz (https) sayt orqali ishlaydi" : !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? "Brauzeringiz mikrofonni qo'llamaydi" : typeof RTCPeerConnection !== 'function' ? "Brauzeringiz ovozli ulanishni qo'llamaydi (WebRTC)" : '');
+  const micOn = () => VC.on && (VC.ptt ? VC.pttDown : !VC.mute);
+  const applyMic = () => { if (VC.stream) for (const t of VC.stream.getAudioTracks()) t.enabled = micOn(); };
+  VC.micLive = micOn;
+  VC.start = async () => {
+    if (VC.on || VC.busy || !C.room) return VC.on;
+    const why = VC.canUse(); if (why) { VC.err = why; game.toast(why, 'bad'); changed(); return false; }
+    VC.busy = true; VC.err = ''; changed(); try { game.audio.init(); } catch { /* */ }
+    let s = null; try { s = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: VC.proc, noiseSuppression: VC.proc, autoGainControl: VC.proc }, video: false }); } catch (e) { VC.err = vErr(e); }
+    VC.busy = false;
+    if (!s || !C.room) { if (s) s.getTracks().forEach((t) => t.stop()); if (VC.err) game.toast(VC.err, 'bad'); changed(); return false; }
+    VC.stream = s; VC.on = true; VC.pttDown = false;
+    for (const t of s.getAudioTracks()) t.onended = () => { if (VC.stream === s) { voiceOff(); game.toast('Mikrofon uzildi — ovozli chat o\'chdi', 'bad'); } };
+    const ctx = game.audio.ctx; if (ctx) { try { VC.src = ctx.createMediaStreamSource(s); VC.an = ctx.createAnalyser(); VC.an.fftSize = 2048; VC.src.connect(VC.an); } catch { VC.src = VC.an = null; } }
+    applyMic(); bcast({ t: 'vo', on: 1 }); for (const m of C.members.values()) reconcile(m);
+    game.toast(VC.ptt ? 'Ovozli chat yoqildi — gapirish uchun [4] ni bosib turing' : 'Ovozli chat yoqildi 🎙 — [4] mikrofonni o\'chiradi/yoqadi', 'good'); changed(); return true;
+  };
+  function voiceOff(silent) {
+    if (!VC.on && !VC.stream) return; VC.on = false; VC.talk = false; VC.lvl = 0;
+    for (const m of C.members.values()) endCall(m);
+    if (VC.stream) VC.stream.getTracks().forEach((t) => { t.onended = null; t.stop(); }); VC.stream = null;
+    if (VC.src) { try { VC.src.disconnect(); } catch { /* */ } } VC.src = VC.an = null;
+    if (!silent && C.room) bcast({ t: 'vo', on: 0 }); changed();
+  }
+  VC.stop = () => { voiceOff(); game.toast("Ovozli chat o'chirildi"); };
+  VC.toggle = () => (VC.on ? (VC.stop(), Promise.resolve(false)) : VC.start());
+  VC.setMute = (b) => { VC.mute = !!b; applyMic(); changed(); };
+  VC.key = () => { if (!VC.on) { VC.start(); return; } VC.setMute(!VC.mute); game.toast(VC.mute ? "Mikrofon o'chirildi 🔇" : 'Mikrofon yoqildi 🎙'); };
+  VC.setPtt = (b) => { VC.ptt = !!b; VC.pttDown = false; applyMic(); changed(); };
+  VC.setAll = (b) => { VC.all = !!b; changed(); };
+  VC.muteFriend = (pid, b) => { const m = C.members.get(pid); if (!m) return; m.vmute = b == null ? !m.vmute : !!b; changed(); };
+  // do'st ovozining balandligi masofaga qarab (0,25…1)
+  VC.volOf = (pid) => { const m = C.members.get(pid); if (!m) return 0; if (VC.all || !m.remote.shown) return 1; const [x, z] = m.remote.where(), p = game.player.onFoot ? game.player.p : game.car.p, d = Math.hypot(x - p[0], z - p[2]);
+    return d <= VNEAR ? 1 : d >= VFAR ? VFLOOR : 1 - (1 - VFLOOR) * (d - VNEAR) / (VFAR - VNEAR); };
+  function reconcile(m) {
+    if (C.members.get(m.pid) !== m) return; const want = VC.on && !!VC.stream && m.vr;
+    if (!want) { if (m.call) endCall(m); return; }
+    if (!m.call && peer && !peer.destroyed && peer.id > m.pid) { let call = null; try { call = peer.call(m.pid, VC.stream, { metadata: { room: C.room && C.room.code } }); } catch (e) { (C.errs.length > 30 && C.errs.shift(), C.errs).push('call: ' + (e && e.message)); } if (call) hookCall(m, call); }
+  }
+  function hookCall(m, call) {
+    m.call = call; m.callT = performance.now();
+    call.on('stream', (s) => attachVoice(m, call, s));
+    const gone = () => { if (m.call !== call) return; m.call = null; detachVoice(m); setTimeout(() => reconcile(m), 2000); };
+    call.on('close', gone); call.on('error', (e) => { (C.errs.length > 30 && C.errs.shift(), C.errs).push('ovoz: ' + (e && e.type)); gone(); });
+  }
+  // kiruvchi qo'ng'iroq: faqat xonadagi do'stdan va ovozli chat yoqilgan bo'lsa (do'st ma'lumoti hali kelmagan bo'lsa — biroz kutamiz)
+  function onCall(call, n = 0) {
+    const m = C.members.get(call.peer);
+    if (!m && n < 6 && C.room) { setTimeout(() => onCall(call, n + 1), 600); return; }
+    if (!m || !VC.on || !VC.stream) { try { call.close(); } catch { /* */ } return; }
+    if (m.call && m.call !== call) { const old = m.call; m.call = null; detachVoice(m); try { old.close(); } catch { /* */ } }
+    m.vr = true; try { call.answer(VC.stream); } catch { try { call.close(); } catch { /* */ } return; } hookCall(m, call);
+  }
+  function attachVoice(m, call, s) {
+    if (m.call !== call || m.vs === s) return; detachVoice(m); m.vs = s;
+    const a = new Audio(); a.muted = true; a.autoplay = true; a.srcObject = s; a.play().catch(() => {}); m.au = a; // Chrome: busiz WebRTC ovozi WebAudio'ga kelmaydi
+    const ctx = game.audio.ctx;
+    if (!ctx) { a.muted = false; return; } // WebAudio yo'q — oddiy ijro (masofasiz)
+    try { m.vsrc = ctx.createMediaStreamSource(s); m.vg = ctx.createGain(); m.vg.gain.value = 0; m.van = ctx.createAnalyser(); m.van.fftSize = 2048; m.vsrc.connect(m.van); m.vsrc.connect(m.vg); m.vg.connect(ctx.destination); if (ctx.state === 'suspended') ctx.resume().catch(() => {}); } catch { a.muted = false; }
+    changed();
+  }
+  function detachVoice(m) {
+    if (m.au) { try { m.au.pause(); m.au.srcObject = null; } catch { /* */ } m.au = null; }
+    for (const k of ['vsrc', 'vg', 'van']) if (m[k]) { try { m[k].disconnect(); } catch { /* */ } m[k] = null; }
+    m.vs = null; m.vlvl = 0; m.vtalk = false; if (m.remote) m.remote.setVoice(m.vr && VC.on ? 1 : 0);
+  }
+  function endCall(m) { const c = m.call; m.call = null; detachVoice(m); if (c) { try { c.close(); } catch { /* */ } } }
+  const vbuf = new Float32Array(2048), rms = (an) => { an.getFloatTimeDomainData(vbuf); let s = 0; for (let i = 0; i < vbuf.length; i++) s += vbuf[i] * vbuf[i]; return Math.sqrt(s / vbuf.length); };
+  // ovoz darajasi, gapirish belgisi va masofa — kadr siklidan tashqarida (yashirin varaqda ham), 10 marta/s
+  setInterval(() => {
+    if (!C.room) return; const ms = performance.now(), ctx = game.audio.ctx, pulse = 2 + ((ms / 260) & 1);
+    if (VC.an) { const l = micOn() ? rms(VC.an) : 0; VC.lvl = l; if (l > VTALK) VC.talkT = ms; VC.talk = micOn() && ms - (VC.talkT || 0) < 350; } else { VC.lvl = 0; VC.talk = false; }
+    for (const m of C.members.values()) {
+      if (m.van) { const l = rms(m.van); m.vlvl = l; m.vpk = Math.max(l, (m.vpk || 0) * 0.97); if (l > VTALK) m.vtalkT = Math.max(m.vtalkT || 0, ms); } else m.vlvl = 0;
+      m.vtalk = !!m.van && ms - (m.vtalkT || 0) < 350;
+      if (m.vg && ctx) m.vg.gain.setTargetAtTime(m.vmute ? 0 : VC.volOf(m.pid) * (game.audio.vol == null ? 1 : game.audio.vol), ctx.currentTime, 0.12);
+      m.remote.setVoice(m.vr && VC.on ? (m.vtalk && !m.vmute ? pulse : 1) : 0);
+      if (m.call && !m.vs && ms - m.callT > 20000) { endCall(m); reconcile(m); } // qo'ng'iroq ulanmay qoldi — qaytadan
+    }
+  }, 100);
+  // bosib gapirish: [4] (yoki ekrandagi tugma) bosib turilganda mikrofon ochiq
+  game.hooks.push(() => { if (!VC.on || !VC.ptt) return; const d = game.mode === 'play' && game.input.down('Digit4'); if (d !== VC.pttDown) { VC.pttDown = d; applyMic(); } });
+  // sinov va tashxis uchun: har do'st bo'yicha ovoz holati; qabul qilingan baytlar — WebRTC statistikasidan
+  VC.info = () => [...C.members.values()].map((m) => ({ pid: m.pid, vr: !!m.vr, call: !!m.call, live: !!(m.vs && m.vs.getAudioTracks().some((t) => t.readyState === 'live')), lvl: m.vlvl || 0, pk: m.vpk || 0, talk: !!m.vtalk, vol: m.vg ? m.vg.gain.value : null, mute: !!m.vmute }));
+  VC.bytesIn = async (pid) => { const m = C.members.get(pid), pc = m && m.call && m.call.peerConnection; if (!pc) return 0; let b = 0; (await pc.getStats()).forEach((r) => { if (r.type === 'inbound-rtp' && (r.kind === 'audio' || r.mediaType === 'audio')) b += r.bytesReceived || 0; }); return b; };
   // ---- do'st oldiga ko'chish ----
   C.teleportTo = (pid) => {
     const m = C.members.get(pid); if (!m || !m.remote.shown) return false;
