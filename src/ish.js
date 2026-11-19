@@ -23,7 +23,7 @@ export function initIsh(game) {
   game.addMoney = (n, why) => { am0(n); n = Math.round(n); if (!n) return; const lab = why || (n > 0 ? 'Daromad' : 'Xarid'), now = st.stats.time, last = st.income[0];
     if (last && last[1] === lab && now - last[3] < 30 && Math.sign(last[2]) === Math.sign(n)) { last[2] += n; last[3] = now; last[0] = hm(game.hour); }
     else { st.income.unshift([hm(game.hour), lab, n, now]); if (st.income.length > 30) st.income.length = 30; } };
-  const pay = (n, why) => { game.addMoney(n, why); sfx('coin'); };
+  const pay = (n, why) => { game.addMoney(IS.split ? IS.split(n, why) : n, why); sfx('coin'); }; // IS.split — onlayn birga ishda daromad teng bo'linadi (coop.js)
 
   // ================= JOYLAR: novvoyxona, taksi bekati, dala =================
   const P = game.site.places.bogiston.board, npcs = L._dbg.npcs;
@@ -120,7 +120,7 @@ export function initIsh(game) {
   const reap = (q) => { const J = IS.cur; pl.yaw = Math.atan2(q.x - pl.p[0], q.z - pl.p[2]); pl.act('swing', 1.3, () => { q.cut = 1; field.draw(); J.carry = true; J.pick.splice(J.pick.indexOf(q), 1); wear(carryM, true); sfx('rustle'); fx().burst(10, q.x, q.y + 0.6, q.z, 1.5, 0.6, 0.25, 0xe2c060, 0.9, 1.2, 1, 0.4); showMarks([field.cart]); game.setWaypoint(field.cart.x, field.cart.z, true); }, 'sickle'); };
   const load = () => { const J = IS.cur; pl.act('bend', 0.8, () => { J.carry = false; wear(carryM, false); J.done++; drawLoad(J.done); const n = 18; J.earn += n; pay(n, "Dalada o'rim"); toast(`🌾 Bog' aravada! +${n} so'm · ${J.done}/${J.goal}`, 'good');
     if (J.done >= J.goal) { const bonus = 70; J.earn += bonus; pay(bonus, "Dalada o'rim — bonus"); finish(true, `Hosil yig'ildi! Bobur aka: «Barakalla!» +${bonus} · jami ${som(J.earn)} so'm`); } else { showMarks(J.pick); game.setWaypoint(null); } }); };
-  IS.dbg = { field, deliver, pickUp, dropOff, reap, load };
+  IS.dbg = { field, deliver, pickUp, dropOff, reap, load, finish, drawLoad, showMarks, pay }; // pay/finish/drawLoad/showMarks — birga ishda do'st amali uchun (coop.js)
 
   // ================= [E] TAKLIFLARI =================
   const ex0 = L.extra;

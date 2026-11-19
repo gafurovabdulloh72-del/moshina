@@ -2,6 +2,7 @@
 import { UI } from './ui.js';
 import { fmtTime } from './game.js';
 import { MAX_PLAYERS, SLOT_COLORS } from './coop.js';
+import { JOBS } from './ish.js';
 import { topKind } from './net.js';
 
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
@@ -96,10 +97,13 @@ P.s_online = function (w, d, btn, x) {
       row.innerHTML = `<i style="background:${SLOT_COLORS[p.slot % 4]}"></i><b>${esc(p.name)}</b>${vic}${me ? '<small>(siz)</small>' : ''}${host ? '<small title="Xona egasi">👑</small>' : ''}<span class="grow"></span>${m && m.ping ? `<small>${m.ping} ms</small>` : ''}`;
       if (!me && m && von) { const b = btn(m.vmute ? '🔈 Eshitish' : '🔇 Ovozsiz', () => VC.muteFriend(p.pid), 'sec'); b.title = m.vmute ? "Do'stingiz ovozini qayta yoqish" : "Faqat siz uchun do'stingiz ovozini o'chirish"; row.appendChild(b); }
       if (!me && m) { const b = btn('Yoniga borish', () => { if (C.teleportTo(p.pid)) this.close(); }, 'sec'); b.disabled = !m.remote.shown; row.appendChild(b); }
+      if (!me && m) { const b = btn('💸', () => this.open('pulot', { pid: p.pid, back: d }), 'sec'); b.title = "Do'stga pul o'tkazish"; row.appendChild(b); }
       list.appendChild(row);
     }
     if (!C.members.size) list.appendChild(el('p', 'onl-note', "Hozircha yolg'izsiz. Kodni yoki havolani do'stingizga yuboring."));
     else list.appendChild(el('p', 'onl-note', g.visit && g.visit.on ? `🏠 Siz ${esc(g.visit.owner)}ning uyida yashayapsiz — uy belgisida [E] bilan uni birga rivojlantiring` : "🏠 Do'stlaringiz sizning uyingizda yashaydi va uni siz bilan birga rivojlantiradi"));
+    // birga: yo'lovchi, birga ish, belgi
+    if (C.members.size) room.appendChild(birgaCard(this, g, d, btn));
     // ovozli chat
     const vc = el('div', 'onl-voice'); room.appendChild(vc); vc.innerHTML = '<b>🎙 Ovozli chat</b>';
     if (!VC.on) {
@@ -167,4 +171,41 @@ P.s_coopres = function (w, r, btn, x) {
   t.innerHTML = `<table><tr><th>O'rin</th><th>Sayyoh</th><th>Vaqt</th></tr>${r.rows.map((x, i) => `<tr><td>${x.time != null ? ['🥇', '🥈', '🥉', '4'][i] || i + 1 : '—'}</td><td>${esc(x.name)}</td><td>${x.time != null ? fmtTime(x.time) : x.left ? 'chiqib ketdi' : 'marraga yetmadi'}</td></tr>`).join('')}</table>`;
   const row = el('div', 'row'); row.style.marginTop = '14px'; w.appendChild(row);
   row.appendChild(btn('Yopish', () => this.close())); if (this.g.coop.room && this.g.coop.room.isHost) row.appendChild(btn('Yana poyga', () => this.open('online'), 'sec'));
+};
+
+// Xona oynasidagi "Birga" bo'limi: yo'lovchi holati, birga ish (chaqirish / qo'shilish / chiqish), "Shu yerga kel" belgilari
+function birgaCard(ui, g, d, btn) {
+  const C = g.coop, IS = g.ish, box = el('div', 'onl-birga'); box.style.marginTop = '10px'; box.innerHTML = "<b>🤝 Birga</b>";
+  const line = (html, ...bs) => { const r = el('div', 'row'); r.style.flexWrap = 'wrap'; r.style.alignItems = 'center'; r.style.marginTop = '6px'; r.appendChild(el('span', 'grow', html)); for (const b of bs) r.appendChild(b); box.appendChild(r); };
+  if (C.ride) { const m = C.members.get(C.ride.pid); line(`🚗 ${esc(m ? m.name : '')}ning mashinasidasiz`, btn('Tushish (F)', () => C.rideOff(), 'sec')); }
+  else if (C.pax.size) line(`🚗 Mashinangizda: ${[...C.pax.keys()].map((p) => esc((C.members.get(p) || {}).name || '')).join(', ')}`);
+  else line("🚗 Do'st mashinasiga yo'lovchi bo'lib o'tirish — mashinasi yonida [E]");
+  const cur = IS && IS.cur, J = C.job;
+  if (J && !J.own) line(`${JOBS[J.id][0]} ${esc(J.oname)}ning «${JOBS[J.id][1]}» ishidasiz · ulushingiz ${som(J.got)} so'm`, btn('Ishdan chiqish', () => { C.jobLeave(); ui.open('online', d); }, 'sec'));
+  else if (cur) { const team = J && J.own ? [...J.team.values()] : []; line(`${JOBS[cur.id][0]} «${JOBS[cur.id][1]}»${team.length ? ` — jamoa: ${team.map(esc).join(', ')} (daromad teng bo'linadi)` : ''}`, btn("👥 Do'stlarni chaqirish", () => C.jobInvite(), 'sec')); }
+  else if (C.jobInv && performance.now() - C.jobInv.t < 120000 && C.members.get(C.jobInv.pid)) { const m = C.members.get(C.jobInv.pid); line(`🤝 ${esc(m.name)} sizni «${JOBS[C.jobInv.id][1]}» ishiga chaqiryapti`, btn("Qo'shilish", () => { if (C.jobJoin(m.pid)) ui.close(); })); }
+  else line("💼 Ish boshlang (non, taksi, dala) va do'stlarni chaqiring — daromad teng bo'linadi");
+  line('📍 Do\'stlarga xaritada belgi', btn('Shu yerga kel (8)', () => { if (C.ping()) ui.close(); }, 'sec'));
+  for (const p of C.pingList()) line(`<i style="display:inline-block;width:10px;height:10px;border-radius:5px;background:${SLOT_COLORS[p.slot % 4]}"></i> ${esc(p.name)}: «Shu yerga kel» · ${p.ago} s oldin`, ...(p.me ? [] : [btn("Yo'l ko'rsat", () => { if (C.goPing(p.pid)) ui.close(); }, 'sec')]));
+  return box;
+}
+
+// Do'stga pul o'tkazish: summa → tasdiqlash. Pul darhol olinadi; do'st qabul qilmasa yoki javob bermasa — qaytadi. Ikkala bankda yoziladi
+P.s_pulot = function (w, d, btn, x) {
+  x(); const g = this.g, C = g.coop, m = C.members.get(d.pid), money = g.visit && g.visit.on ? g.visit.money() : g.state.money;
+  const back = () => this.open('online', d.back || {});
+  if (!m) { w.innerHTML = "<h1>Pul o'tkazish</h1><p class=\"sub\">Do'stingiz xonada emas.</p>"; w.appendChild(btn('Orqaga', back, 'sec')); return; }
+  if (d.n) {
+    w.innerHTML = `<h1>💸 Tasdiqlang</h1><p class="sub"><b>${esc(m.name)}</b>ga <b>${som(d.n)} so'm</b> o'tkazilsinmi? Sizda: ${som(money)} so'm. Ikkala bankda yoziladi.</p>`;
+    const r = el('div', 'row'); r.style.marginTop = '12px'; w.appendChild(r);
+    r.appendChild(btn("Ha, o'tkazish", () => { if (C.sendMoney(m.pid, d.n)) back(); }));
+    r.appendChild(btn('Bekor qilish', () => this.open('pulot', { pid: d.pid, back: d.back }), 'sec')); return;
+  }
+  w.innerHTML = `<h1>💸 Do'stga pul o'tkazish <small>${esc(m.name)} · sizda 💰 ${som(money)} so'm</small></h1><p class="sub">Bitta o'tkazma — 50 000 so'mgacha. Pul do'stingiz banki tarixida ham ko'rinadi.</p>`;
+  const r = el('div', 'row'); r.style.flexWrap = 'wrap'; r.style.marginTop = '10px'; w.appendChild(r);
+  for (const n of [100, 500, 1000, 5000, 10000]) { const b = btn(`${som(n)} so'm`, () => this.open('pulot', { pid: d.pid, back: d.back, n }), 'sec'); b.disabled = money < n; r.appendChild(b); }
+  const f = el('form', 'row onl-join'); f.style.marginTop = '10px'; f.innerHTML = `<input class="onl-code" type="number" min="1" max="50000" placeholder="Boshqa summa" autocomplete="off"><button type="submit">Davom etish</button>`; w.appendChild(f);
+  const inp = f.querySelector('input'); inp.addEventListener('keydown', (e) => e.stopPropagation());
+  f.onsubmit = (e) => { e.preventDefault(); const n = Math.floor(+inp.value); if (!(n >= 1 && n <= 50000)) return g.toast("1 dan 50 000 so'mgacha", 'bad'); if (n > money) return g.toast('Pul yetmaydi', 'bad'); this.open('pulot', { pid: d.pid, back: d.back, n }); };
+  const r2 = el('div', 'row'); r2.style.marginTop = '12px'; w.appendChild(r2); r2.appendChild(btn('Orqaga', back, 'sec'));
 };

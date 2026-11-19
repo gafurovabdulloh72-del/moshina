@@ -200,7 +200,9 @@ function update(dt) {
     if (best) { L.position.set(best.x, best.y, best.z); L.color.setHex(best.hex).lerp(_wh, 0.45); L.intensity += (best.power * 34 * night * (0.9 + 0.1 * Math.sin(g.time * 9)) - L.intensity) * Math.min(1, dt * 4); } else L.intensity *= 0.9; }
   g.camera.near = g.cam.mode === 2 && !foot ? 0.3 : g.zoomView ? 0.6 : 1.2;
   const sp = car.spec;
-  g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt });
+  const rv = g.coop && g.coop.ride ? g.coop.rideCam() : null; // onlayn: do'st mashinasida yo'lovchi — kamera o'sha mashinaga ergashadi (coop.js)
+  if (rv) g.cam.update(dt, rv.tgt, rv.cp, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), foot: false, len: rv.len, hgt: rv.hgt });
+  else g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt });
   g.sky.update(dt, g.camera, focus);
   g.terrain.update(g.camera); g.props.update(g.camera); g.detail.update(g.camera);
   { let dh = Math.abs(g.hour - (g._envH == null ? -99 : g._envH)); if (dh > 12) dh = 24 - dh; const envF = g.state.set.gfx > 0 && dh > 0.1; if (envF) g._envH = g.hour; g.gfx.update(dt, envF); } // osmon yoritishi (PMREM) ~5 s da bir yangilanadi (0-darajada — gfx.js'ning o'z siyrak jadvali)

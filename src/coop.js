@@ -8,8 +8,11 @@ import * as THREE from 'three';
 import { Peer } from 'peerjs';
 import * as T from './terrain.js';
 import { buildVehicle, syncWheels, vehById } from './vehicles.js';
-import { makeRig, poseRig, setHat, HAT_LIST, HAT_SHOP } from './rig.js';
-import { lookRigOpts, STYLES, BEARDS } from './hayot2.js';
+import { makeRig, makeRider, poseRig, setHat, HAT_LIST, HAT_SHOP } from './rig.js';
+import { lookRigOpts, STYLES, BEARDS, MENU } from './hayot2.js';
+import { GB, MAT } from './geo.js';
+import { JOBS } from './ish.js';
+import { YARD } from './uy2.js';
 import { fmtTime } from './game.js';
 import { HOME_LEVELS, DECOR } from './home.js';
 
@@ -59,7 +62,7 @@ class Remote {
   // do'stning kiyimi va sochi: o'zgarganda model qayta quriladi (shapka, joy saqlanadi)
   setLook(lk) {
     if (!lk) return; const key = JSON.stringify(lk); if (key === this.lkK) return; this.lkK = key; const old = this.rig, r = makeRig(lookRigOpts(lk));
-    r.root.visible = old.root.visible; r.root.position.copy(old.root.position); r.root.rotation.copy(old.root.rotation); this.g.scene.add(r.root); this.g.scene.remove(old.root); old.mesh.geometry.dispose(); old.mesh.skeleton.dispose();
+    this.look = lk; r.root.visible = old.root.visible; r.root.position.copy(old.root.position); r.root.rotation.copy(old.root.rotation); this.g.scene.add(r.root); this.g.scene.remove(old.root); old.mesh.geometry.dispose(); old.mesh.skeleton.dispose();
     this.rig = r; setHat(r, this.hat); this.lod = -1;
   }
   setVoice(vt) { if (vt !== (this.vt | 0)) { this.vt = vt; this.drawTag(); } } // 0 — ovozli chatda emas, 1 — jim, 2/3 — gapiryapti (navbatma-navbat — "nafas")
@@ -90,6 +93,7 @@ class Remote {
     if (d.lk) this.setLook(lookFrom(d.lk));
     this.anim = typeof d.a === 'string' && /^[a-z]{2,12}$/.test(d.a) ? d.a : 'idle';
     this.rp = +d.rp || 0; this.lastPkt = d;
+    this.ri = typeof d.ri === 'string' && d.ri.length < 80 ? d.ri : null; this.se = Math.max(0, Math.min(2, d.se | 0)); // yo'lovchi: qaysi do'st mashinasida, qaysi o'rindiqda
     const b = this.buf; if (b.length && t - b[b.length - 1].t < 0.005) b.pop(); b.push({ t, c: d.c, h: d.h || null, f: d.f | 0 }); if (b.length > 40) b.shift();
   }
   // oraliqlangan holat: ikki paket orasida chiziqli/sferik, oxirgisidan keyin tezlik bo'yicha (ko'pi bilan 0,35 s)
@@ -122,7 +126,7 @@ class Remote {
     if (m.headMat) { if (lit) m.headMat.color.setRGB(2.6, 2.4, 1.9); else m.headMat.color.setHex(0xb8b8b0); }
     if (m.tailMat) { if (brk) m.tailMat.color.setRGB(2.4, 0.22, 0.12); else m.tailMat.color.setHex(lit ? 0xa81810 : 0x6a1410); }
     // piyoda qahramon
-    const rig = this.rig; rig.root.visible = foot && !!B.h && cam.distanceTo(this.fpos) < 300;
+    const rig = this.rig; rig.root.visible = foot && !!B.h && cam.distanceTo(this.fpos) < 300 && !this.riding(); // yo'lovchi — haydovchi mashinasidagi o'rindiqda chiziladi
     if (foot && B.h) {
       const ha = A.h || B.h, hb = B.h, hx = ha[0] + (hb[0] - ha[0]) * k + hb[4] * ex, hy = ha[1] + (hb[1] - ha[1]) * k, hz = ha[2] + (hb[2] - ha[2]) * k + hb[5] * ex;
       const fj = !this.fshown || this.fpos.distanceToSquared(_v.set(hx, hy, hz)) > 400, fk = fj ? 1 : 1 - Math.exp(-dt * 16);
@@ -136,6 +140,7 @@ class Remote {
     const tp = foot && B.h ? this.fpos : this.pos, hh = foot ? 2.25 : (m.spec.hgt || 1.6) + 1.1, d = cam.distanceTo(tp);
     this.tag.visible = d < 900; this.tag.position.set(tp.x, tp.y + hh - (foot ? 0 : m.spec.com || 0), tp.z);
   }
+  riding() { const C = this.g.coop; return !!this.ri && !!C && (this.ri === C.myId() || C.members.has(this.ri)); }
   // xaritada ko'rsatish uchun joriy joy
   where() { return this.foot && this.fshown ? [this.fpos.x, this.fpos.z] : [this.pos.x, this.pos.z]; }
   yaw() { _e.setFromQuaternion(this.q, 'YXZ'); return this.foot ? this.fyaw : _e.y; }
@@ -224,6 +229,7 @@ export function initCoop(game) {
       case 'hm': if (!C.room.isHost && m.pid === C.room.hostPid) visitApply(d); break; // xona egasining uyi
       case 'ha': if (C.room.isHost) hostAct(m, d); break; // mehmon uyda biror narsa qildi
       case 'hr': if (m.pid === C.room.hostPid) visitDone(d.id | 0, d); break; // egasining javobi
+      default: birgaData(m, d); // yo'lovchi, birga ish, choyxona, o'tkazma, belgi (pastda)
     }
   }
   function applyRoster(list) {
@@ -245,7 +251,7 @@ export function initCoop(game) {
   }
   function drop(m) {
     if (C.members.get(m.pid) !== m) return;
-    C.members.delete(m.pid); endCall(m); m.remote.dispose();
+    birgaDrop(m); C.members.delete(m.pid); endCall(m); m.remote.dispose();
     if (C.room) sysMsg(`${m.name} ${m.bye ? 'xonadan chiqdi' : 'bilan aloqa uzildi'}`);
     if (C.room && C.room.joining) { fail("Xonaga ulanib bo'lmadi"); return; }
     if (C.room && m.pid === C.room.hostPid) migrate();
@@ -298,7 +304,7 @@ export function initCoop(game) {
     p.on('disconnected', () => { if (C.room && !p.destroyed) setTimeout(() => { try { p.reconnect(); } catch { /* */ } }, 1500); });
   });
   function teardown() {
-    clearTimeout(joinTimer); voiceOff(true);
+    clearTimeout(joinTimer); voiceOff(true); birgaReset();
     for (const m of C.members.values()) { endCall(m); try { m.conn.close(); } catch { /* */ } m.remote.dispose(); }
     C.members.clear(); C.room = null; C.race = null; game.coopRace = null; visitEnd();
     for (const p of [hostPeer, peer]) if (p && !p.destroyed) { try { p.destroy(); } catch { /* */ } }
@@ -344,6 +350,7 @@ export function initCoop(game) {
     const pids = Object.keys(d.slots).filter((p) => p === peer.id || C.members.has(p)).sort((x, y) => d.slots[x] - d.slots[y]);
     if (!pids.includes(peer.id)) return;
     if (game.act) game.endAct(false, 'cancel');
+    if (C.ride) C.rideOff();
     const names = {}; for (const p of pids) names[p] = p === peer.id ? C.myName() : C.members.get(p).name;
     C.race = { id: d.id, pids, names, fin: {}, t0: performance.now(), firstFin: 0, done: false };
     if (game.ui && game.ui.screenName) { game.ui.screenName === 'menu' ? C.enterPlay() : game.ui.close(); }
@@ -398,9 +405,11 @@ export function initCoop(game) {
   V.contribute = (n) => { n = Math.floor(n); const nx = HOME_LEVELS[game.state.home.lvl + 1]; if (!nx || n < 1) return false; return V.act('fund', { n }, (r) => { const u = Math.max(0, Math.min(n, r.n | 0)); game.addMoney(-u, 'Do\'st uyiga hissa'); game.audio.sfx('coin'); game.toast(r.up ? `Uy yaxshilandi! ${V.owner}ning uyiga ${som(u)} so'm qo'shdingiz 🏠` : `${V.owner}ning uyiga ${som(u)} so'm qo'shdingiz`, r.up ? 'gold' : 'good'); }, n); };
   V.decor = (id) => { const q = DECOR.find((x) => x.id === id), h = game.state.home; if (!q || h.decor[id] || h.lvl < 1) return false; return V.act('dec', { q: id }, () => { game.addMoney(-q.cost, 'Do\'st uyi bezagi'); game.audio.sfx('buy'); game.toast(`«${q.name}» ${V.owner}ning hovlisiga o'rnatildi`, 'good'); }, q.cost); };
   // xona egasi: uy holati (vaqtlar egasining o'yin vaqtida; mehmon o'zinikiga o'tkazadi)
-  const homeSnap = () => { const st = game.state, h = st.home; return { t: 'hm', o: peer.id, n: C.myName(), ht: Math.round(st.stats.time), h: { lvl: h.lvl | 0, decor: Object.assign({}, h.decor), beds: h.beds.slice(0, 6), wat: h.wat.slice(0, 6), fund: h.fund | 0 }, fl: st.flowers.filter((f) => nearHome(f[0], f[1])).slice(-120).map((f) => [f[0], f[1], f[2] | 0, f[3] | 0, f[4] ? 1 : 0]) }; };
+  const homeSnap = () => { const st = game.state, h = st.home; return { t: 'hm', o: peer.id, n: C.myName(), ht: Math.round(st.stats.time), h: { lvl: h.lvl | 0, decor: Object.assign({}, h.decor), beds: h.beds.slice(0, 6), wat: h.wat.slice(0, 6), fund: h.fund | 0 }, fl: st.flowers.filter((f) => nearHome(f[0], f[1])).slice(-120).map((f) => [f[0], f[1], f[2] | 0, f[3] | 0, f[4] ? 1 : 0]), h2: h2Snap() }; };
+  // uy kengaytmalari (uy2.js): mehmon xonasi, oshxona, garaj (va undagi transport), hovli jihozlari — ixcham: [bayroqlar, hovli id ro'yxati]
+  const h2Snap = () => { const H = game.state.home2 || {}, y = H.yard || {}; return { g: H.guest ? 1 : 0, k: H.kitchen ? 1 : 0, gr: H.garage ? 1 : 0, y: YARD.filter((q) => y[q.id]).map((q) => q.id), gv: H.garage && H.gVeh && vehById[H.gVeh] ? H.gVeh : null }; };
   let homeSig = '';
-  function sendHome(force) { if (!C.room || !C.room.isHost || !peer || !C.members.size) return; const d = homeSnap(), sig = JSON.stringify([d.h, d.fl]); if (!force && sig === homeSig) return; homeSig = sig; bcast(d); }
+  function sendHome(force) { if (!C.room || !C.room.isHost || !peer || !C.members.size) return; const d = homeSnap(), sig = JSON.stringify([d.h, d.fl, d.h2]); if (!force && sig === homeSig) return; homeSig = sig; bcast(d); }
   C.sendHome = sendHome;
   function hostAct(m, d) {
     const st = game.state, h = st.home, L = game.live, no = (why) => sendTo(m, { t: 'hr', id: d.id | 0, ok: 0, why });
@@ -441,6 +450,8 @@ export function initCoop(game) {
     st.home = { lvl, decor, beds: arr(H.beds).map(tm), wat: arr(H.wat).map((v) => (v ? 1 : 0)), eggT: st.stats.time, mailT: st.stats.time, incT: st.stats.time, fund: Math.max(0, H.fund | 0) };
     const fl = (Array.isArray(d.fl) ? d.fl.slice(0, 120) : []).filter((f) => num(f, 4) && nearHome(f[0], f[1])).map((f) => [f[0], f[1], Math.abs(f[2] | 0) % 6, tm(f[3]), f[4] ? 1 : 0]);
     st.flowers = st.flowers.filter((f) => !nearHome(f[0], f[1])).concat(fl);
+    if (game.uy2) { const h2 = d.h2 && typeof d.h2 === 'object' ? d.h2 : {}, yard = {}; if (Array.isArray(h2.y)) for (const id of h2.y.slice(0, 12)) if (YARD.some((q) => q.id === id)) yard[id] = 1; // egasining kengaytmalari (uy2.js U.vh — faqat ko'rinish)
+      game.uy2.vh = { guest: h2.g ? 1 : 0, kitchen: h2.k ? 1 : 0, garage: h2.gr ? 1 : 0, yard, gVeh: typeof h2.gv === 'string' && vehById[h2.gv] ? h2.gv : null }; }
     const lvUp = !first && V.lvl !== lvl; V.lvl = lvl; L.applyHome(); L.drawFlowers();
     const pl = game.player; if (lvUp && pl.onFoot && Math.hypot(pl.p[0] - hm().x, pl.p[2] - hm().z) < 30) pl.place(hm().gate[0], hm().gate[1], hm().yaw + Math.PI); // yangi devorlar ichida qolmasin
     if (first) { V.spawnPending = true; trySpawn(); }
@@ -460,7 +471,7 @@ export function initCoop(game) {
   function visitEnd() {
     if (!V.on) return; const st = game.state, L = game.live;
     st.home = V.own; st.flowers = st.flowers.filter((f) => !nearHome(f[0], f[1])).concat(V.ownIn || []);
-    V.on = false; V.own = V.ownIn = null; V.oid = null; V.lvl = -1; V.pend.clear(); V.reserved = 0; V.spawnPending = false;
+    V.on = false; V.own = V.ownIn = null; V.oid = null; V.lvl = -1; V.pend.clear(); V.reserved = 0; V.spawnPending = false; if (game.uy2) game.uy2.vh = null;
     L.applyHome(); L.drawFlowers(); game.save();
     if (game.ui && game.ui.screenName === 'home') game.ui.open('home');
   }
@@ -570,11 +581,366 @@ export function initCoop(game) {
   C.teleportTo = (pid) => {
     const m = C.members.get(pid); if (!m || !m.remote.shown) return false;
     if (game.act) { game.toast('Avval chellenjni tugating yoki bekor qiling ([X])', 'bad'); return false; }
+    if (C.ride) { game.toast('Avval mashinadan tushing [F]', 'bad'); return false; }
     const [x, z] = m.remote.where(), yaw = m.remote.yaw(), pl = game.player;
     if (pl.onFoot) pl.place(x - Math.sin(yaw) * 2.5 + Math.cos(yaw) * 1.5, z - Math.cos(yaw) * 2.5 - Math.sin(yaw) * 1.5, yaw);
     else { game.car.place(x - Math.sin(yaw) * 9, z - Math.cos(yaw) * 9, yaw); game.prevP = game.car.p.slice(); }
     game.cam.snap(); game.toast(`${m.name} yoniga ko'chdingiz`, 'good'); return true;
   };
+
+  // ======================= BIRGA O'YNASH: yo'lovchi, birga ish, choyxona, pul o'tkazish, "Shu yerga kel" =======================
+  // Hamma amal — so'rov/javob: kim egasi bo'lsa (haydovchi, ish egasi, pul oluvchi), o'sha tekshiradi. Pul faqat o'z saqlovida o'zgaradi va bankka yoziladi.
+  const pl = game.player, IN = game.interior, IS = () => game.ish, H2 = () => game.hayot2, N = (m) => esc(m.name), toast = (t, k) => game.toast(t, k);
+  const rl = (o, key, n, ms) => { const t = performance.now(), q = (o[key] = (o[key] || []).filter((x) => t - x < ms)); if (q.length >= n) return false; q.push(t); return true; }; // tezlik chegarasi
+  const gift = (n, why) => { game.noWeek = true; try { game.addMoney(n, why); } finally { game.noWeek = false; } }; // o'tkazma/qaytarilgan pul — hafta daromadiga kirmaydi
+  const myPos = () => (IN.inside && IN.ret ? [IN.ret[0], IN.ret[1]] : pl.onFoot ? [pl.p[0], pl.p[2]] : [game.car.p[0], game.car.p[2]]);
+  const MAXT = 50000; // bitta o'tkazma chegarasi (so'm)
+  // nur ustunlari: do'st ishidagi manzillar va do'stlar belgisi (chiroq emas — sahnadagi chiroqlar soni o'zgarmaydi)
+  const beamGeo = new THREE.CylinderGeometry(0.45, 0.45, 40, 10, 1, true);
+  const mkBeam = (col) => { const b = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.38, depthWrite: false, fog: false })); b.visible = false; b.frustumCulled = false; game.scene.add(b); return b; };
+  const jobBeams = [0, 1, 2, 3, 4, 5].map(() => mkBeam(0xffd23a)), pingBeams = SLOT_COLORS.map((c) => mkBeam(new THREE.Color(c)));
+  const beamAt = (b, x, z) => { b.visible = true; b.position.set(x, T.ground(x, z, 1e9).y + 20, z); };
+
+  // ---------- 1. Do'st mashinasida yo'lovchi ----------
+  // Yo'lovchi piyoda qoladi, lekin harakatsiz: joyi har kadr haydovchi mashinasidagi o'rindiqqa qo'yiladi, kamera o'sha mashinaga ergashadi (main.js → C.rideCam).
+  // Hamma o'yinchida yo'lovchi haydovchi modelidagi o'rindiqda (rig.js makeRider — haydovchi kabi poza, yo'lovchining kiyimida) chiziladi.
+  const NOSEAT = new Set(['velo', 'kart', 'bolid']), REAR = new Set(['xetch', 'sedan', 'ralli', 'limuzin', 'jip']);
+  const seatsOf = (md) => (!md || !md._rd || NOSEAT.has(md.id) ? 0 : Math.abs(md._rd.x || 0) > 0.1 ? (REAR.has(md.id) ? 3 : 1) : 1);
+  C.seatsOf = seatsOf;
+  function seatPose(md, s) { // o'rindiq: x — modeldagi joy, d — makeRider ma'lumoti (son, qo'l, oyoq)
+    const o = md._rd, hy = o.hip[1], hz = o.hip[2], fy = o.foot[1], fz = o.foot[2];
+    if (Math.abs(o.x || 0) > 0.1) { const rear = s > 0, z = rear ? hz - 0.9 : hz, x = rear ? (s === 1 ? -o.x : o.x) * 0.9 : -o.x;
+      return { x, d: { hip: [0, hy, z], lean: o.lean || -0.15, hand: [0.17, hy + 0.12, z + 0.34], foot: [0.16, fy, rear ? z + Math.min(0.55, fz - hz) : fz], knee: 0.16 } }; }
+    const z = hz - 0.42; return { x: 0, d: { hip: [0, hy + 0.06, z], lean: o.lean || 0.1, hand: [0.2, hy + 0.3, z + 0.3], foot: [Math.max(0.16, o.foot[0] || 0), fy + 0.04, z + 0.12], knee: 0.18 } };
+  }
+  const paxModels = new Set();
+  function paxRig(md, s, look, hat) { const P = seatPose(md, s), r = makeRider(P.d, lookRigOpts(look)); if (hat) setHat(r, hat); const w = new THREE.Group(); w.position.x = P.x; w.add(r.root); md.tilt.add(w); return { w, r }; }
+  function dropPax(o) { if (o.w.parent) o.w.parent.remove(o.w); o.r.mesh.geometry.dispose(); if (o.r.mesh.skeleton) o.r.mesh.skeleton.dispose(); }
+  // har kadr: qaysi mashinada kim o'tiribdi (yo'lovchining o'z paketidagi ri/se bo'yicha) — modellarga o'rindiq qo'shiladi/olinadi
+  function syncPax() {
+    if (rideReq && performance.now() - rideReq.t > 8000) rideReq = null; // haydovchi javob bermadi
+    const want = new Map(), me = C.myId();
+    const add = (drv, pid, s, look, hat) => { const dm = drv === me ? null : C.members.get(drv), md = drv === me ? game.carModel : dm && dm.remote.shown ? dm.remote.model : null; if (!md || s >= seatsOf(md)) return;
+      let w = want.get(md); if (!w) want.set(md, (w = new Map())); for (const v of w.values()) if (v.s === s) return; w.set(pid, { s, look, hat, key: s + '|' + JSON.stringify(look || null) + '|' + (hat || '') }); };
+    for (const m of C.members.values()) { const R = m.remote; if (R.ri && R.shown && R.foot) add(R.ri, m.pid, R.se, R.look, R.hat); }
+    if (C.ride) add(C.ride.pid, me, C.ride.seat, game.state.look, game.state.hat);
+    for (const md of want.keys()) paxModels.add(md);
+    for (const md of [...paxModels]) { const cur = md._pax || (md._pax = new Map()), w = want.get(md);
+      for (const [pid, o] of cur) { const n = w && w.get(pid); if (!n || n.key !== o.key) { dropPax(o); cur.delete(pid); } }
+      if (w) for (const [pid, n] of w) if (!cur.has(pid)) cur.set(pid, Object.assign(paxRig(md, n.s, n.look, n.hat), { key: n.key }));
+      if (!cur.size) paxModels.delete(md); }
+  }
+  C.ride = null; C.pax = new Map(); let rideReq = null; // pax — men haydovchiman: yo'lovchi → o'rindiq
+  const pu = pl.update; pl.update = function (...a) { if (C.ride) return; return pu.apply(this, a); }; // yo'lovchi o'zi yurmaydi
+  C.rideReq = (pid) => {
+    const m = C.members.get(pid), R = m && m.remote;
+    if (!R || !R.shown || R.foot || !R.model) { toast("Do'stingiz hozir transportda emas", 'bad'); return false; }
+    if (C.ride || !pl.onFoot || pl.lock > 0 || IN.inside || game.act || (IS() && IS().cur && !(C.job && !C.job.own))) { toast("Hozir o'tirib bo'lmaydi", 'bad'); return false; }
+    if (!seatsOf(R.model)) { toast(`${R.model.v.name}da yo'lovchi o'rni yo'q`, 'bad'); return false; }
+    if (Math.hypot(R.pos.x - pl.p[0], R.pos.z - pl.p[2]) > R.model.spec.len / 2 + 4) { toast('Mashinaga yaqinroq boring', 'bad'); return false; }
+    rideReq = { pid, t: performance.now() }; sendTo(m, { t: 'rq' }); return true;
+  };
+  function onRideReq(m) { // haydovchi: o'rin beramizmi
+    const no = (why) => sendTo(m, { t: 'ra', ok: 0, why }), car = game.car;
+    if (!rl(m, 'rqq', 4, 5000)) return no('Juda tez — biroz kuting');
+    if (pl.onFoot) return no(`${C.myName()} hozir transportda emas`); if (game.act) return no('Haydovchi chellenjda');
+    const n = seatsOf(game.carModel); if (!n) return no(`${game.carModel.v.name}da yo'lovchi o'rni yo'q`);
+    const [x, z] = m.remote.where(); if (!m.remote.foot || Math.hypot(x - car.p[0], z - car.p[2]) > car.spec.len / 2 + 5) return no('Mashinaga yaqinroq keling');
+    if (car.speed > 4) return no("Mashina to'xtaganda o'tiring");
+    let s = C.pax.has(m.pid) ? C.pax.get(m.pid) : -1; if (s < 0) { const used = new Set(C.pax.values()); for (let i = 0; i < n; i++) if (!used.has(i)) { s = i; break; } }
+    if (s < 0) return no("Bo'sh o'rin qolmadi");
+    C.pax.set(m.pid, s); m.paxT = performance.now(); sendTo(m, { t: 'ra', ok: 1, s }); toast(`${N(m)} mashinangizga o'tirdi 🚗`, 'good'); game.audio.sfx('door'); changed();
+  }
+  function onRideAns(m, d) {
+    if (!rideReq || rideReq.pid !== m.pid) return; rideReq = null;
+    C.rideMsg = String(d.why || '').slice(0, 80); if (!d.ok) { toast(esc(C.rideMsg || "O'tirib bo'lmadi"), 'bad'); return; }
+    const s = d.s | 0; if (s < 0 || s > 2 || C.ride || !pl.onFoot || IN.inside || game.act) { sendTo(m, { t: 'rx' }); return; }
+    C.ride = { pid: m.pid, seat: s, footT: 0 }; pl.lock = 1e9; pl.lockAnim = 'sit'; pl.lockFn = null; pl.sit = false; pl.emote = null; pl.v[0] = pl.v[1] = pl.v[2] = 0; pl.rig.root.visible = false; pl.lamp.intensity = 0;
+    game.cam.snap(); game.audio.sfx('door'); toast(`${N(m)}ning mashinasidasiz — [F] tushish`, 'good'); changed();
+  }
+  C.rideOff = (why) => {
+    const R = C.ride; if (!R) return; C.ride = null; const m = C.members.get(R.pid), md = m && m.remote.model;
+    pl.lock = 0; pl.lockAnim = null; pl.rig.root.visible = true; let x = pl.p[0], z = pl.p[2], yaw = pl.yaw;
+    if (md && m.remote.shown) { const P = seatPose(md, R.seat), sd = P.x >= 0 ? 1 : -1; md.root.updateWorldMatrix(true, false); _v.set(P.x + sd * (md.spec.wid / 2 + 0.9), 0, P.d.hip[2]); md.root.localToWorld(_v); x = _v.x; z = _v.z; yaw = m.remote.yaw(); }
+    pl.place(x, z, yaw); game.cam.snap(); game.audio.sfx('door'); if (m) sendTo(m, { t: 'rx' }); toast(why ? esc(why) : 'Mashinadan tushdingiz'); changed();
+  };
+  // yo'lovchi kamerasi uchun haydovchi mashinasi (camera.js kutgan maydonlar)
+  const RT = { fwd: 0, speed: 0, v: [0, 0, 0], yaw: 0, R: new Float64Array(9), nitroOn: false, rpm: 0, spec: null }, _m4 = new THREE.Matrix4();
+  C.rideCam = () => {
+    const m = C.ride && C.members.get(C.ride.pid), Rm = m && m.remote; if (!Rm || !Rm.model || !Rm.shown) return null; const c = Rm.lastPkt && Rm.lastPkt.c, e = _m4.makeRotationFromQuaternion(Rm.q).elements;
+    RT.v[0] = c ? c[7] : 0; RT.v[1] = c ? c[8] : 0; RT.v[2] = c ? c[9] : 0; RT.speed = Math.hypot(RT.v[0], RT.v[2]); RT.fwd = c ? c[11] : 0; RT.yaw = Rm.yaw(); RT.spec = Rm.model.spec;
+    const M = RT.R; M[0] = e[0]; M[1] = e[4]; M[2] = e[8]; M[3] = e[1]; M[4] = e[5]; M[5] = e[9]; M[6] = e[2]; M[7] = e[6]; M[8] = e[10];
+    return { tgt: RT, cp: Rm.pos, len: Rm.model.spec.len, hgt: Rm.model.spec.hgt };
+  };
+  function rideFrame(dt) {
+    const R = C.ride; if (!R) return; const m = C.members.get(R.pid);
+    if (!pl.onFoot) { C.ride = null; pl.lock = 0; pl.lockAnim = null; if (m) sendTo(m, { t: 'rx' }); changed(); return; } // boshqa yo'l bilan o'z transportiga o'tirdi
+    if (!m) return C.rideOff('Haydovchi bilan aloqa uzildi');
+    const Rm = m.remote; if (Rm.foot) { R.footT += dt; if (R.footT > 0.6) return C.rideOff(`${m.name} mashinadan tushdi — siz ham tushdingiz`); } else R.footT = 0;
+    if (!Rm.model || R.seat >= seatsOf(Rm.model)) return C.rideOff("Bu transportda o'rin yo'q");
+    const px = Rm.model._pax && Rm.model._pax.get(C.myId()); if (px) { px.r.root.updateWorldMatrix(true, false); px.r.root.getWorldPosition(_v); } else _v.copy(Rm.pos);
+    pl.p[0] = _v.x; pl.p[1] = _v.y; pl.p[2] = _v.z; pl.yaw = Rm.yaw(); pl.v[0] = pl.v[1] = pl.v[2] = 0; pl.anim = 'sit'; pl.rig.root.visible = false; pl.lamp.intensity = 0;
+  }
+  function paxFrame() { // haydovchi: tushib qolsam — yo'lovchilar ham tushadi; ketgan yo'lovchi o'rni bo'shaydi
+    if (!C.pax.size) return; const now = performance.now(), me = C.myId();
+    for (const [pid] of C.pax) { const m = C.members.get(pid); if (!m || (m.remote.ri !== me && now - (m.paxT || 0) > 3000)) C.pax.delete(pid); }
+    if (pl.onFoot || seatsOf(game.carModel) < 1) { for (const pid of C.pax.keys()) { const m = C.members.get(pid); if (m) sendTo(m, { t: 'rk' }); } C.pax.clear(); changed(); }
+  }
+
+  // ---------- 2. Birga ish (non yetkazish, taksi, dalada o'rim — ish.js) ----------
+  // Ish egasi hakam: jamoa (ko'pi bilan 3 do'st), har soniyada holat (manzillar, vaqt, bajarilgan), do'stlar amalini tekshiradi; har to'lov teng bo'linadi (ish.js pay → IS.split).
+  C.job = null; C.jobInv = null; let jobSig = '', jobT = 0, jobLast = null;
+  const stripTags = (h) => String(h || '').replace(/<[^>]*>/g, '').slice(0, 120);
+  const ownJob = (id) => (C.job = { own: true, id, team: new Map(), carry: new Set(), inv: new Map() });
+  const jobTeam = () => (C.job && C.job.own ? [...C.job.team.keys()].filter((p) => C.members.has(p)) : []);
+  if (game.ish) game.ish.split = (n, why) => {
+    const J = C.job, cur = game.ish.cur; if (!J || !J.own || !cur || cur.id !== J.id) return n; const team = jobTeam(); if (!team.length) return n;
+    const k = team.length + 1, sh = Math.floor(n / k); if (sh < 1) return n;
+    for (const p of team) sendTo(C.members.get(p), { t: 'jp', n: sh, why: String(why || JOBS[J.id][1]).slice(0, 40) });
+    return n - sh * (k - 1);
+  };
+  function jobState() {
+    const J0 = IS().cur, D = IS().dbg, pts = []; let cut = null, ld = 0;
+    if (J0.id === 'non') for (const q of J0.pts) if (!q.ok) pts.push([r2(q.x), r2(q.z)]);
+    if (J0.id === 'dala') { for (const q of J0.pick) pts.push([r2(q.x), r2(q.z), 0, q.k]); if (D.field.cart) pts.push([r2(D.field.cart.x), r2(D.field.cart.z), 1]); cut = D.field.clumps.filter((q) => q.cut).map((q) => q.k); ld = J0.done; }
+    if (J0.id === 'taksi') { const tg = J0.stage === 'pick' ? J0.a : J0.b; if (tg) pts.push([r2(tg.x), r2(tg.z)]); }
+    const team = jobTeam(); return { t: 'js', id: J0.id, team, line: stripTags(J0.line()), tm: J0.t != null ? Math.round(J0.t) : null, done: J0.done, pts: pts.slice(0, 8), cut, ld, open: team.length < 3 ? 1 : 0 };
+  }
+  function ownerJobFrame(dt) {
+    const cur = IS() && IS().cur;
+    if (jobLast && (!cur || cur.id !== jobLast)) { bcast({ t: 'je', id: jobLast }); if (C.job && C.job.own) C.job = null; jobLast = null; jobSig = ''; changed(); }
+    if (!cur || !C.members.size || (C.job && !C.job.own)) return; jobLast = cur.id; if (C.job && C.job.own && C.job.id !== cur.id) C.job = null;
+    jobT += dt; if (jobT < 0.25) return; const s = jobState(), sig = JSON.stringify(s); if (sig !== jobSig || jobT > 1.5) { jobSig = sig; jobT = 0; bcast(s); }
+  }
+  C.jobInvite = () => {
+    const cur = IS() && IS().cur; if (!cur || !C.members.size) { toast('Avval ish boshlang — keyin do\'stlarni chaqiring', 'bad'); return false; }
+    if (!C.job || !C.job.own || C.job.id !== cur.id) ownJob(cur.id); const t = performance.now(); for (const m of C.members.values()) if (!C.job.team.has(m.pid)) C.job.inv.set(m.pid, t);
+    bcast({ t: 'ji', id: cur.id }); toast(`Do'stlar «${JOBS[cur.id][1]}» ishiga chaqirildi 🤝`, 'good'); return true;
+  };
+  C.jobJoin = (pid) => {
+    const m = C.members.get(pid); if (!m || !m.job) { toast("Do'stingizda hozir ish yo'q", 'bad'); return false; }
+    if (IS().cur) { toast("Avval o'z ishingizni tugating [X]", 'bad'); return false; } if (game.act) { toast('Avval chellenjni tugating', 'bad'); return false; } if (C.job) { toast('Siz allaqachon birga ishdasiz', 'bad'); return false; }
+    sendTo(m, { t: 'jq', id: m.job.id }); return true;
+  };
+  C.jobLeave = () => { const J = C.job; if (!J || J.own) return; const m = C.members.get(J.owner); if (m) sendTo(m, { t: 'jl' }); jobEnd(`Ishdan chiqdingiz · ulushingiz ${som(J.got)} so'm`); };
+  C.jobAct = (k, a) => { const J = C.job, m = J && !J.own && C.members.get(J.owner); if (!m) return false; sendTo(m, Object.assign({ t: 'ja', k }, a || {})); return true; };
+  function jobEnd(msg) { const J = C.job; if (!J || J.own) return; C.job = null; for (const b of jobBeams) b.visible = false; if (game.way && game.way.coop) game.setWaypoint(null); game.banner('Birga ish tugadi', esc(msg), J.got ? 'gold' : ''); game.audio.sfx(J.got ? 'win' : 'click'); changed(); }
+  function onJobReq(m, d) {
+    const no = (why) => sendTo(m, { t: 'jw', ok: 0, why }), J0 = IS().cur;
+    if (!rl(m, 'jqq', 4, 5000)) return no('Juda tez — biroz kuting');
+    if (!J0 || J0.id !== d.id) return no('Bu ish allaqachon tugagan'); if (game.act) return no('Ish egasi chellenjda');
+    const J = C.job && C.job.own && C.job.id === J0.id ? C.job : ownJob(J0.id);
+    if (J.team.has(m.pid)) return sendTo(m, { t: 'jw', ok: 1, id: J.id });
+    if (J.team.size >= 3) return no("Jamoa to'la (4 kishi)");
+    const inv = J.inv.get(m.pid), [x, z] = m.remote.where(), [mx, mz] = myPos();
+    if (!(inv && performance.now() - inv < 120000) && !(m.remote.shown && Math.hypot(x - mx, z - mz) < 25)) return no('Ish egasi yoniga boring yoki taklifni kuting');
+    J.team.set(m.pid, m.name); sendTo(m, { t: 'jw', ok: 1, id: J.id }); jobSig = ''; jobT = 1; toast(`${N(m)} ishingizga qo'shildi — daromad teng bo'linadi 🤝`, 'good'); game.audio.sfx('check'); changed();
+  }
+  function onJobWel(m, d) {
+    if (!d.ok) { toast(esc(String(d.why || "Qo'shilib bo'lmadi").slice(0, 80)), 'bad'); return; }
+    if (!JOBS[d.id] || IS().cur || (C.job && C.job.owner !== m.pid)) { sendTo(m, { t: 'jl' }); return; }
+    if (!C.job) { C.job = { own: false, id: d.id, owner: m.pid, oname: m.name, st: null, got: 0, carry: false }; C.jobInv = null; game.banner(`${JOBS[d.id][0]} Birga ish`, `${esc(m.name)} bilan «${JOBS[d.id][1]}» — daromad teng bo'linadi`, 'gold'); game.audio.sfx('start'); changed(); }
+  }
+  const okPts = (a) => (Array.isArray(a) ? a.slice(0, 8).filter((p) => num(p, 2) && Math.abs(p[0]) < 3300 && Math.abs(p[1]) < 3300) : []);
+  function onJobState(m, d) {
+    if (!JOBS[d.id]) return; const team = Array.isArray(d.team) ? d.team.slice(0, 4).map(String) : [];
+    m.job = { id: d.id, open: !!d.open, t: performance.now() };
+    const J = C.job; if (!J || J.own || J.owner !== m.pid) return;
+    if (!team.includes(C.myId()) || d.id !== J.id) return jobEnd(`${m.name} ishidan chiqarildingiz`);
+    J.st = { id: d.id, line: String(d.line || '').slice(0, 120), tm: typeof d.tm === 'number' && Number.isFinite(d.tm) ? d.tm : null, done: d.done | 0, pts: okPts(d.pts), n: team.length + 1 };
+    if (d.id === 'dala' && !IS().cur && Array.isArray(d.cut)) { const D = IS().dbg, f = D.field, set = new Set(d.cut.slice(0, 200).map((k) => k | 0)); let ch = false; for (const q of f.clumps) { const c = set.has(q.k) ? 1 : 0; if (q.cut !== c) { q.cut = c; ch = true; } } if (ch && f.draw) f.draw(); D.drawLoad(Math.max(0, Math.min(6, d.ld | 0))); }
+  }
+  function onJobInv(m, d) { if (!JOBS[d.id] || !rl(m, 'jiq', 3, 10000) || C.job) return; C.jobInv = { pid: m.pid, id: d.id, t: performance.now() }; toast(`🤝 ${N(m)} sizni «${JOBS[d.id][1]}» ishiga chaqiryapti — [O] → Qo'shilish yoki yoniga borib [E]`, 'gold'); game.audio.sfx('check'); changed(); }
+  function onJobAct(m, d) {
+    const J = C.job, J0 = IS().cur, D = IS().dbg, no = (why) => sendTo(m, { t: 'jr', ok: 0, why });
+    if (!J || !J.own || !J.team.has(m.pid) || !J0 || J0.id !== J.id) return no('Ish topilmadi');
+    if (!rl(m, 'jaq', 6, 3000)) return no('Juda tez');
+    const [x, z] = m.remote.where(), near = (px, pz, r) => m.remote.shown && Math.hypot(x - px, z - pz) < r;
+    if (d.k === 'non' && J0.id === 'non') { const q = J0.pts.find((p) => !p.ok && Math.abs(p.x - d.x) < 1 && Math.abs(p.z - d.z) < 1); if (!q) return no('Bu uyga non allaqachon berilgan'); if (!near(q.x, q.z, 11)) return no('Uyga yaqinroq boring');
+      sendTo(m, { t: 'jr', ok: 1, k: 'non' }); toast(`🍞 ${N(m)} nonni topshirdi`, 'good'); D.deliver(q); }
+    else if (d.k === 'reap' && J0.id === 'dala') { const q = J0.pick.find((p) => p.k === (d.i | 0)); if (!q) return no("Bu bug'doy allaqachon o'rilgan"); if (J.carry.has(m.pid)) return no("Avval bog'ni aravaga olib boring"); if (!near(q.x, q.z, 4)) return no("Bug'doyga yaqinroq boring");
+      q.cut = 1; D.field.draw(); J0.pick.splice(J0.pick.indexOf(q), 1); J.carry.add(m.pid); if (!J0.carry) D.showMarks(J0.pick); sendTo(m, { t: 'jr', ok: 1, k: 'reap' }); }
+    else if (d.k === 'load' && J0.id === 'dala') { const c = D.field.cart; if (!J.carry.has(m.pid)) return no("Qo'lingizda bog' yo'q"); if (!c || !near(c.x, c.z, 4.5)) return no('Aravaga yaqinroq boring');
+      J.carry.delete(m.pid); J0.done++; D.drawLoad(J0.done); const n = 18; J0.earn += n; sendTo(m, { t: 'jr', ok: 1, k: 'load' }); D.pay(n, "Dalada o'rim"); toast(`🌾 ${N(m)} bog'ni aravaga ortdi · ${J0.done}/${J0.goal}`, 'good');
+      if (J0.done >= J0.goal) { const b = 70; J0.earn += b; D.pay(b, "Dalada o'rim — bonus"); D.finish(true, `Hosil birga yig'ildi! +${b} · jami ${som(J0.earn)} so'm`); } }
+    else return no("Noma'lum amal");
+    jobSig = ''; jobT = 1;
+  }
+  function onJobRes(m, d) {
+    const J = C.job; if (!J || J.own || J.owner !== m.pid) return;
+    C.jobMsg = String(d.why || '').slice(0, 80); if (!d.ok) { toast(esc(C.jobMsg || 'Bajarilmadi'), 'bad'); return; }
+    if (d.k === 'non') { game.audio.sfx('pop'); toast("🍞 Non topshirildi! «Rahmat, bolam!»", 'good'); } else if (d.k === 'reap') { J.carry = true; game.audio.sfx('rustle'); toast("Bog'ni aravaga olib boring 🌾"); } else if (d.k === 'load') { J.carry = false; toast("🌾 Bog' aravada!", 'good'); }
+  }
+  function onJobPay(m, d) {
+    const J = C.job, n = d.n; if (!J || J.own || J.owner !== m.pid || !Number.isInteger(n) || n < 1 || n > 600 || J.got + n > 3000) return; // ulush: aqlga sig'adigan chegara
+    J.got += n; game.addMoney(n, String(d.why || JOBS[J.id][1]).replace(/[\u0000-\u001f<>]/g, '').slice(0, 40) + ' (birga)'); game.audio.sfx('coin'); toast(`+${n} so'm — ulushingiz (${N(m)} bilan) 🤝`, 'good');
+  }
+  function onJobEnd(m, d) { m.job = null; const J = C.job; if (J && !J.own && J.owner === m.pid) jobEnd(`${m.name} bilan ish tugadi · ulushingiz ${som(J.got)} so'm`); }
+  // do'st ishidagi manzillar (nur, xarita nuqtasi, yo'l ko'rsatkich) va HUD
+  const jh = document.createElement('div'); jh.className = 'panel tc jobhud'; jh.style.display = 'none';
+  function memberJobFrame() {
+    const J = C.job, st = J && !J.own ? J.st : null, mine = IS() && IS().cur;
+    if (st && mine) { C.jobLeave(); return; } // o'z ishini boshladi — do'st ishidan chiqadi
+    if (!jh.parentNode && game.ui) game.ui.hud.appendChild(jh);
+    const show = !!st && !game.act; if (jh.style.display !== (show ? '' : 'none')) jh.style.display = show ? '' : 'none';
+    jobBeams.forEach((b, i) => { const p = show && st.pts[i]; if (p && !(st.id === 'dala' && (J.carry ? !p[2] : p[2]))) beamAt(b, p[0], p[1]); else b.visible = false; });
+    if (!show) return;
+    const L = game.live, [mx, mz] = myPos(); let best = null, bd = 1e9; for (const p of st.pts) { if (st.id === 'dala' && (J.carry ? !p[2] : p[2])) continue; L.dots.push([p[0], p[1], '#ffd23a']); const dd = Math.hypot(p[0] - mx, p[1] - mz); if (dd < bd) { bd = dd; best = p; } }
+    if (best && (!game.way || (game.way.coop && (game.way.x !== best[0] || game.way.z !== best[1])))) { game.setWaypoint(best[0], best[1], true); game.way.coop = 1; }
+    const k = JSON.stringify([st.tm, st.done, st.line, J.got, J.carry]); if (jh._k === k) return; jh._k = k;
+    const mm = st.tm != null ? `${Math.floor(Math.max(0, st.tm) / 60)}:${String(Math.max(0, st.tm) % 60).padStart(2, '0')}` : '';
+    jh.innerHTML = `<h3>${JOBS[st.id][0]} ${JOBS[st.id][1]} · birga</h3>${mm ? `<div class="timer${st.tm < 20 ? ' low' : ''}">${mm}</div>` : ''}<div class="ln">${J.carry ? "Bog'ni aravaga olib boring 🌾" : esc(st.line)}</div><div class="ln" style="opacity:.75;font-size:12px">${esc(J.oname)} bilan (${st.n} kishi) · ulushingiz ${som(J.got)} so'm · <kbd>X</kbd> — chiqish</div>`;
+  }
+  // do'st ishida [E] amallari (piyoda) va transportda nonni derazadan uzatish
+  function jobOffers(offer, px, pz) {
+    const J = C.job, st = J && !J.own && J.st; if (!st || IS().cur) return;
+    if (st.id === 'non') for (const p of st.pts) { const d = Math.hypot(p[0] - px, p[1] - pz); if (d < 2.8) offer(d - 0.3, "<kbd>E</kbd> Nonni topshirish 🍞 (birga)", () => { pl.yaw = Math.atan2(p[0] - pl.p[0], p[1] - pl.p[2]); pl.act('bend', 0.9, () => C.jobAct('non', { x: p[0], z: p[1] }), 'basket'); }); }
+    if (st.id === 'dala') for (const p of st.pts) { const d = Math.hypot(p[0] - px, p[1] - pz) - (p[2] ? 1 : 0);
+      if (!J.carry && !p[2] && d < 2.2) offer(d - 0.3, "<kbd>E</kbd> Bug'doyni o'rish 🌾 (birga)", () => { pl.yaw = Math.atan2(p[0] - pl.p[0], p[1] - pl.p[2]); pl.act('swing', 1.3, () => C.jobAct('reap', { i: p[3] | 0 }), 'sickle'); });
+      if (J.carry && p[2] && d < 2.2) offer(d - 0.3, "<kbd>E</kbd> Bog'ni aravaga ortish", () => pl.act('bend', 0.8, () => C.jobAct('load'))); }
+  }
+  const carJob = () => { const J = C.job, st = J && !J.own && J.st; if (!st || st.id !== 'non' || pl.onFoot || game.car.speed > 3 || IS().cur) return null; const c = game.car.p; for (const p of st.pts) if (Math.hypot(p[0] - c[0], p[1] - c[2]) < 8) return p; return null; };
+
+  // ---------- 3. Choyxona: bir stolda — bir-birini va taomlarni ko'rish, "Men to'layman" ----------
+  // Har kim o'z stoli (stol kaliti), o'rindig'i, stoldagi taomlari va hisobini (shu stolda buyurtma qilgani) yuboradi; to'lovchi do'stlarning hisobini qoplaydi:
+  // to'lovchidan pul darhol olinadi, do'st tekshiradi (hisob mos, shu stolda) va o'z buyurtmasi pulini qaytarib oladi; rad etilsa yoki javob kelmasa — to'lovchiga qaytadi.
+  const tab = { k: null, s: null, sum: 0, sig: '', t: 0 }, xfer = new Map(); let xseq = 0;
+  const kOf = (a, b) => Math.round(a * 10) + ':' + Math.round(b * 10), KRE = /^-?\d{1,4}:-?\d{1,4}$/;
+  const seatTab = (sp) => { if (IN.inside !== 'cafe' || !sp || sp.k !== 'csit' || !sp.table) return; const k = kOf(sp.table[0], sp.table[1]); if (tab.k && k !== tab.k) tab.sum = 0; tab.k = k; tab.s = kOf(sp.lx, sp.lz); };
+  { const o0 = H2().order; H2().order = (id, ...r) => { const ok = o0(id, ...r); if (ok) { seatTab(game.hayot && game.hayot.seat); const it = MENU.find((q) => q[0] === id); if (it && tab.k) tab.sum = Math.min(5000, tab.sum + it[3]); } return ok; }; }
+  function cafeFrame(dt) {
+    const HY = game.hayot, sp = HY && HY.seat, inCafe = IN.inside === 'cafe';
+    if (!inCafe) { tab.k = tab.s = null; tab.sum = 0; } else seatTab(sp);
+    const ds = inCafe ? H2().dishes.map((q) => q.id).slice(0, 4) : [], sig = JSON.stringify([tab.k, tab.s, ds, tab.sum]); tab.t += dt;
+    if (C.members.size && (sig !== tab.sig || (tab.k && tab.t > 3))) { tab.sig = sig; tab.t = 0; bcast({ t: 'tb', k: tab.k, s: tab.s, ds, sum: tab.sum }); }
+    // do'stlarning stoldagi taomlari (faqat choyxona ichida, do'st haqiqatan shu o'rindiq yonida bo'lsa)
+    const Cf = IN.X.cafe;
+    for (const m of C.members.values()) { const tb = m.tb, R = m.remote; let n = 0;
+      const sp2 = inCafe && Cf && tb && tb.s && R.foot && R.fshown ? Cf.seats.find((q) => q.k === 'csit' && kOf(q.lx, q.lz) === tb.s) : null;
+      if (sp2 && Math.hypot(R.fpos.x - sp2.x, R.fpos.z - sp2.z) < 1.6) { const tx = Cf.o[0] + sp2.table[0], tz = Cf.o[2] + sp2.table[1], a = Math.atan2(-Math.sin(sp2.yaw), -Math.cos(sp2.yaw)), c = Math.cos(a), s = Math.sin(a);
+        for (const id of tb.ds) { const mesh = dishFor(m, n, id), sl = SLOTS[n]; mesh.position.set(tx + sl[0] * c + sl[1] * s, Cf.o[1] + sp2.top, tz - sl[0] * s + sl[1] * c); mesh.rotation.y = a + Math.PI; mesh.visible = true; n++; } }
+      if (m.dm) for (let i = n; i < m.dm.length; i++) if (m.dm[i]) m.dm[i].m.visible = false; }
+  }
+  const SLOTS = [[0, 0.16], [-0.24, 0.12], [0.24, 0.12], [0, -0.12]];
+  function dishFor(m, i, id) { m.dm = m.dm || []; let o = m.dm[i]; if (o && o.id !== id) { if (o.m.parent) o.m.parent.remove(o.m); o.m.geometry.dispose(); o = null; }
+    if (!o) { const g = new GB(2300); g.jit = 0; H2().DISH[id](g); const mesh = new THREE.Mesh(g.build(), MAT.flat); mesh.castShadow = true; IN.X.cafe.grp.add(mesh); o = m.dm[i] = { id, m: mesh }; } return o.m; }
+  function onTab(m, d) {
+    const k = typeof d.k === 'string' && KRE.test(d.k) ? d.k : null, s = typeof d.s === 'string' && KRE.test(d.s) ? d.s : null, sum = Number.isInteger(d.sum) && d.sum >= 0 && d.sum <= 5000 ? d.sum : 0;
+    const ds = Array.isArray(d.ds) ? d.ds.slice(0, 4).filter((id) => typeof id === 'string' && MENU.some((q) => q[0] === id) && H2().DISH[id]) : [];
+    const was = m.tb && m.tb.k; m.tb = { k, s, ds, sum };
+    if (k && k !== was && k === tab.k && IN.inside === 'cafe') toast(`🍵 ${N(m)} stolingizga o'tirdi — menyuda «Men to'layman»`, 'good');
+  }
+  C.tableMates = () => (tab.k && IN.inside === 'cafe' ? [...C.members.values()].filter((m) => m.tb && m.tb.k === tab.k) : []);
+  C.tab = tab;
+  C.payTable = () => {
+    const list = C.tableMates().filter((m) => m.tb.sum > 0), tot = list.reduce((a, m) => a + m.tb.sum, 0);
+    if (!list.length) { toast("Do'stlaringiz hali hech narsa buyurtma qilmagan", 'bad'); return false; }
+    if (V.money() < tot) { toast(`Pul yetmaydi (${som(tot)} so'm kerak)`, 'bad'); return false; }
+    for (const m of list) { const n = m.tb.sum, id = ++xseq; game.addMoney(-n, `Choyxona: ${m.name} uchun`); xfer.set(id, { n, pid: m.pid, t: performance.now(), kind: 'tab' }); sendTo(m, { t: 'tq', id, n, k: tab.k }); m.tb.sum = 0; }
+    game.audio.sfx('buy'); toast(`Stol hisobini siz to'ladingiz — ${som(tot)} so'm 🍵`, 'gold'); changed(); return true;
+  };
+  function onTabPay(m, d) {
+    const n = d.n, id = d.id | 0, no = (why) => sendTo(m, { t: 'tr', id, ok: 0, why });
+    if (!rl(m, 'tqq', 6, 10000)) return no('Juda tez');
+    if (IN.inside !== 'cafe' || !tab.k || d.k !== tab.k) return no(`${C.myName()} boshqa stolda`);
+    if (!Number.isInteger(n) || n < 1 || n > 5000 || n !== tab.sum) return no("Hisob o'zgardi — qayta urining");
+    tab.sum = 0; gift(n, `Choyxona: ${m.name} to'ladi`); sendTo(m, { t: 'tr', id, ok: 1, n }); game.audio.sfx('coin'); toast(`🍵 ${N(m)} stol hisobini to'ladi — ${som(n)} so'm qaytdi`, 'gold');
+  }
+
+  // ---------- 4. Do'stga pul o'tkazish ----------
+  C.sendMoney = (pid, n) => {
+    const m = C.members.get(pid); n = Math.floor(+n); if (!m) return false;
+    if (!(n >= 1 && n <= MAXT)) { toast(`O'tkazma 1 dan ${som(MAXT)} so'mgacha`, 'bad'); return false; }
+    if (V.money() < n) { toast('Pul yetmaydi', 'bad'); return false; }
+    if (!rl(C, 'mtq', 5, 60000)) { toast("Juda tez — bir daqiqada ko'pi bilan 5 ta o'tkazma", 'bad'); return false; }
+    const id = ++xseq; game.addMoney(-n, `O'tkazma → ${m.name}`); xfer.set(id, { n, pid, t: performance.now(), kind: 'mt' }); sendTo(m, { t: 'mt', id, n }); game.audio.sfx('coin'); toast(`💸 ${N(m)}ga ${som(n)} so'm yuborilmoqda…`); changed(); return true;
+  };
+  function onMoney(m, d) {
+    const n = d.n, id = d.id | 0; if (!Number.isInteger(n) || n < 1 || n > MAXT || !rl(m, 'mtr', 6, 60000)) return sendTo(m, { t: 'mr', id, ok: 0, why: "O'tkazma qabul qilinmadi" });
+    gift(n, `O'tkazma ← ${m.name}`); sendTo(m, { t: 'mr', id, ok: 1, n }); game.audio.sfx('coin'); toast(`💸 ${N(m)} sizga ${som(n)} so'm o'tkazdi`, 'gold'); addLog(`${m.name} sizga ${som(n)} so'm o'tkazdi`);
+  }
+  function onXferRes(m, d) { // o'tkazma yoki stol hisobi javobi
+    const id = d.id | 0, p = xfer.get(id); if (!p || p.pid !== m.pid) return; xfer.delete(id);
+    if (d.ok) toast(p.kind === 'mt' ? `✓ ${N(m)}ga ${som(p.n)} so'm o'tkazildi` : `${N(m)}: «Rahmat!» 🍵`, 'good');
+    else { gift(p.n, p.kind === 'mt' ? "O'tkazma qaytdi" : 'Choyxona: qaytarildi'); toast(`${esc(String(d.why || 'Rad etildi').slice(0, 80))} — ${som(p.n)} so'm qaytdi`, 'bad'); }
+    changed();
+  }
+  setInterval(() => { const t = performance.now(); for (const [id, p] of xfer) if (t - p.t > 12000) { xfer.delete(id); gift(p.n, p.kind === 'mt' ? "O'tkazma qaytdi" : 'Choyxona: qaytarildi'); toast(`Do'stingiz javob bermadi — ${som(p.n)} so'm qaytdi`, 'bad'); } }, 1000);
+
+  // ---------- 5. "Shu yerga kel" belgisi ([8]) ----------
+  const pings = new Map(); // pid → { x, z, t }
+  C.ping = () => {
+    if (!C.room) return false; if (!rl(C, 'pgq', 1, 2500)) { toast('Biroz kuting'); return false; }
+    const [x, z] = myPos(), d = { t: 'pg', x: r2(x), z: r2(z) }; bcast(d); pings.set(C.myId(), { x: d.x, z: d.z, t: performance.now() });
+    game.audio.sfx('check'); toast("📍 Do'stlarga «Shu yerga kel!» belgisi yuborildi"); changed(); return true;
+  };
+  function onPing(m, d) {
+    if (!num([d.x, d.z], 2) || Math.abs(d.x) > 3300 || Math.abs(d.z) > 3300 || !rl(m, 'pgr', 3, 5000)) return;
+    pings.set(m.pid, { x: d.x, z: d.z, t: performance.now() }); game.audio.sfx('check'); toast(`📍 ${N(m)}: «Shu yerga kel!» — xaritada belgi`, 'gold');
+    if (!game.way && !game.act && !(IS() && IS().cur) && !C.job) { game.setWaypoint(d.x, d.z); game.way.ping = 1; } changed();
+  }
+  C.pingList = () => { const t = performance.now(), out = []; for (const [pid, p] of pings) { const me = pid === C.myId(), m = C.members.get(pid); if (!me && !m) continue; out.push({ pid, me, name: me ? C.myName() : m.name, slot: me ? C.room.slot : m.slot, x: p.x, z: p.z, ago: Math.round((t - p.t) / 1000) }); } return out; };
+  C.goPing = (pid) => { const p = pings.get(pid); if (!p) return false; game.setWaypoint(p.x, p.z); game.way.ping = 1; toast('Yo\'l ko\'rsatildi 📍', 'good'); return true; };
+  function pingDots(dots) {
+    const t = performance.now(); let i = 0;
+    for (const [pid, p] of pings) { if (t - p.t > 90000) { pings.delete(pid); continue; } const me = pid === C.myId(), m = C.members.get(pid); if (!me && !m) { pings.delete(pid); continue; }
+      const slot = me ? C.room.slot : m.slot, nm = me ? 'Siz' : m.name; dots.push([p.x, p.z, SLOT_COLORS[slot % 4], '📍 ' + nm, pid]); if (i < pingBeams.length) { const b = pingBeams[slot % 4]; beamAt(b, p.x, p.z); b._used = true; } i++; }
+    for (const b of pingBeams) { if (!b._used) b.visible = false; b._used = false; }
+  }
+
+  // ---------- umumiy: xabarlar, chiqish, kadr ----------
+  function birgaData(m, d) {
+    switch (d.t) {
+      case 'rq': onRideReq(m); break; case 'ra': onRideAns(m, d); break;
+      case 'rx': if (C.pax.delete(m.pid)) { toast(`${N(m)} mashinadan tushdi`); changed(); } break;
+      case 'rk': if (C.ride && C.ride.pid === m.pid) C.rideOff(`${m.name} mashinadan tushdi — siz ham tushdingiz`); break;
+      case 'ji': onJobInv(m, d); break; case 'jq': onJobReq(m, d); break; case 'jw': onJobWel(m, d); break; case 'js': onJobState(m, d); break;
+      case 'ja': onJobAct(m, d); break; case 'jr': onJobRes(m, d); break; case 'jp': onJobPay(m, d); break; case 'je': onJobEnd(m, d); break;
+      case 'jl': if (C.job && C.job.own && C.job.team.delete(m.pid)) { C.job.carry.delete(m.pid); toast(`${N(m)} ishdan chiqdi`); jobSig = ''; changed(); } break;
+      case 'tb': onTab(m, d); break; case 'tq': onTabPay(m, d); break; case 'tr': case 'mr': onXferRes(m, d); break; case 'mt': onMoney(m, d); break;
+      case 'pg': onPing(m, d); break;
+    }
+  }
+  function birgaDrop(m) { // do'st chiqdi / aloqa uzildi
+    if (C.ride && C.ride.pid === m.pid) C.rideOff(`${m.name} bilan aloqa uzildi — mashinadan tushdingiz`);
+    if (rideReq && rideReq.pid === m.pid) rideReq = null; C.pax.delete(m.pid); pings.delete(m.pid);
+    if (C.job && C.job.own) { C.job.team.delete(m.pid); C.job.carry.delete(m.pid); } else if (C.job && C.job.owner === m.pid) jobEnd(`${m.name} chiqib ketdi — birga ish tugadi · ulushingiz ${som(C.job.got)} so'm`);
+    if (C.jobInv && C.jobInv.pid === m.pid) C.jobInv = null;
+    if (m.dm) for (const o of m.dm) if (o) { if (o.m.parent) o.m.parent.remove(o.m); o.m.geometry.dispose(); } m.dm = null;
+  }
+  function birgaReset() { // xonadan chiqish
+    if (C.ride) C.rideOff(); rideReq = null; C.pax.clear(); if (C.job && !C.job.own) jobEnd('Xonadan chiqdingiz'); C.job = null; C.jobInv = null; jobLast = null; pings.clear();
+    for (const b of [...jobBeams, ...pingBeams]) b.visible = false; jh.style.display = 'none'; tab.sig = '';
+    for (const md of paxModels) { if (md._pax) { for (const o of md._pax.values()) dropPax(o); md._pax.clear(); } } paxModels.clear();
+  }
+  let sitShift = false;
+  function birgaFrame(dt) {
+    syncPax(); rideFrame(dt); paxFrame(); ownerJobFrame(dt); cafeFrame(dt);
+    // bir joyga (topchan, divan) ikki kishi o'tirsa — kattaroq id'li biroz yonga suriladi (ustma-ust tushmasin)
+    if (pl.onFoot && pl.sit && !C.ride) { if (!sitShift) for (const m of C.members.values()) { const R = m.remote; if (m.pid > C.myId() || !R.foot || !R.fshown) continue;
+      if (Math.hypot(R.fpos.x - pl.p[0], R.fpos.z - pl.p[2]) < 0.45 && Math.abs(R.fpos.y - pl.p[1]) < 1) { pl.p[0] += Math.cos(pl.yaw) * 0.62; pl.p[2] -= Math.sin(pl.yaw) * 0.62; sitShift = true; break; } } } else sitShift = false;
+  }
+  // [E] takliflari va kadr (living.js L.extra / L.useE / L.update — eng tashqi o'ram)
+  { const L = game.live, ex0 = L.extra, ue0 = L.useE, up0 = L.update;
+    L.extra = (offer, px, pz, p) => { if (C.ride) return; ex0(offer, px, pz, p); if (!C.room || IN.inside) return;
+      if (pl.onFoot) for (const m of C.members.values()) { const R = m.remote; if (!R.shown || R.foot || !R.model || !seatsOf(R.model)) continue; const d = Math.hypot(R.pos.x - px, R.pos.z - pz) - R.model.spec.len / 2; if (d < 2.2) offer(d + 0.05, `<kbd>E</kbd> ${N(m)}ning mashinasiga o'tirish 🚗`, () => C.rideReq(m.pid)); }
+      if (!C.job && !(IS() && IS().cur)) for (const m of C.members.values()) { const j = m.job; if (!j || !j.open || performance.now() - j.t > 4000) continue; const [x, z] = m.remote.where(), d = Math.hypot(x - px, z - pz); if (d < 3) offer(d, `<kbd>E</kbd> ${N(m)}ning «${JOBS[j.id][1]}» ishiga qo'shilish 🤝`, () => C.jobJoin(m.pid)); }
+      jobOffers(offer, px, pz); };
+    L.useE = () => { if (C.ride) return; const p = carJob(); if (p) { C.jobAct('non', { x: p[0], z: p[1] }); return; } ue0(); };
+    L.update = (dt) => { up0(dt); if (!C.room) return; memberJobFrame();
+      if (C.ride) { const m = C.members.get(C.ride.pid); L.prompt = `<kbd>F</kbd> ${m ? N(m) + 'ning mashinasidan' : 'Mashinadan'} tushish`; } else if (!L.prompt && carJob()) L.prompt = '<kbd>E</kbd> Nonni derazadan uzatish 🍞 (birga)'; };
+  }
+  // choyxona menyusiga "Do'stlar stolingizda" kartasi (oyna qayta chizilsa ham qoladi)
+  game.hooks.push(function wrapCafe() {
+    const ui = game.ui; if (!ui || !ui.s_choyxona || ui.s_choyxona._coop) return; const s0 = ui.s_choyxona;
+    ui.s_choyxona = function (w, d, btn, x) { s0.call(this, w, d, btn, x); if (!C.room) return; const card = document.createElement('div'); card.className = 'card coop-tab'; card.style.marginTop = '10px';
+      const draw = () => { const ms = C.tableMates(); if (!ms.length) { card.innerHTML = `<h4>👥 Do'stlar bilan</h4><p class="sub">Do'stingiz shu stolga o'tirsa, uning hisobini ham to'lay olasiz.</p>`; return; }
+        const tot = ms.reduce((a, m) => a + m.tb.sum, 0);
+        card.innerHTML = `<h4>👥 Stolingizda: ${ms.map((m) => esc(m.name)).join(', ')}</h4><p>${ms.map((m) => `${esc(m.name)}: ${m.tb.ds.map((id) => MENU.find((q) => q[0] === id)[2]).join(' ') || '—'} · hisob ${som(m.tb.sum)} so'm`).join('<br>')}</p>`;
+        const b = document.createElement('button'); b.textContent = tot ? `Men to'layman — ${som(tot)} so'm` : "Men to'layman"; b.disabled = !tot || V.money() < tot; b.onclick = () => { if (C.payTable()) draw(); }; card.appendChild(b); };
+      const keep = () => { if (!w.contains(card)) w.appendChild(card); }; draw(); keep(); new MutationObserver(keep).observe(w, { childList: true }); const iv = setInterval(() => { if (!w.isConnected) return clearInterval(iv); draw(); }, 1500); };
+    ui.s_choyxona._coop = true;
+  });
 
   // ---- har kadr ----
   const flags = () => { const g = game, foot = g.player.onFoot, s = g.input.state, m = g.carModel; let f = 0; if (m.spot && m.spot.intensity > 0) f |= 1; if (!foot && ((s.brake > 0.1 && g.car.fwd > 1) || s.handbrake)) f |= 2; if (foot) f |= 4; if (g.car.nitroOn) f |= 8; return f; };
@@ -586,10 +952,12 @@ export function initCoop(game) {
     const v = g.carModel.id, k = g.carModel.paintMat.color.getHex(), hat = g.state.hat || null, lk = lookCode(g.state.look), mk = v + k + hat + lk; if (mk !== metaK || ++metaN >= 10) { metaK = mk; metaN = 0; d.v = v; d.k = k; d.hat = hat; if (lk) d.lk = lk; }
     if (foot) { d.h = [r2(pl.p[0]), r2(pl.p[1]), r2(pl.p[2]), r3(pl.yaw), r2(pl.v[0]), r2(pl.v[2]), r2(pl.v[1]), pl.grounded ? 1 : 0, pl.swim ? 1 : 0]; d.a = pl.anim || 'idle'; }
     if (g.coopRace && a && a.def.type === 'race') d.rp = (a.my || 0) + a.cpi * 0.001;
+    if (C.ride) { d.ri = C.ride.pid; d.se = C.ride.seat; } // do'st mashinasida yo'lovchi
     return d;
   }
   // boshqa o'yinchilar transporti bilan yumshoq to'qnashuv (faqat o'z transportimiz suriladi)
   function bump() {
+    if (C.ride) return; // yo'lovchi do'st mashinasi ichida
     const g = game, car = g.car, pl = g.player, foot = pl.onFoot, mr = car.spec.wid * 0.5 + 0.35;
     for (const m of C.members.values()) {
       const R = m.remote; if (!R.shown || !R.model) continue; const rr = R.model.spec.wid * 0.5 + 0.35;
@@ -604,9 +972,10 @@ export function initCoop(game) {
     if (!C.room) { if (game.netDots) game.netDots = null; return; }
     const now = performance.now() / 1000, n = C.members.size;
     for (const m of C.members.values()) m.remote.update(dt, now);
+    birgaFrame(dt); // yo'lovchilar o'rindiqda, yo'lovchi kamerasi joyi, birga ish, choyxona, belgilar
     if (game.mode === 'play' || game.mode === 'ui') bump();
     // xaritadagi nuqtalar va poygadagi o'rin
-    const dots = []; for (const m of C.members.values()) if (m.remote.shown) { const [x, z] = m.remote.where(); dots.push([x, z, SLOT_COLORS[m.slot % 4], m.name, m.pid]); } game.netDots = dots;
+    const dots = []; for (const m of C.members.values()) if (m.remote.shown) { const [x, z] = m.remote.where(); dots.push([x, z, SLOT_COLORS[m.slot % 4], m.name, m.pid]); } pingDots(dots); game.netDots = dots;
     if (game.coopRace && game.act && C.race) { const a = game.act, my = (a.my || 0) + a.cpi * 0.001; let ahead = 0; for (const p of C.race.pids) { if (p === peer.id) continue; const m = C.members.get(p); if (C.race.fin[p] != null) ahead++; else if (m && m.remote.rp > my) ahead++; } game.coopRace.place = 1 + ahead; }
     if (!n || !peer) return;
     { const g = game, pl = g.player, idle = (pl.onFoot ? Math.hypot(pl.v[0], pl.v[1], pl.v[2]) < 0.05 && !pl.emote && (pl.lock || 0) <= 0 : Math.hypot(g.car.v[0], g.car.v[1], g.car.v[2]) < 0.05), R = idle ? RATE_IDLE : RATE_MOVE;
