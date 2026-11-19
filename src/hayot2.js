@@ -24,6 +24,9 @@ export const HAIRS = [['oddiy', 'Oddiy', 30, 0], ['kalta', 'Kalta', 40, 1], ['ta
 export const HAIRC = [[0x2a1d16, "To'q jigarrang"], [0x15110e, 'Qora'], [0x8a5a2a, 'Malla'], [0xd8b060, 'Sariq'], [0xb8bcc4, 'Kumush']];
 export const BEARDS = [['yoq', "Soqolsiz", 0, 0], ['moylov', "Mo'ylov", 1, 0], ['soqol', 'Soqol', 0, 1], ['ikkala', "Soqol va mo'ylov", 1, 1]];
 const DEF_LOOK = { shirt: 0xf0b83a, style: 'kalta', pants: 0x2f4a78, hs: 0, hair: 0x2a1d16, beard: 'yoq' };
+// ko'rinish (st.look) → makeRig opsiyalari; transport haydovchisi va onlayn do'stlar modeli ham shundan quriladi (hayot3.js, coop.js)
+export const lookRigOpts = (lk0) => { const lk = Object.assign({}, DEF_LOOK, lk0 || {}), sty = (STYLES.find((q) => q[0] === lk.style) || STYLES[0])[3], bd = BEARDS.find((q) => q[0] === lk.beard) || BEARDS[0];
+  return { shirt: lk.shirt, pants: lk.pants, hair: lk.hair, skin: 0xdcae86, seed: 7, height: 1, build: 1, sleeve: sty.sleeve, vest: sty.vest || undefined, stache: !!bd[2], beard: !!bd[3], hairStyle: lk.hs, player: true }; };
 const som = (n) => Math.round(n).toLocaleString('ru-RU');
 const hex = (n) => '#' + n.toString(16).padStart(6, '0');
 
@@ -35,8 +38,7 @@ export function initHayot2(game) {
 
   // ================= QAHRAMON KO'RINISHI =================
   const lookOf = () => Object.assign({}, DEF_LOOK, st.look || {});
-  const rigOpts = (lk) => { const sty = (STYLES.find((q) => q[0] === lk.style) || STYLES[0])[3], bd = BEARDS.find((q) => q[0] === lk.beard) || BEARDS[0];
-    return { shirt: lk.shirt, pants: lk.pants, hair: lk.hair, skin: 0xdcae86, seed: 7, height: 1, build: 1, sleeve: sty.sleeve, vest: sty.vest || undefined, stache: !!bd[2], beard: !!bd[3], hairStyle: lk.hs, player: true }; };
+  const rigOpts = lookRigOpts;
   // qahramon modelini yangi kiyimda qayta quradi (ranglar teri uchlariga pishirilgan — boshqa yo'l yo'q); holati, shlyapasi, asbobi saqlanadi
   const restyle = (lk, hat = st.hat) => {
     const old = pl.rig, r = makeRig(rigOpts(lk)); r.root.visible = old.root.visible; r.root.position.copy(old.root.position); r.root.rotation.copy(old.root.rotation); scene.add(r.root);

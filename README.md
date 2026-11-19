@@ -277,6 +277,18 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | **Telefon** | **4** (yoki yuqoridagi «Telefon» tugmasi): Xarita, Bank (balans va so'nggi pul harakatlari), Kontaktlar (taksi — transportingizni yoningizga 60 so'm; mexanik Rustam — joyida ta'mir; onam; dispetcher), Kamera (surat rejimi), Ob-havo va soat, Ishlar (yo'l ko'rsatish), Musiqa, Uyim |
 | **Ko'cha** | muzqaymoqchi (8 so'm, **E**), kaptarlarga don sepish (to'planib keladi; yugursangiz uchib ketadi), futbol maydoni (to'pni yurib surasiz, **E** — tepish, gol — 15 so'm), avtobus bekati (o'tirib kutasiz, avtobus keladi — **E**, 15 so'mga istalgan manzilga), o'tayotgan mashinaga **3** bilan qo'l silkisangiz signal chaladi |
 
+### 2.12. Kundalik hayot 3 (biznes, uy kengaytmalari, charchoq va kun rejasi, qishloq topshiriqlari)
+
+| Imkoniyat | Qanday |
+|---|---|
+| **O'z biznesingiz** | Bog'iston do'koni (12 000), kiyim do'koni (16 000) yoki choyxona (22 000 so'm): ichkarida peshtaxta yonida **E** → «sotib olish». So'ng o'yin vaqti o'tishi bilan (uxlaganda ham) savdo kassaga yig'iladi: kun vaqtiga qarab mijozlar oqimi o'zgaradi (choyxona — tushlik va kechqurun gavjum). **Boshqaruv** (o'sha joyda **E** yoki telefon → 🏪 Biznesim): kassani olish (faqat biznesda) yoki «avto-bank» (har soatda bankka, 5 % komissiya), tovar keltirish (tovar tugasa savdo deyarli to'xtaydi), ishchi yollash (3 tagacha, har biri +35 %, soatbay maosh), daraja 1→5 (savdo ×3,6, tashqarida yangi bezaklar: «★ Sizniki» belgisi, gul tuvaklar, skameyka, soyabonli stol, rangli chiroqlar), reklama (12 soat +40 %). Biznes oldida mijozlar yurib kirib-chiqadi va o'tiradi — daraja oshgani sari ko'payadi; choyxona ichida qo'shimcha mehmonlar va yollangan ishchi ko'rinadi. Har bir pul harakati telefon bankida («Biznes: …») va biznes daftarida |
+| **Uy kengaytmalari** | Uy daftari (**E** uyda stol yonida yoki uy oldida) → «🏗 Uy kengaytmalari»: **mehmon xonasi** (4 500, kulbadan: ikkinchi karavot — unda ham uxlasa bo'ladi, shkaf, gilam), **oshxonani yangilash** (3 500, hovli uydan: duxovka — uy somsasi, mevali pirog; samovar — choy tetiklashtiradi), **garaj** (6 000, uy yonida: transportni almashtirsangiz hozirgisi garajda turadi va 4 o'yin soatida o'zi ta'mirlanadi; ta'mir — mexanikdan 2 marta arzon, bak to'ldirish 1,5 so'm/%) |
+| **Hovli jihozlari** | Katta topchan (o'tirsangiz tetiklik tiklanadi), uzum ishkomi (har 12 soatda +4 uzum), mangal (20 so'mga shashlik ×2), tandir (har 16 soatda 3 non; hovli uyda o'zi bor), mevali bog' (olma, o'rik, anor — har 12 soatda +6 meva, pishganda daraxtda ko'rinadi), girlyanda (kechqurun rang-barang yonadi). Pishgan taomlar (somsa, pirog, shashlik) **Y** bilan yeyiladi |
+| **Tetiklik (charchoq)** | Piyoda panelda 😴 Tetiklik: uyg'oq vaqtda asta kamayadi (~20 o'yin soatida), yugursangiz tezroq, o'tirsangiz biroz tiklanadi, choy ichsangiz +6 (samovar +20). 25 % dan past: biroz sekin yuriladi, ekran chetlari qorayadi va ba'zan ko'z yumiladi, esnash eslatmalari, transportda rul biroz kechikib javob beradi (faqat kiritish — fizika o'zgarmaydi). Karavotda uxlasangiz (yoki chodirda dam olsangiz) — 100 % |
+| **Ish jadvali va kun rejasi** | Non yetkazish 06:00–11:00, taksi 07:00–22:00, dala 08:00–18:00 — vaqtida boshlasangiz to'lov +30 % («Ish vaqti bonusi»), boshqa vaqtda ham ishlash mumkin (bonussiz). Telefon → 📅 Bugungi reja (yoki **7**): tetiklik, hurmat, ishlar (hozir vaqtimi), tushlik, biznes eslatmalari (tovar kam, kassa to'lyapti), topshiriqlar, uyqu vaqti; qatorni bossangiz — xaritada yo'l |
+| **Qishloq topshiriqlari** | Ustida sariq «!» belgisi bor aholi bilan **E** — iltimos (10 xil): kampirning sumkasini uyiga olib borish, boshqa qishloqqa xat yetkazish, qochgan echkini topib yetaklab kelish (ortingizdan ergashadi), uchta tovuqni ushlash, quduqdan chelakda suv olib kelish, shamol yiqitgan to'siqni tuzatish, mashinada bozorga olib borish, ikkita non, to'rtta o'tin yoki bitta baliq olib kelish. Nishon — yashil nur va GPS, tepada topshiriq paneli, **X** — voz kechish. Mukofot: pul va 🤝 **hurmat**; har 10 hurmatda sovg'a va unvon (Yaxshi qo'shni → Hurmatli inson → Mahallaning g'ururi → Oqsoqol) |
+| **Haydovchi ko'rinishi** | Velosiped, skuter, mototsikl va boshqa ochiq transportda haydovchi endi qahramonning kiyimi, sochi, soqoli (dubulg'a bo'lmasa — shapkasi) bilan; kiyim almashsa darhol qayta quriladi. Onlayn do'stlar ham sizning kiyim-sochingizni ko'radi (holat paketida ixcham ko'rinish kodi) |
+
 ---
 
 ## 3. Boshqaruv
@@ -307,6 +319,7 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | B | harakatlar menyusi |
 | 1 / 2 / 3 | raqs / dutor / salom |
 | 4 | telefon |
+| 7 | telefon — bugungi reja |
 | L / Z | fonar / durbin |
 
 | Umumiy | |
@@ -358,6 +371,11 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `hayot.js` | kundalik hayot: chanqoq, uy ichidagi harakatlar, oshxona/muzlatkich/do'kon oynalari, NPC suhbati, do'kon binolari, HUD ko'rsatkichlari |
 | `hayot2.js` | kundalik hayot 2: choyxona, kiyim do'koni, sartaroshxona (binolar va ichki makonlar `interior.js` qurollari — `IN.lib`, `IN.X` — bilan), ofitsiant, qahramon ko'rinishi (`restyle` — kiyim/soch o'zgarsa modelni qayta quradi) |
 | `ish.js` | ishlar (non, taksi smenasi, dala), pul tarixi (`game.addMoney(n, sabab)`), telefon oynasi va xizmatlari |
+| `hayot3.js` | kundalik hayot 3 kirish nuqtasi; ikki g'ildirakli transport haydovchisini o'yinchi ko'rinishida qayta qurish |
+| `kun.js` | o'yin soati hisobi (`game.kun.pass/on` — o'tgan vaqt tinglovchilarga), tetiklik va uning ta'siri, ish jadvali bonusi, telefon «Bugungi reja» |
+| `biznes.js` | biznes: sotib olish, daromad (yarim soatlik bo'laklarda), kassa/avto-bank, tovar, ishchilar, daraja, reklama, tashqi bezaklar va mijozlar, telefon «Biznesim» |
+| `uy2.js` | uy kengaytmalari: mehmon xonasi va oshxona (`interior.js` ilgaklari `IN.homeRooms/homeFurnish`), garaj, hovli jihozlari |
+| `topshiriq.js` | qishloq topshiriqlari (10 tur), hurmat, «!» belgilari, topshiriq paneli |
 | `kocha.js` | ko'cha: muzqaymoqchi, kaptarlar, futbol, avtobus bekati, mashinaga qo'l silkish |
 | `fuel.js` | yoqilg'i: sarf, shoxobchalar (nasos, xodim), quyish, kanistr, gaz pedalini cheklash (`input.poll` ustida — `physics.js` o'zgarmagan) |
 | `props.js` | daraxtlar, toshlar, butalar (InstancedMesh + LOD), yaqin atrofdagi o't |
@@ -429,7 +447,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 `localStorage`, kalit `safar_save_v2`. Yuklashda saqlangan holat standart holat (`defState()` — `game.js`) ustiga qo'shiladi, shuning uchun **yangi maydon qo'shilganda eski saqlovlar buzilmaydi** — faqat `defState()` ga standart qiymat yozish kerak. v1 saqlovlari ham ochiladi.
 
-Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
+Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `soat` (o'tgan o'yin soatlari), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
 
 Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
@@ -471,7 +489,8 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `npm run test:save` | v1 saqlovi ochiladi; yangi holat saqlanib, qayta yuklanadi | ~40 s |
 | `npm run test:life` | kundalik hayot: uyga kirish, uxlash, o'tirish/turish, pishirish va stolda ovqatlanish, suv ichish, do'kon xaridi, yoqilg'i quyish, bo'sh bak, NPC suhbati | ~1 daq |
 | `npm run test:life2` | kundalik hayot 2: choyxona buyurtmasi va ovqatlanish, kiyim sotib olish/qaytishi va saqlanishi, sartarosh, 3 ta ish (non, taksi, dala), telefon (bank, taksi, mexanik), muzqaymoq, kaptarlar, futbol goli, avtobus | ~3 daq |
-| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life) | ~5–6 daq |
+| `npm run test:life3` | kundalik hayot 3: tetiklik va uyqu, ish jadvali bonusi, «Bugungi reja», biznes (sotib olish, daromad, kassa, tovar, ishchi, daraja, mijozlar, telefon), uy kengaytmalari va hovli, garaj, haydovchi ko'rinishi, 10 tur topshiriq, saqlov va qayta yuklash | ~4 daq |
+| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, life3) | ~10 daq |
 
 Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuterda Google Chrome o'rnatilgan bo'lishi kerak). Xato bo'lsa yoki `TEST … FAIL` satri chiqsa — chiqish kodi 1.
 
@@ -590,6 +609,8 @@ Ma'lum cheklovlar:
 - Litsenziya tanlanmagan (`package.json` da `UNLICENSED`).
 
 ---
+
+- **Kundalik hayot 3:** biznes daromadi, hosil va tetiklik o'yin soatiga bog'langan — ekransiz sinovda vaqt sun'iy yuritilgan (`G.kun.pass`), haqiqiy o'yindagi muvozanat (narxlar, tetiklik tezligi) egasi tomonidan sinab ko'rilishi kerak. Faol topshiriq saqlanmaydi (sahifa yangilansa bekor bo'ladi), bajarilganlar va hurmat saqlanadi. Mehmon xonasi, garaj va hovli jihozlari onlayn do'stga (mehmon rejimida) ko'rsatilmaydi. Do'st kiyim-sochi faqat yangi versiyadagi o'yinchilar o'rtasida ko'rinadi.
 
 ## 11. Keyingi g'oyalar
 

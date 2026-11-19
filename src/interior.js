@@ -188,6 +188,7 @@ export function initInterior(game) {
       doors = [{ ax: 'z', c: -B, a: -A + 0.7, b: -A + 1.7, exit: 1 }, { ax: 'z', c: B, a: -A + 0.9, b: -A + 1.9 }];
       if (E) { rooms.push({ t: 'kit', x0: C, z0: -B + bathD, x1: C + E, z1: Z1, floor: L.kfloor }, { t: 'bath', x0: C, z0: -B, x1: C + E, z1: -B + bathD, floor: L.bfloor });
         const zk = (-B + bathD + B) / 2; doors.push({ ax: 'x', c: C, a: zk - 0.5, b: zk + 0.5 }, { ax: 'x', c: C, a: -B + bathD / 2 - 0.45, b: -B + bathD / 2 + 0.45 }); }
+      if (IN.homeRooms) IN.homeRooms(lvl, L, rooms, doors); // qo'shimcha xonalar (uy2.js: mehmon xonasi)
       buildShell(I, g, gw, gl, rooms, doors, h, L.wall, L.ceil, o);
       // --- mehmonxona ---
       const sx = (C - A) / 2 + 0.9, sofaW = Math.min(2.2, A + C - 2.6);
@@ -255,6 +256,7 @@ export function initInterior(game) {
         g.color(0xdfeef2); g.box((kx0 + kx1) / 2, 0.7, bz0 + 0.07, E - 0.1, 1.4, 0.02); g.box(kx1 - 0.07, 0.7, (bz0 + bz1) / 2, 0.02, 1.4, bathD - 0.1);
       }
     }
+    if (IN.homeFurnish && !L.tent) IN.homeFurnish(I, g, gw, gl, lamps, lvl, L, rooms); // qo'shimcha xona jihozlari, oshxona yangilanishi (uy2.js)
     I.rooms = rooms; I.doors = doors;
     finish(I, g, gw, gl, lamps, lvl === 0 ? 0.92 : 1.02);
     I.grp.visible = IN.inside === 'home';
@@ -324,7 +326,7 @@ export function initInterior(game) {
   };
   IN.cur = cur;
   IN.roomAt = (x, z) => { const I = cur(); if (!I) return null; const lx = x - I.o[0], lz = z - I.o[2]; for (let i = 0; i < I.rooms.length; i++) { const r = I.rooms[i]; if (lx >= r.x0 - 0.05 && lx <= r.x1 + 0.05 && lz >= r.z0 - 0.05 && lz <= r.z1 + 0.05) return i; } return null; };
-  IN.rebuildHome = () => { if (H.lvl !== game.state.home.lvl) buildHome(game.state.home.lvl); };
+  IN.rebuildHome = (force) => { if (force || H.lvl !== game.state.home.lvl) buildHome(game.state.home.lvl); };
 
   // ---------- har kadr: yorug'lik, deraza rangi, TV, sotuvchi, yopiq joy kamerasi ----------
   const _c = new THREE.Color(), camT = new THREE.Vector3(), camW = new THREE.Vector3(), look = new THREE.Vector3();

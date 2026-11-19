@@ -45,7 +45,7 @@ export class Player {
     this.swim = wy > gy0 + 1.2 && p[1] < wy - 0.9;
     const tired = st.energy <= 0.5; if (tired) this.tiredT = 2.5; if (this.tiredT > 0) { this.tiredT -= dt; run = false; }
     const moving = mx !== 0 || mz !== 0; run = run && moving && !this.swim;
-    const vmax = this.swim ? 2.3 : run ? 7.4 : 3.7;
+    const vmax = (this.swim ? 2.3 : run ? 7.4 : 3.7) * (this.speedMul || 1); // speedMul — charchoqda biroz sekinroq (kun.js)
     const tvx = mx * vmax, tvz = mz * vmax, acc = this.grounded || this.swim ? 16 : 5;
     v[0] += clamp(tvx - v[0], -acc * dt, acc * dt); v[2] += clamp(tvz - v[2], -acc * dt, acc * dt);
     if (moving) this.yaw += angDiff(Math.atan2(mx, mz), this.yaw) * Math.min(1, dt * 11);
