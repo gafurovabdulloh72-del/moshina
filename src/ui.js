@@ -14,6 +14,7 @@ const stars = (n, max = 3) => `<span class="stars">${'★'.repeat(n)}<i>${'★'.
 const TYPE = { del: 'Yetkazish', frag: "Mo'rt yuk", taxi: "Yo'lovchi", col: "Yig'ish", multi: 'Pochta', race: 'Poyga', drift: 'Drift', smash: 'Sindirish', radar: 'Radar', jump: 'Sakrash' };
 const WHY = { time: 'Vaqt tugadi', cargo: 'Yuk sindi', comfort: "Yo'lovchi tushib ketdi", wreck: 'Transport ishdan chiqdi', sunk: 'Suvga botdingiz', slow: 'Bronza vaqtiga yetmadi', low: "Ochko yetarli bo'lmadi", left: 'Maydonni tark etdingiz' };
 const VICON = { velo: '🚲', skuter: '🛵', kart: '🏎', moto: '🏍', kvadro: '🛺', xetch: '🚗', traktor: '🚜', sedan: '🚘', pikap: '🛻', jip: '🚙', furgon: '🚐', bagi: '🏜', ralli: '🏁', yuk: '🚚', avtobus: '🚌', kupe: '🚗', otochar: '🚒', muskul: '💪', limuzin: '🎩', monstr: '👹', super: '⚡', bolid: '🏎' };
+const BAR_ICON = { M: '🗺', I: '🎒', Tab: '📘', C: '🎥', P: '📷', O: '🌐', 4: '📱', 6: '📅', U: '💬', 5: '🎙', Esc: '☰' }; // yuqori qator: sensorli ekranda ikonka-plitkalar
 const MPX = 0.25; // xarita: 1 m = 0.25 px (1600 px)
 const som = (n) => Math.round(n).toLocaleString('ru-RU');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -88,7 +89,7 @@ export class UI {
     joy.addEventListener('pointermove', (e) => { if (e.pointerId === jid) jmove(e); });
     const jend = (e) => { if (e.pointerId !== jid) return; jid = null; t.jx = t.jy = 0; knob.style.transform = ''; joy.classList.remove('act'); };
     joy.addEventListener('pointerup', jend); joy.addEventListener('pointercancel', jend);
-    this.touchOn = () => { tc.classList.add('on'); hud.classList.add('touch'); };
+    this.touchOn = () => { tc.classList.add('on'); hud.classList.add('touch'); document.documentElement.classList.add('touch'); };
     addEventListener('touchstart', this.touchOn, { once: true, passive: true });
   }
   // Interfeysni yashirish (surat rejimi) — hech qachon "yo'qolib qolmaydi": yozuv turadi va 20 soniyadan keyin o'zi qaytadi
@@ -134,7 +135,7 @@ export class UI {
   // tugmalar qatorini chizish (faqat tarkib o'zgarganda)
   drawBar(box, items, key) {
     const sig = items.map((b) => b.code + b.text).join('|'); if (this[key] === sig) return; this[key] = sig;
-    box.innerHTML = items.map((b) => `<button tabindex="-1" class="ab${b.hold ? ' hold' : ''}" data-code="${b.code}" title="${b.text} (${b.key})"><kbd>${b.key}</kbd><span>${b.text}</span></button>`).join('');
+    box.innerHTML = items.map((b) => `<button tabindex="-1" class="ab${b.hold ? ' hold' : ''}" data-code="${b.code}" title="${b.text} (${b.key})"><kbd>${b.key}</kbd>${BAR_ICON[b.key] ? `<i class="ic">${BAR_ICON[b.key]}</i>` : ''}<span>${b.text}</span></button>`).join('');
   }
   drawDmg() {
     const d = this.g.damage, key = `${Math.round(d.zone.front / 4)},${Math.round(d.zone.rear / 4)},${Math.round(d.zone.left / 4)},${Math.round(d.zone.right / 4)},${Math.round(d.engine / 4)},${d.tires.join('')}`;
@@ -234,6 +235,7 @@ export class UI {
     const col = el('div'); col.style.cssText = 'display:flex;flex-direction:column;gap:8px'; w.appendChild(col);
     col.appendChild(btn('▶  Davom etish', () => this.close()));
     col.appendChild(btn("🌐 Onlayn — do'stlar bilan", () => this.open('online'), 'sec'));
+    col.appendChild(btn('📅 Haftalik chellenj va nishonlar', () => this.open('hafta'), 'sec'));
     col.appendChild(btn('Xarita', () => this.open('map'), 'sec')); col.appendChild(btn('Sumka va topshiriqlar', () => this.open('bag'), 'sec')); col.appendChild(btn('Sayohat pasporti', () => this.open('progress'), 'sec'));
     col.appendChild(btn('Vaqtni almashtirish (dam olish)', () => this.open('rest'), 'sec'));
     col.appendChild(btn("Ustaxonaga evakuatsiya (200 so'm)", () => { this.close(); g.tow(); }, 'sec'));
@@ -308,9 +310,9 @@ export class UI {
           <div><h4 style="margin:0 0 6px">Tyuning <small style="font-weight:600;color:var(--mut)">(barcha transportlarga ta'sir qiladi)</small></h4>${UPG.map((u) => { const lv = st.up[u.id], mx = lv >= u.max, c = mx ? 0 : u.cost[lv]; return `<div class="card" style="margin-bottom:8px"><div class="meta"><h4>${u.name}</h4><span class="pips">${Array.from({ length: u.max }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></div><p>${u.desc}</p><button data-a="up:${u.id}" class="${mx ? 'sec' : ''}" ${mx || st.money < c ? 'disabled' : ''}>${mx ? 'Eng yuqori daraja' : `Yaxshilash — ${som(c)} so'm`}</button></div>`; }).join('')}</div></div>`;
       }
       w.innerHTML = h;
-      this.on({ tab: (a) => { this.gtab = +a; render(); }, fix: () => { const hp2 = d.health, c2 = Math.round(((100 - hp2) * 9 + d.tires.reduce((a, b) => a + b, 0) * 60) * Math.max(0.4, Math.sqrt(g.car.mass / 1500))); g.addMoney(-Math.min(c2, st.money)); d.repair(100); g.audio.sfx('repair'); g.save(); render(); },
-        paint: (id) => { const p = PAINTS.find((q) => q.id === id), own = st.paints.includes(id); if (!own) { if (st.money < p.cost) return g.toast('Pul yetarli emas', 'bad'); g.addMoney(-p.cost); st.paints.push(id); g.audio.sfx('buy'); } g.setPaint(id); g.save(); render(); },
-        up: (id) => { const u = UPG.find((q) => q.id === id), c = u.cost[st.up[id]]; if (st.money < c) return; g.addMoney(-c); st.up[id]++; g.applyUpgrades(); g.audio.sfx('buy'); g.save(); render(); },
+      this.on({ tab: (a) => { this.gtab = +a; render(); }, fix: () => { const hp2 = d.health, c2 = Math.round(((100 - hp2) * 9 + d.tires.reduce((a, b) => a + b, 0) * 60) * Math.max(0.4, Math.sqrt(g.car.mass / 1500))); g.addMoney(-Math.min(c2, st.money), 'Ustaxona: ta\'mir'); d.repair(100); g.audio.sfx('repair'); g.save(); render(); },
+        paint: (id) => { const p = PAINTS.find((q) => q.id === id), own = st.paints.includes(id); if (!own) { if (st.money < p.cost) return g.toast('Pul yetarli emas', 'bad'); g.addMoney(-p.cost, 'Ustaxona: bo\'yoq'); st.paints.push(id); g.audio.sfx('buy'); } g.setPaint(id); g.save(); render(); },
+        up: (id) => { const u = UPG.find((q) => q.id === id), c = u.cost[st.up[id]]; if (st.money < c) return; g.addMoney(-c, 'Tyuning: ' + u.name); st.up[id]++; g.applyUpgrades(); g.audio.sfx('buy'); g.save(); render(); },
         buy: (id) => { if (g.buyVehicle(id)) { g.pickVehicle(id, spot); render(); } }, pick: (id) => { g.pickVehicle(id, spot); g.audio.sfx('buy'); render(); } });
     };
     render();
@@ -369,9 +371,9 @@ export class UI {
         <h4 style="margin:12px 0 6px">Asboblar</h4>${TOOLS.map(([id, n, c, ds]) => `<div class="card" style="margin-bottom:6px;flex-direction:row;align-items:center"><div class="grow"><h4>${n}</h4><p>${ds}</p></div><button data-a="tool:${id}" class="${st.tools[id] ? 'sec' : ''}" ${st.tools[id] || st.money < c ? 'disabled' : ''}>${st.tools[id] ? '✓ Bor' : c + " so'm"}</button></div>`).join('')}</div></div>`;
       if (d && d.back) { const b = btn('← Orqaga', () => this.open(d.back[0], d.back[1]), 'sec'); b.style.marginTop = '10px'; w.appendChild(b); }
       this.on({ sell: (k) => { const n = L.sellAll(k === '1'); if (n) g.toast(`Sotildi: +${som(n)} so'm`, 'gold'); g.save(); render(); },
-        buy: (id) => { const it = SHOP.find((q) => q[0] === id); if (st.money < it[2]) return; g.addMoney(-it[2]); st.inv[id] = (st.inv[id] || 0) + it[3]; g.audio.sfx('buy'); render(); },
-        tool: (id) => { const it = TOOLS.find((q) => q[0] === id); if (st.tools[id] || st.money < it[2]) return; g.addMoney(-it[2]); st.tools[id] = 1; g.audio.sfx('buy'); g.toast(`${it[1]} sotib olindi!`, 'good'); g.save(); render(); },
-        hat: (id) => { const it = HAT_LIST.find((q) => q[0] === id); if (!st.hats.includes(id)) { if (st.money < it[2]) return; g.addMoney(-it[2]); st.hats.push(id); g.audio.sfx('buy'); } st.hat = st.hat === id ? null : id; g.player.setHat(st.hat); g.save(); render(); } });
+        buy: (id) => { const it = SHOP.find((q) => q[0] === id); if (st.money < it[2]) return; g.addMoney(-it[2], 'Bozor: ' + it[1]); st.inv[id] = (st.inv[id] || 0) + it[3]; g.audio.sfx('buy'); render(); },
+        tool: (id) => { const it = TOOLS.find((q) => q[0] === id); if (st.tools[id] || st.money < it[2]) return; g.addMoney(-it[2], 'Bozor: ' + it[1]); st.tools[id] = 1; g.audio.sfx('buy'); g.toast(`${it[1]} sotib olindi!`, 'good'); g.save(); render(); },
+        hat: (id) => { const it = HAT_LIST.find((q) => q[0] === id); if (!st.hats.includes(id)) { if (st.money < it[2]) return; g.addMoney(-it[2], 'Bozor: ' + it[1]); st.hats.push(id); g.audio.sfx('buy'); } st.hat = st.hat === id ? null : id; g.player.setHat(st.hat); g.save(); render(); } });
     };
     render();
   }
@@ -401,7 +403,7 @@ export class UI {
     w.innerHTML = r.ok ? `<h1>${a.name}</h1><div class="res-stars">${'★'.repeat(r.stars)}<i>${'★'.repeat(3 - r.stars)}</i></div><p style="font-size:17px;font-weight:700">${r.info}</p><p style="font-size:22px;font-weight:900;color:var(--ac)">+${r.reward} so'm</p>${r.stars > r.prev && r.prev > 0 ? '<p class="sub">Yangi rekord!</p>' : ''}`
       : `<h1 style="color:var(--bad)">${WHY[r.why] || 'Bajarilmadi'}</h1><p class="sub" style="font-size:16px">${a.name}${r.info ? ' · ' + r.info : ''}</p>`;
     const row = el('div', 'row'); row.style.justifyContent = 'center'; row.style.marginTop = '12px'; w.appendChild(row);
-    row.appendChild(btn('Davom etish', () => { this.close(); const sc = g.stampCount(); if (r.ok && a.cat === 'job' && g.stamps()[a.place] && !g.state['st_' + a.place]) { g.state['st_' + a.place] = 1; g.addMoney(500); this.banner('Pasportga muhr bosildi!', `${g.site.places[a.place].name} · +500 so'm · ${sc}/12`, 'gold'); g.audio.sfx('win'); g.save(); } if (r.ok && a.opt && a.opt.final && !g.state.paints.includes('oltin')) { g.state.paints.push('oltin'); g.setPaint('oltin'); this.banner('KATTA SAFAR yakunlandi!', "Tabriklaymiz! Oltin bo'yoq sizniki. Sayohat davom etadi…", 'gold'); } }));
+    row.appendChild(btn('Davom etish', () => { this.close(); const sc = g.stampCount(); if (r.ok && a.cat === 'job' && g.stamps()[a.place] && !g.state['st_' + a.place]) { g.state['st_' + a.place] = 1; g.addMoney(500, 'Pasport muhri'); this.banner('Pasportga muhr bosildi!', `${g.site.places[a.place].name} · +500 so'm · ${sc}/12`, 'gold'); g.audio.sfx('win'); g.save(); } if (r.ok && a.opt && a.opt.final && !g.state.paints.includes('oltin')) { g.state.paints.push('oltin'); g.setPaint('oltin'); this.banner('KATTA SAFAR yakunlandi!', "Tabriklaymiz! Oltin bo'yoq sizniki. Sayohat davom etadi…", 'gold'); } }));
     if (a.cat !== 'inf') row.appendChild(btn('Qayta urinish', () => { this.close(); g.retry(a); }, 'sec'));
   }
   s_progress(w, d, btn, x) {
@@ -447,7 +449,7 @@ export class UI {
       info.innerHTML = '';
       if (pl2) { const acts = g.acts.byPlace[pl2.id] || []; const got = acts.reduce((s, a) => s + (st.stars[a.id] || 0), 0); const known = st.places[pl2.id] || pl2.id === 'uy'; info.innerHTML = `<h4 style="margin:0 0 4px">${known ? pl2.name : "Noma'lum manzil"}</h4><p class="sub">${pl2.id === 'uy' ? 'Sizning uyingiz' : `${acts.length} chellenj · ★ ${got}/${acts.length * 3}`}<br>Masofa: ${fmtDist(Math.hypot(pl2.x - me[0], pl2.z - me[2]))}</p>`;
         if (pl2.id === 'uy' && !g.act) { const b = btn('Uyga qaytish — bepul', () => travel(() => g.goHome()), ''); b.style.marginTop = '6px'; info.appendChild(b); }
-        else if (st.places[pl2.id] && pl2.board && !g.act) { const b = btn(`Tez sayohat — 120 so'm`, () => { if (st.money < 120) { g.toast('Pul yetarli emas', 'bad'); return; } g.addMoney(-120); travel(() => { g.car.place(pl2.board.x + 6, pl2.board.z + 6, 0); g.respawn(); if (pl.onFoot) g.live.mount(false); }); }, 'sec'); b.style.marginTop = '6px'; info.appendChild(b); } }
+        else if (st.places[pl2.id] && pl2.board && !g.act) { const b = btn(`Tez sayohat — 120 so'm`, () => { if (st.money < 120) { g.toast('Pul yetarli emas', 'bad'); return; } g.addMoney(-120, 'Tez sayohat'); travel(() => { g.car.place(pl2.board.x + 6, pl2.board.z + 6, 0); g.respawn(); if (pl.onFoot) g.live.mount(false); }); }, 'sec'); b.style.marginTop = '6px'; info.appendChild(b); } }
       else info.innerHTML = `<p class="sub">GPS belgilandi.<br>Masofa: ${fmtDist(Math.hypot(wx - me[0], wz - me[2]))}</p>`;
       const cl = btn('GPS ni tozalash', () => { g.setWaypoint(null); draw(); info.innerHTML = ''; }, 'sec'); cl.style.marginTop = '6px'; info.appendChild(cl);
     };

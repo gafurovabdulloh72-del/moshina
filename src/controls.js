@@ -20,6 +20,7 @@ export const ACTIONS = [
   { key: 'P', codes: ['KeyP'], top: 1, bar: () => 'Surat', run: (g) => g.ui.setHud(!g.hudOn) },
   { key: 'O', codes: ['KeyO'], top: 1, bar: () => 'Onlayn', run: (g) => g.ui.open('online') },
   { key: '4', codes: ['Digit4', 'Numpad4'], top: 1, bar: () => 'Telefon', run: (g) => g.phone && g.phone.open() }, // telefon (ish.js)
+  { key: '6', codes: ['Digit6', 'Numpad6'], top: 1, bar: () => 'Hafta', run: (g) => g.hafta && g.hafta.open() }, // haftalik chellenj, reyting, nishonlar (hafta.js)
   { key: 'U', codes: ['KeyU'], ok: (g) => !!(g.coop && g.coop.room), bar: () => 'Chat', run: (g) => g.coop.openChat() }, // onlayn xonada chat
   // onlayn xonada ovozli chat: [4] — yoqish, keyin mikrofonni o'chirish/yoqish; "bosib gapirish" rejimida — bosib turilganda gapiradi (barcha harf tugmalari band)
   { key: '5', codes: ['Digit5', 'Numpad5'], ok: (g) => !!(g.coop && g.coop.room && !(g.coop.voice.on && g.coop.voice.ptt)), bar: (g) => (g.coop.voice.on ? (g.coop.voice.mute ? 'Mikrofon 🔇' : 'Mikrofon 🎙') : null), run: (g) => g.coop.voice.key() },

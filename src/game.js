@@ -32,8 +32,9 @@ function defState() {
     home: { lvl: 0, decor: {}, beds: [0, 0, 0, 0, 0, 0], wat: [0, 0, 0, 0, 0, 0], eggT: 0, mailT: 0, incT: 0, fund: 0 }, // fund — onlayn xonada do'stlar qo'shgan pul (keyingi darajaga)
     flowers: [], trees: [], flags: [], tasks: [], cnt: {}, seen: {}, peaks: {},
     thirst: 100, fuel: {}, fridge: {}, alarm: 6.5, // kundalik hayot (hayot.js): chanqoq, transport yoqilg'isi (%), muzlatkich, budilnik soati
-    look: null, clothes: [], income: [], jobs: {},
-    dunyo: { day: 1, toy: -1, nav: -1 } }; // obhavo/tadbir: o'yin kuni (taqvim: hafta kuni, fasl, Navro'z), oxirgi to'y/Navro'z sovg'asi olingan kun // hayot2/ish: kiyim-soch ko'rinishi (null — boshlang'ich), sotib olingan kiyimlar, pul tarixi (telefon banki), ishlar hisobi
+    look: null, clothes: [], income: [], jobs: {}, // hayot2/ish: kiyim-soch ko'rinishi, sotib olingan kiyimlar, pul tarixi, ishlar hisobi
+    dunyo: { day: 1, toy: -1, nav: -1 }, // obhavo/tadbir: o'yin kuni, oxirgi to'y/Navro'z sovg'asi olingan kun
+    hafta: { w: -1, best: null, stars: 0, paid: 0, tries: 0, s: { money: 0, km: 0, jobs: 0, wins: 0 }, hist: [], badges: {}, done: 0, weeks: 0 } }; // hafta.js: joriy hafta raqami, haftalik chellenj rekordi/yulduzi/to'langan mukofot, hafta ko'rsatkichlari (km — metrda), o'tgan haftalar, nishonlar
 }
 function loadState() {
   const d = defState(); let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* saqlangan o'yin yo'q */ }
@@ -61,8 +62,9 @@ export function initGame(game) {
   game.levelName = () => LEVELS[game.level() - 1];
   game.stamps = () => { const o = {}; for (const pid in A.byPlace) { const jobs = A.byPlace[pid].filter((a) => a.cat === 'job'); if (jobs.length) o[pid] = jobs.every((j) => st.stars[j.id] > 0); } return o; };
   game.stampCount = () => Object.values(game.stamps()).filter(Boolean).length;
-  const addMoney = (n) => { st.money = Math.max(0, Math.round(st.money + n)); };
-  game.addMoney = addMoney;
+  // pul: game.addMoney(n, sabab) — boshqa tizimlar uni o'raydi (ish.js — telefon banki tarixi, hafta.js — hafta statistikasi); ichki chaqiruvlar ham o'ralgan nusxa orqali o'tadi
+  game.addMoney = (n) => { st.money = Math.max(0, Math.round(st.money + n)); };
+  const addMoney = (n, why) => game.addMoney(n, why);
 
   // --- tyuning ---
   game.applyUpgrades = () => {
@@ -88,7 +90,7 @@ export function initGame(game) {
     if (keep) { car.place(x, z, yaw); game.prevP = car.p.slice(); }
     if (game.cam) game.cam.snap();
   };
-  game.buyVehicle = (id) => { const v = vehById[id]; if (!v || st.veh.own.includes(id) || st.money < v.price) return false; addMoney(-v.price); st.veh.own.push(id); game.audio.sfx('win'); game.banner('Yangi transport!', v.name, 'gold'); game.save(); return true; };
+  game.buyVehicle = (id) => { const v = vehById[id]; if (!v || st.veh.own.includes(id) || st.money < v.price) return false; addMoney(-v.price, 'Transport: ' + v.name); st.veh.own.push(id); game.audio.sfx('win'); game.banner('Yangi transport!', v.name, 'gold'); game.save(); return true; };
   game.setPaint = (id) => { const p = PAINTS.find((q) => q.id === id); if (p) { st.paint = id; st.veh.paint[st.veh.cur] = id; game.carModel.paintMat.color.setHex(p.hex); } };
   game.setVehicle(st.veh.cur, false);
   game.nitro = 1;
@@ -246,7 +248,7 @@ export function initGame(game) {
     if (ok) {
       const mult = [0, 0.55, 0.8, 1][stars]; reward = Math.round(a.reward * mult * (a.cat === 'inf' ? 1 : prev >= stars ? 0.3 : 1));
       if (stars > prev && a.cat !== 'inf') st.stars[a.id] = stars; if (a.cat === 'inf') game.live.count('inf');
-      addMoney(reward); st.xp += stars * 45 + 20;
+      addMoney(reward, 'Chellenj: ' + a.name); st.xp += stars * 45 + 20;
       game.audio.sfx(stars >= 3 ? 'win' : 'medal');
     } else if (why !== 'cancel') game.audio.sfx('fail');
     const res = { ok, why, stars, reward, info, def: a, time: act.t, prev };
@@ -330,7 +332,7 @@ export function initGame(game) {
   let air = null, lastGround = [car.p[0], car.p[2]];
   const award = (a, stars, text) => {
     const prev = starsFor(a);
-    if (stars > prev) { st.stars[a.id] = stars; const rw = Math.round(a.reward * (stars - prev) / 3); addMoney(rw); st.xp += (stars - prev) * 30; game.toast(`${text} ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}  +${rw} so'm`, 'gold'); game.audio.sfx('medal'); game.save(); }
+    if (stars > prev) { st.stars[a.id] = stars; const rw = Math.round(a.reward * (stars - prev) / 3); addMoney(rw, a.cat === 'radar' ? 'Radar' : 'Tramplin'); st.xp += (stars - prev) * 30; game.toast(`${text} ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}  +${rw} so'm`, 'gold'); game.audio.sfx('medal'); game.save(); }
     else game.toast(`${text} ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`, stars ? 'good' : '');
   };
 
@@ -342,7 +344,7 @@ export function initGame(game) {
   game.onWreck = () => { game.banner('Motor ishdan chiqdi!', 'Transport yurmaydi. [T] — evakuator ustaxonaga olib boradi', 'bad'); game.audio.sfx('fail'); if (act) game.endAct(false, 'wreck'); };
   game.tow = () => {
     let best = null, bd = 1e18; for (const pt of game.points) if (pt.kind === 'garage') { const d = Math.hypot(pt.x - car.p[0], pt.z - car.p[2]); if (d < bd) { bd = d; best = pt; } }
-    const fee = Math.min(st.money, 200); addMoney(-fee); game.damage.repair(100); car.place(best.x, best.z, 0); game.prevP = car.p.slice(); if (game.player.onFoot) game.live.mount(false); game.cam.snap();
+    const fee = Math.min(st.money, 200); addMoney(-fee, 'Evakuator'); game.damage.repair(100); car.place(best.x, best.z, 0); game.prevP = car.p.slice(); if (game.player.onFoot) game.live.mount(false); game.cam.snap();
     game.toast(`Evakuator sizni ustaxonaga olib keldi va ta'mirlandi. To'lov: ${fee} so'm`, 'good'); game.audio.sfx('repair'); game.save();
   };
   game.respawn = (msg) => { const c = car; const nr = T.nearestRoad(c.p[0], c.p[2], 12); if (nr.edge >= 0) { const i = nr.i; c.place(T.roads.x[i], T.roads.z[i], Math.atan2(T.roads.tx[i], T.roads.tz[i])); } else { const h = site.places.bogiston; c.place(h.x + 20, h.z + 8, 0); } game.prevP = c.p.slice(); game.cam.snap(); if (msg) game.toast(msg, 'bad'); };
@@ -366,7 +368,7 @@ export function initGame(game) {
         if (act && act.def.type === 'frag') act.cargo = Math.max(0, act.cargo - Math.max(0, (e.v - 4) * 4));
       } else if (e.type === 'smash') {
         const ref = e.ref; if (ref) { site.smash.hide(ref); const cols = { crate: [0xc79a66, 0x9a6a42], barrel: [0xb8402e, 0x4a4e58], hay: [0xe2c460, 0xd0b050], cone: [0xf26a2a, 0xffffff], sign: [0xf2ead8, 0x6e4a30], fence: [0x9a6a42, 0x6e4a30], snowman: [0xf6f9ff, 0xf08a2a] }[ref.type]; fx.debris(ref.type === 'cone' ? 3 : 7, ref.x, ref.y, ref.z, cols, 6, ref.type === 'hay' ? 0.5 : 0.36, car.v[0], car.v[2]); }
-        game.audio.sfx('smash'); st.stats.smashed++; addMoney(3); game.live.count('smash'); if (act && act.def.type === 'smash') act.count++;
+        game.audio.sfx('smash'); st.stats.smashed++; addMoney(3, 'Sindirish'); game.live.count('smash'); if (act && act.def.type === 'smash') act.count++;
         if (act && act.def.type === 'frag') act.cargo = Math.max(0, act.cargo - 4);
       } else if (e.type === 'splash') { game.audio.sfx('splash'); }
       else if (e.type === 'sunk') { game.damage.engine = Math.max(0, game.damage.engine - 12); game.damage.apply(); game.respawn('Suvga botdingiz! Dvigatelga suv kirdi.'); if (act && act.def.type !== 'race') game.endAct(false, 'sunk'); }
@@ -413,21 +415,21 @@ export function initGame(game) {
     if (foot) air = null;
     else if (car.onGround === 0) { if (!air) { air = { x: p[0], z: p[2], t: 0, ramp: null }; for (const j of jumps) if (Math.hypot(j.x - p[0], j.z - p[2]) < 13) air.ramp = j; } air.t += dt; }
     else if (air && car.onGround >= 2) { const d = Math.hypot(p[0] - air.x, p[2] - air.z); if (air.t > 0.45) { if (d > st.stats.jump) st.stats.jump = Math.round(d); st.stats.air += air.t;
-        const coins = d > 10 ? Math.min(220, Math.round(d * 1.6 + air.t * 12)) : 0; if (coins) { addMoney(coins); st.xp += 4; game.audio.sfx('coin'); } if (d >= 15) game.live.count('jump');
+        const coins = d > 10 ? Math.min(220, Math.round(d * 1.6 + air.t * 12)) : 0; if (coins) { addMoney(coins, 'Sakrash'); st.xp += 4; game.audio.sfx('coin'); } if (d >= 15) game.live.count('jump');
         if (air.ramp) { if (!st.best[air.ramp.id] || d > st.best[air.ramp.id]) st.best[air.ramp.id] = Math.round(d); award(air.ramp, starsByScore(d, air.ramp.thr), `Sakrash: ${d.toFixed(0)} m · +${coins} so'm`); } else if (coins) game.toast(`Sakrash: ${d.toFixed(0)} m · havoda ${air.t.toFixed(1)} s · +${coins} so'm`, 'gold'); } air = null; }
     // erkin drift: sirpanish burchagi va tezlik uchun ochko, tugaganda tanga
     if (!foot && !(act && act.def.type === 'drift')) { const sa = Math.abs(car.slipAng || 0) * 57.3;
       if (sa > 16 && sp > 8 && car.onGround >= 2 && car.fwd > 2) { drift.s += sa * sp * dt; drift.t = 0.8; game.driftScore = drift.s; }
-      else if (drift.t > 0) { drift.t -= dt; if (drift.t <= 0) { if (drift.s > 300) { const rw = Math.min(320, Math.round(drift.s / 24)); addMoney(rw); st.stats.drift += Math.round(drift.s); st.xp += 3; game.audio.sfx('coin'); game.live.count('driftc', rw); game.toast(`Drift! ${Math.round(drift.s)} ochko · +${rw} so'm`, 'gold'); } drift.s = 0; game.driftScore = 0; } } }
+      else if (drift.t > 0) { drift.t -= dt; if (drift.t <= 0) { if (drift.s > 300) { const rw = Math.min(320, Math.round(drift.s / 24)); addMoney(rw, 'Drift'); st.stats.drift += Math.round(drift.s); st.xp += 3; game.audio.sfx('coin'); game.live.count('driftc', rw); game.toast(`Drift! ${Math.round(drift.s)} ochko · +${rw} so'm`, 'gold'); } drift.s = 0; game.driftScore = 0; } } }
     // radarlar
     if (!foot) for (const r of radars) { const dx = p[0] - r.x, dz = p[2] - r.z; if (dx * dx + dz * dz > 900) { r._s = 0; continue; } const along = dx * r.tx + dz * r.tz, lat = Math.abs(dx * r.tz - dz * r.tx); const s = along > 0 ? 1 : -1; if (r._s && s !== r._s && lat < r.hw + 2.5) { const v = Math.round(kmh); const nb = !st.best[r.id] || v > st.best[r.id]; if (nb) st.best[r.id] = v; const rs = starsByScore(v, r.thr); if (rs > 0 || (nb && v >= r.thr[0] * 0.75)) award(r, rs, `📸 ${r.name}: ${v} km/soat`); } r._s = s; }
     // tangalar va sandiqlar
     { const im = pick.coinIM, cs = pick.coins, t = game.time; let ch = false;
       for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (coinSet.has(i)) { if (!c.h) { c.h = true; placeInst(im, i, c, 0, 0.001); ch = true; } continue; } const dx = c.x - p[0], dz = c.z - p[2]; if (dx > 260 || dx < -260 || dz > 260 || dz < -260) continue;
-        if (dx * dx + dz * dz < 6.5 && Math.abs(c.y - p[1]) < 3.5) { coinSet.add(i); st.coins.push(i); addMoney(15); st.xp += 2; game.live.count('coin'); game.audio.sfx('coin'); game.fx.burst(6, c.x, c.y, c.z, 3, 0.4, 0.4, 0xffe14a, 1, 1, 3, 0); continue; }
+        if (dx * dx + dz * dz < 6.5 && Math.abs(c.y - p[1]) < 3.5) { coinSet.add(i); st.coins.push(i); addMoney(15, 'Tanga'); st.xp += 2; game.live.count('coin'); game.audio.sfx('coin'); game.fx.burst(6, c.x, c.y, c.z, 3, 0.4, 0.4, 0xffe14a, 1, 1, 3, 0); continue; }
         placeInst(im, i, c, t * 2.4 + i, 1); ch = true; }
       if (ch) im.instanceMatrix.needsUpdate = true;
-      pick.chests.forEach((c, i) => { if (chestSet.has(i)) return; if (Math.abs(c.x - p[0]) < 3.6 && Math.abs(c.z - p[2]) < 3.6) { chestSet.add(i); st.chests.push(i); placeInst(pick.chestIM, i, c, 0, 0.001); pick.chestIM.instanceMatrix.needsUpdate = true; addMoney(350); st.xp += 40; game.audio.sfx('medal'); game.fx.burst(24, c.x, c.y + 1, c.z, 6, 0.9, 0.6, 0xffe14a, 1, 1.5, 6, 0); game.banner('Yashirin sandiq topildi!', `+350 so'm · ${st.chests.length}/${pick.chests.length}`, 'gold'); game.save(); } });
+      pick.chests.forEach((c, i) => { if (chestSet.has(i)) return; if (Math.abs(c.x - p[0]) < 3.6 && Math.abs(c.z - p[2]) < 3.6) { chestSet.add(i); st.chests.push(i); placeInst(pick.chestIM, i, c, 0, 0.001); pick.chestIM.instanceMatrix.needsUpdate = true; addMoney(350, 'Sandiq'); st.xp += 40; game.audio.sfx('medal'); game.fx.burst(24, c.x, c.y + 1, c.z, 6, 0.9, 0.6, 0xffe14a, 1, 1.5, 6, 0); game.banner('Yashirin sandiq topildi!', `+350 so'm · ${st.chests.length}/${pick.chests.length}`, 'gold'); game.save(); } });
       kitT += dt; let kc = false;
       pick.kits.forEach((k, i) => { if (k.cd > 0) { k.cd -= dt; if (k.cd <= 0) kc = true; else return; } const near = Math.abs(k.x - p[0]) < 220 && Math.abs(k.z - p[2]) < 220; if (near || kc) { placeInst(pick.kitIM, i, k, game.time * 1.5 + i, 1); kc = true; }
         if (!foot && Math.abs(k.x - p[0]) < 3.2 && Math.abs(k.z - p[2]) < 3.2 && game.damage.health < 96) { k.cd = 150; placeInst(pick.kitIM, i, k, 0, 0.001); kc = true; game.damage.repair(40); const ti = game.damage.tires.indexOf(1); if (ti >= 0) game.damage.tires[ti] = 0; game.damage.apply(); game.audio.sfx('repair'); game.toast("Ta'mir qutisi: +40% ta'mir", 'good'); } });
@@ -437,7 +439,7 @@ export function initGame(game) {
     else if (site.lava) { const l = site.lava; if (Math.hypot(p[0] - l.x, p[2] - l.z) < l.r && p[1] < l.y + 2.2) { game.damage.engine = Math.max(0, game.damage.engine - 30); game.damage.zone.front = Math.max(0, game.damage.zone.front - 25); game.damage.apply(); game.fx.burst(30, p[0], p[1], p[2], 8, 1, 1.2, 0xff7a20, 1, 2, 4, 1); const v = site.places.vulqon; car.place(v.x, v.z, 0); game.prevP = car.p.slice(); game.cam.snap(); game.toast('Lavaga tushdingiz! Mashina kuydi.', 'bad'); game.audio.sfx('crash'); if (game.damage.engine <= 0 && !game.damage.wrecked) { game.damage.wrecked = true; game.onWreck(); } } }
     // manzilni aniqlash
     let np = null; for (const id in site.places) { const pl = site.places[id]; const d = Math.hypot(p[0] - pl.x, p[2] - pl.z); if (d < pl.r) { np = pl; break; } }
-    if (np !== curPlace) { curPlace = game.curPlace = np; if (np) { if (!st.places[np.id]) { st.places[np.id] = 1; addMoney(150); st.xp += 60; game.banner(np.id === 'uy' ? 'Bu — sizning uyingiz!' : 'Yangi manzil ochildi', `${np.name} · +150 so'm`, 'gold'); game.audio.sfx('medal'); game.save(); } else game.banner(np.name, '', 'place'); } }
+    if (np !== curPlace) { curPlace = game.curPlace = np; if (np) { if (!st.places[np.id]) { st.places[np.id] = 1; addMoney(150, 'Yangi manzil'); st.xp += 60; game.banner(np.id === 'uy' ? 'Bu — sizning uyingiz!' : 'Yangi manzil ochildi', `${np.name} · +150 so'm`, 'gold'); game.audio.sfx('medal'); game.save(); } else game.banner(np.name, '', 'place'); } }
     game.region = REGION[T.biomeAt(p[0], p[2])];
     // yaqin nuqta (E)
     let nearPt = null; if (!act || act.def.type !== 'race') for (const pt of game.points) { if (Math.abs(pt.x - p[0]) < pt.r && Math.abs(pt.z - p[2]) < pt.r && sp < 4.5) { nearPt = pt; break; } }

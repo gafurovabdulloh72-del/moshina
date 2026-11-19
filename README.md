@@ -276,6 +276,7 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | **Ishlar** | ish beruvchi oldida **E** (sariq nuqta) yoki telefon → Ishlar. **Non yetkazish** (novvoy Karim aka): 5 uyga sariq nur — piyoda yoki mashinada **E**, 30 so'm/uy + tezlik bonusi, ~2,5 daqiqa. **Taksi smenasi** (dispetcher Lola opa): 3 yo'lovchi — ko'k belgi yonida to'xtab **E**, manzilga eltsangiz o'zi tushadi, masofa bo'yicha + o'z vaqtida +20, bonus 80. **Dalada o'rim** (fermer Bobur aka): o'roq bilan 6 bog' o'rib, yelkada aravaga tashish, 18 so'm/bog' + 70 bonus, ~3 daqiqa. **X** — ishni tugatish |
 | **Telefon** | **4** (yoki yuqoridagi «Telefon» tugmasi): Xarita, Bank (balans va so'nggi pul harakatlari), Kontaktlar (taksi — transportingizni yoningizga 60 so'm; mexanik Rustam — joyida ta'mir; onam; dispetcher), Kamera (surat rejimi), Ob-havo va soat, Ishlar (yo'l ko'rsatish), Musiqa, Uyim |
 | **Ko'cha** | muzqaymoqchi (8 so'm, **E**), kaptarlarga don sepish (to'planib keladi; yugursangiz uchib ketadi), futbol maydoni (to'pni yurib surasiz, **E** — tepish, gol — 15 so'm), avtobus bekati (o'tirib kutasiz, avtobus keladi — **E**, 15 so'mga istalgan manzilga), o'tayotgan mashinaga **3** bilan qo'l silkisangiz signal chaladi |
+| **Hafta** | **6** (yoki yuqoridagi «Hafta» tugmasi, telefon → Hafta, pauza menyusi): har ISO haftada bitta chellenj (poyga, drift yoki sindirish — hafta raqamidan aniqlanadi, barcha do'stlarda bir xil, internetsiz ham). «Boshlash» start chizig'iga yoki o'sha manzilga olib boradi; hafta rekordi saqlanadi, mukofot ★ 300 / ★★ 600 / ★★★ 1000 so'm (farqi bir marta). Hafta ko'rsatkichlari: topilgan pul, bosilgan yo'l, bajarilgan ishlar, poyga g'alabalari; 8 ta nishon (Ilk qadam, Oltin hafta, Boyvachcha, Uzoq yo'l, Mehnatkash, Poyga ustasi, Hafta yulduzi, Doimiy sayyoh) — olinganda xabar chiqadi. Kirgan o'yinchida — hafta reytingi (chellenj va 4 ko'rsatkich, xonadagi do'stlar 👥 belgisi bilan). Bankda endi har bir pul harakati sababi bilan (chellenj, hafta mukofoti, tanga, sandiq, tyuning, bozor…) |
 
 ### 2.12. Ob-havo, tadbirlar va gavjum ko'chalar
 
@@ -332,6 +333,7 @@ Bugungi tadbir xaritada katta rangli nuqta bo'lib chiqadi, ertalab e'lon qilinad
 | B | harakatlar menyusi |
 | 1 / 2 / 3 | raqs / dutor / salom |
 | 4 | telefon |
+| 6 | hafta: haftalik chellenj, reyting, nishonlar |
 | L / Z | fonar / durbin |
 
 | Umumiy | |
@@ -350,7 +352,7 @@ Bugungi tadbir xaritada katta rangli nuqta bo'lib chiqadi, ertalab e'lon qilinad
 
 O'zi ekkan gul yonida **E** — gulni olib tashlash (urug' qaytadi, ekishda berilgan 10 so'm qaytariladi); hali o'sayotgan ko'chat yonida — qazib olish (ko'chat sumkaga qaytadi).
 
-Geympad: RT/LT — gaz/tormoz, chap stik — rul, A — qo'l tormozi, X — nitro. Sensorli ekranda birinchi teginishda chapda virtual joystik (yurish, transportda rul va gaz/tormoz), o'ngda pedallar paydo bo'ladi; amallar — o'sha ekran tugmalari, mini-xarita chap tepaga ko'chadi.
+Geympad: RT/LT — gaz/tormoz, chap stik — rul, A — qo'l tormozi, X — nitro. Sensorli ekranda birinchi teginishda chapda virtual joystik (yurish, transportda rul va gaz/tormoz), o'ngda pedallar paydo bo'ladi; amallar — o'sha ekran tugmalari, mini-xarita chap tepaga ko'chadi. Telefonda yuqori o'ngdagi umumiy tugmalar 46×46 ikonka-plitkalar (Sumka, Pasport, Surat — pauza menyusi va telefonda); yotiq ekranda pedallar o'ng pastda, tikda — amal tugmalari yonida.
 
 ---
 
@@ -383,6 +385,7 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `hayot.js` | kundalik hayot: chanqoq, uy ichidagi harakatlar, oshxona/muzlatkich/do'kon oynalari, NPC suhbati, do'kon binolari, HUD ko'rsatkichlari |
 | `hayot2.js` | kundalik hayot 2: choyxona, kiyim do'koni, sartaroshxona (binolar va ichki makonlar `interior.js` qurollari — `IN.lib`, `IN.X` — bilan), ofitsiant, qahramon ko'rinishi (`restyle` — kiyim/soch o'zgarsa modelni qayta quradi) |
 | `ish.js` | ishlar (non, taksi smenasi, dala), pul tarixi (`game.addMoney(n, sabab)`), telefon oynasi va xizmatlari |
+| `hafta.js`, `haftalik.js` | haftalik chellenj, hafta statistikasi, nishonlar, «Hafta» oynasi; `haftalik.js` — sof hisob (hafta raqami, haftaning chellenji, chegaralar), server ham ishlatadi |
 | `kocha.js` | ko'cha: muzqaymoqchi, kaptarlar, futbol, avtobus bekati, mashinaga qo'l silkish |
 | `fuel.js` | yoqilg'i: sarf, shoxobchalar (nasos, xodim), quyish, kanistr, gaz pedalini cheklash (`input.poll` ustida — `physics.js` o'zgarmagan) |
 | `props.js` | daraxtlar, toshlar, butalar (InstancedMesh + LOD), yaqin atrofdagi o't |
@@ -457,7 +460,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 `localStorage`, kalit `safar_save_v2`. Yuklashda saqlangan holat standart holat (`defState()` — `game.js`) ustiga qo'shiladi, shuning uchun **yangi maydon qo'shilganda eski saqlovlar buzilmaydi** — faqat `defState()` ga standart qiymat yozish kerak. v1 saqlovlari ham ochiladi.
 
-Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
+Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
 
 Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
@@ -502,7 +505,9 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `npm run test:life` | kundalik hayot: uyga kirish, uxlash, o'tirish/turish, pishirish va stolda ovqatlanish, suv ichish, do'kon xaridi, yoqilg'i quyish, bo'sh bak, NPC suhbati | ~1 daq |
 | `npm run test:life2` | kundalik hayot 2: choyxona buyurtmasi va ovqatlanish, kiyim sotib olish/qaytishi va saqlanishi, sartarosh, 3 ta ish (non, taksi, dala), telefon (bank, taksi, mexanik), muzqaymoq, kaptarlar, futbol goli, avtobus | ~3 daq |
 | `npm run test:world` | ob-havo (har biri: tutish, tuman, zarrachalar, 3 sifat pog'onasi), sirpanchiq yo'lda tormoz yo'li, taqvim, to'y/bozor/Navro'z (odamlar, osh yeyish, sumalak), kortej, ko'cha mashinalari va piyodalar, svetofor qizilida o'tib ketmaslik, dala o'ti. `SHOTS=1` — skrinshotlar | ~3–5 daq |
-| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world) | ~8–10 daq |
+| `npm run test:hafta` | haftalik chellenj: hafta raqami, poyga/zona boshlash, rekord, mukofot (bir marta, farqi), g'alaba/ish/km hisobi, hafta almashishi, nishon xabari, oyna va telefon ilovasi, bankda sabablar, saqlov | ~25 s |
+| `node tools/touch.mjs [papka]` | sensorli ekran: iPhone 13 / Pixel 7 (tik va yotiq) — HUD va oynalar skrinshoti, 44 px dan kichik, bir-birini to'sgan, ekrandan chiqqan tugmalar ro'yxati (`report.json`). Avval build | ~3 daq |
+| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta) | ~8–10 daq |
 
 Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuterda Google Chrome o'rnatilgan bo'lishi kerak). Xato bo'lsa yoki `TEST … FAIL` satri chiqsa — chiqish kodi 1.
 
@@ -632,7 +637,7 @@ Ma'lum cheklovlar:
 
 - Mac uchun `.pkg` o'rnatuvchi (1–3 bosishda o'rnatiladigan).
 - Reklamaga logotip va sayt manzili.
-- Telefon uchun to'liq boshqaruv (kamera, kattaroq tugmalar).
+- Telefon uchun kamerani barmoq bilan aylantirish (tugmalar va joylashuv 44 px qoidasiga moslangan).
 - `npm test` ga aniq "o'tdi/o'tmadi" shartlari.
 
 ---
@@ -688,6 +693,7 @@ brauzer (o'yin)  ──HTTPS──▶  Vercel funksiyalari api/*.js  ──REST�
 | `api/auth.js` | `POST` — Telegram ma'lumotini tekshiradi (HMAC-SHA256, kalit = SHA256(bot token), 24 soatdan eski emas) → 30 kunlik sessiya; `GET` — sessiya amal qiladimi |
 | `api/save.js` | `GET/PUT` — har Telegram foydalanuvchisiga bitta saqlov (`safar_save_v2` formati, `v: 2`, 200 KB gacha). Saqlanganda yulduz/daraja reytingi server tomonda saqlovdan hisoblanadi |
 | `api/top.js` | `GET ?id=` — eng yaxshi 20 ta; `POST` — rekordlar. Chellenj turi va aqlga sig'adigan chegaralar serverda (`acts.js` → `actKinds()`), har o'yinchining eng yaxshisi saqlanadi |
+| `api/hafta.js` | `GET ?t=ch\|money\|km\|jobs\|wins&w=` — hafta reytingi (eng yaxshi 20 ta); `POST {w, ch, s}` — haftalik natija va ko'rsatkichlar. Haftaning chellenji va turi serverda (`src/haftalik.js`), faqat joriy (±1) hafta, natija chegarasi, ko'rsatkichlar «hafta boshidan o'tgan real vaqt × o'sish + zaxira» bilan qirqiladi; jadvallar 45 kunda o'chadi |
 | `src/net.js` | o'yin tomoni: config, kirish (Telegram skripti faqat Onlayn oynasi ochilganda yuklanadi), bulut bilan solishtirish va avtomatik yuklash, rekordlarni yuborish |
 | `src/coop.js` | xona: PeerJS ulanishlari (har kim har kim bilan), holat paketlari (harakatda 20, turganda 5 marta/s; alohida tez kanal), boshqa o'yinchilarni silliq chizish (moslashuvchan kechikish 60–300 ms + qisqa ekstrapolyatsiya, uzoqdagilar soyasiz/yashirin), do'st uyida yashash (`game.visit`), chat, birga poyga, egalik o'tishi, yumshoq to'qnashuv, ovozli chat (`game.coop.voice`) |
 | `src/onlineui.js` | oynalar: Onlayn, saqlov tanlovi, Reyting, poyga natijasi; HUD'dagi `🌐 KOD 2/4` belgisi |

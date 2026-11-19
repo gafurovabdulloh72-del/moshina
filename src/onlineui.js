@@ -38,6 +38,7 @@ P.s_online = function (w, d, btn, x) {
   const acct = el('div', 'card onl-acct'), room = el('div', 'card onl-room'); grid.appendChild(acct); grid.appendChild(room);
   const foot = el('div', 'row'); foot.style.marginTop = '14px'; w.appendChild(foot);
   foot.appendChild(btn('🏆 Reyting', () => this.open('top', { back: ['online', d] }), 'sec'));
+  if (d.back !== 'menu') foot.appendChild(btn('📅 Hafta reytingi', () => this.open('hafta'), 'sec'));
   if (d.back === 'menu') foot.appendChild(btn('Orqaga', () => this.open('menu'), 'sec')); else foot.appendChild(btn('Yopish', () => this.close(), 'sec'));
   let codeVal = C.inviteCode || '';
   const renderAcct = () => {

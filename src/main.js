@@ -32,6 +32,7 @@ import { initOnlineUI } from './onlineui.js';
 import { initObhavo } from './obhavo.js';
 import { initShahar } from './shahar.js';
 import { initTadbir } from './tadbir.js';
+import { initHafta } from './hafta.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -93,6 +94,7 @@ async function boot() {
   if (st.foot && !st.fresh) { game.live.dismount(true); game.player.place(st.foot[0], st.foot[1], st.foot[2]); }
   game.ui = new UI(game);
   initNet(game); initCoop(game); initOnlineUI(game); // onlayn rejim (faqat saytda; faylda — "mavjud emas")
+  initHafta(game); // haftalik chellenj, hafta statistikasi, nishonlar ([6])
   game.applyQuality('boot'); resize();
   game.gfx.precompile(); // barcha sheyderlar yuklash paytida tayyorlanadi
   // videokarta konteksti yo'qolsa (drayver qayta ishga tushdi va h.k.) — kutamiz va qaytganda hammasini qayta tiklaymiz
