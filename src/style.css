@@ -198,6 +198,9 @@ input[type=range]{width:200px;accent-color:var(--ac)}
 .onl-players{display:flex;flex-direction:column;gap:6px;margin:6px 0}
 .onl-pl{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.05)}.onl-pl>i{width:12px;height:12px;border-radius:50%;flex:none}.onl-pl small{color:var(--mut)}.onl-pl button{padding:6px 10px;font-size:13px}
 .onl-race{margin-top:6px;display:flex;flex-direction:column;gap:6px}
+.onl-voice{margin-top:8px;display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:10px;background:rgba(255,255,255,.04)}.onl-ck{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}.onl-ck input{width:18px;height:18px;accent-color:var(--blue)}
+.vmic{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:13px;background:rgba(150,160,180,.25);flex:none}.vmic.off{opacity:.6}.vmic.talk{background:#3ccf6e;animation:vpulse .45s ease-in-out infinite alternate}
+@keyframes vpulse{from{box-shadow:0 0 0 0 rgba(60,207,110,.7);transform:scale(1)}to{box-shadow:0 0 0 6px rgba(60,207,110,0);transform:scale(1.12)}}
 .onl-top table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}.onl-top th{text-align:left;color:var(--mut);font-weight:700;padding:6px 8px}.onl-top td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.08)}.onl-top tr.me td{background:rgba(255,200,58,.14);font-weight:800}
 #chat{position:absolute;left:16px;bottom:262px;width:min(380px,calc(100vw - 32px));pointer-events:none;display:none}
 #chat .feed{display:flex;flex-direction:column;gap:3px;font-size:13.5px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.9)}

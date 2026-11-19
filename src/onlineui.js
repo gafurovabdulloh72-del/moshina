@@ -14,8 +14,14 @@ export const SITE = 'https://cargame-self.vercel.app';
 export function initOnlineUI(game) {
   const ui = game.ui, C = game.coop, net = game.net;
   const chip = el('div', 'chip netchip'); chip.style.display = 'none'; ui.hud.querySelector('.tl').appendChild(chip);
-  const upd = () => { const r = C.room; chip.style.display = r ? '' : 'none'; if (r) chip.innerHTML = `🌐 <b>${esc(r.code)}</b> <small>${C.members.size + 1}/${MAX_PLAYERS}</small>`; };
+  const VC = C.voice;
+  const upd = () => { const r = C.room; chip.style.display = r ? '' : 'none'; if (r) chip.innerHTML = `🌐 <b>${esc(r.code)}</b> <small>${C.members.size + 1}/${MAX_PLAYERS}</small>${VC.on ? `<span class="vmic${VC.micLive() ? '' : ' off'}" data-vpid="me">${VC.micLive() ? '🎙' : '🔇'}</span>` : ''}`; };
   C.onChange(upd); upd();
+  // gapirayotgan belgisi (HUD belgisi va xona ro'yxatida): faqat class almashadi, 7 marta/s
+  let vlast = 0; setInterval(() => {
+    if (!C.room || !VC.on) { if (vlast) { vlast = 0; for (const e of document.querySelectorAll('.vmic.talk')) e.classList.remove('talk'); } return; } vlast = 1; upd.mic !== VC.micLive() && ((upd.mic = VC.micLive()), upd());
+    for (const e of document.querySelectorAll('[data-vpid]')) { const id = e.dataset.vpid, m = id === 'me' ? null : C.members.get(id); e.classList.toggle('talk', id === 'me' ? VC.talk : !!(m && m.vtalk && !m.vmute)); }
+  }, 140);
   // ochiq onlayn oynani yangilash (hisob yoki xona holati o'zgarganda)
   const refresh = () => { if (ui._onl && ui.screenName === 'online') ui._onl(); else if (ui.screenName === 'cloud' && net.cloud !== 'choice') ui.close(); };
   net.onChange(refresh); C.onChange(refresh);
@@ -25,7 +31,7 @@ export function initOnlineUI(game) {
 
 const P = UI.prototype;
 P.s_online = function (w, d, btn, x) {
-  const g = this.g, net = g.net, C = g.coop; d = d || {};
+  const g = this.g, net = g.net, C = g.coop, VC = C.voice; d = d || {};
   if (d.back !== 'menu') x();
   w.innerHTML = `<h1>Onlayn <small>do'stlar bilan birga</small></h1><p class="sub">Telegram orqali kiring — yutuqlaringiz bulutda saqlanadi. Xona oching va do'stlaringizni kod yoki havola bilan chaqiring (2–4 kishi): birga sayohat, birga poyga, chat.<br>Do'stingiz havolasi orqali kirsangiz — uning uyida yashaysiz va uni birga rivojlantirasiz.</p>`;
   const grid = el('div', 'onl'); w.appendChild(grid);
@@ -85,12 +91,27 @@ P.s_online = function (w, d, btn, x) {
     const list = el('div', 'onl-players'); room.appendChild(list);
     for (const p of C.roster()) {
       const me = p.pid === C.myId(), host = p.pid === R.hostPid, m = C.members.get(p.pid), row = el('div', 'onl-pl');
-      row.innerHTML = `<i style="background:${SLOT_COLORS[p.slot % 4]}"></i><b>${esc(p.name)}</b>${me ? '<small>(siz)</small>' : ''}${host ? '<small title="Xona egasi">👑</small>' : ''}<span class="grow"></span>${m && m.ping ? `<small>${m.ping} ms</small>` : ''}`;
+      const von = me ? VC.on : !!(m && m.vr && VC.on), vic = von ? `<span class="vmic${(me ? !VC.micLive() : m.vmute) ? ' off' : ''}" data-vpid="${me ? 'me' : esc(p.pid)}" title="Ovozli chatda">${(me ? !VC.micLive() : m.vmute) ? '🔇' : '🎙'}</span>` : m && m.vr ? '<small title="Ovozli chatda — eshitish uchun siz ham yoqing">🎙</small>' : '';
+      row.innerHTML = `<i style="background:${SLOT_COLORS[p.slot % 4]}"></i><b>${esc(p.name)}</b>${vic}${me ? '<small>(siz)</small>' : ''}${host ? '<small title="Xona egasi">👑</small>' : ''}<span class="grow"></span>${m && m.ping ? `<small>${m.ping} ms</small>` : ''}`;
+      if (!me && m && von) { const b = btn(m.vmute ? '🔈 Eshitish' : '🔇 Ovozsiz', () => VC.muteFriend(p.pid), 'sec'); b.title = m.vmute ? "Do'stingiz ovozini qayta yoqish" : "Faqat siz uchun do'stingiz ovozini o'chirish"; row.appendChild(b); }
       if (!me && m) { const b = btn('Yoniga borish', () => { if (C.teleportTo(p.pid)) this.close(); }, 'sec'); b.disabled = !m.remote.shown; row.appendChild(b); }
       list.appendChild(row);
     }
     if (!C.members.size) list.appendChild(el('p', 'onl-note', "Hozircha yolg'izsiz. Kodni yoki havolani do'stingizga yuboring."));
     else list.appendChild(el('p', 'onl-note', g.visit && g.visit.on ? `🏠 Siz ${esc(g.visit.owner)}ning uyida yashayapsiz — uy belgisida [E] bilan uni birga rivojlantiring` : "🏠 Do'stlaringiz sizning uyingizda yashaydi va uni siz bilan birga rivojlantiradi"));
+    // ovozli chat
+    const vc = el('div', 'onl-voice'); room.appendChild(vc); vc.innerHTML = '<b>🎙 Ovozli chat</b>';
+    if (!VC.on) {
+      const why = VC.canUse(), vb = btn(VC.busy ? 'Mikrofon so\'ralmoqda…' : '🎙 Ovozli chatni yoqish', () => VC.start(), 'sec'); vb.disabled = VC.busy || !!why; vc.appendChild(vb);
+      vc.appendChild(el('p', VC.err || why ? 'onl-err' : 'onl-note', esc(VC.err || why || "Mikrofon faqat shu tugmani bosganingizda so'raladi. Ovozli chatni yoqqan do'stlar bir-birini eshitadi; uzoqdagi do'st ovozi pastroq.")));
+    } else {
+      const r1 = el('div', 'row'); r1.style.flexWrap = 'wrap'; vc.appendChild(r1);
+      if (!VC.ptt) r1.appendChild(btn(VC.mute ? '🔇 Mikrofon o\'chiq (4)' : '🎙 Mikrofon yoniq (4)', () => VC.setMute(!VC.mute), VC.mute ? 'bad' : 'sec'));
+      r1.appendChild(btn("Ovozli chatni o'chirish", () => VC.stop(), 'sec'));
+      const ck = (txt, val, set, tip) => { const l = el('label', 'onl-ck', `<input type="checkbox"${val ? ' checked' : ''}> ${txt}`); l.title = tip; l.querySelector('input').onchange = (e) => set(e.target.checked); vc.appendChild(l); };
+      ck('Bosib gapirish — [4] ni bosib turing', VC.ptt, VC.setPtt, "Yoqilsa mikrofon faqat [4] tugmasi bosib turilganda ochiq bo'ladi");
+      ck('Hamma eshitsin (masofasiz)', VC.all, VC.setAll, "O'chiq bo'lsa do'st ovozi masofaga qarab pasayadi: 15 m gacha to'liq, 150 m dan uzoqda 25%");
+    }
     const rc = el('div', 'onl-race'); room.appendChild(rc);
     if (R.isHost) {
       rc.innerHTML = `<b>🏁 Birga poyga</b><div class="row"><select class="onl-sel">${C.races().map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('')}</select></div>`;
