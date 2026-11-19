@@ -804,7 +804,7 @@ export function initCoop(game) {
   // ---------- 3. Choyxona: bir stolda — bir-birini va taomlarni ko'rish, "Men to'layman" ----------
   // Har kim o'z stoli (stol kaliti), o'rindig'i, stoldagi taomlari va hisobini (shu stolda buyurtma qilgani) yuboradi; to'lovchi do'stlarning hisobini qoplaydi:
   // to'lovchidan pul darhol olinadi, do'st tekshiradi (hisob mos, shu stolda) va o'z buyurtmasi pulini qaytarib oladi; rad etilsa yoki javob kelmasa — to'lovchiga qaytadi.
-  const tab = { k: null, s: null, sum: 0, sig: '', t: 0 }, xfer = new Map(); let xseq = 0;
+  const tab = { k: null, s: null, sum: 0, sig: '', t: 0 }, xfer = new Map(), xdone = new Map(); let xseq = (Math.random() * 1e9) | 0; // xdone: qabul qilingan so'rovlar javobi (takror kelsa pul ikki marta tushmaydi)
   const kOf = (a, b) => Math.round(a * 10) + ':' + Math.round(b * 10), KRE = /^-?\d{1,4}:-?\d{1,4}$/;
   const seatTab = (sp) => { if (IN.inside !== 'cafe' || !sp || sp.k !== 'csit' || !sp.table) return; const k = kOf(sp.table[0], sp.table[1]); if (tab.k && k !== tab.k) tab.sum = 0; tab.k = k; tab.s = kOf(sp.lx, sp.lz); };
   { const o0 = H2().order; H2().order = (id, ...r) => { const ok = o0(id, ...r); if (ok) { seatTab(game.hayot && game.hayot.seat); const it = MENU.find((q) => q[0] === id); if (it && tab.k) tab.sum = Math.min(5000, tab.sum + it[3]); } return ok; }; }
@@ -836,15 +836,15 @@ export function initCoop(game) {
     const list = C.tableMates().filter((m) => m.tb.sum > 0), tot = list.reduce((a, m) => a + m.tb.sum, 0);
     if (!list.length) { toast("Do'stlaringiz hali hech narsa buyurtma qilmagan", 'bad'); return false; }
     if (V.money() < tot) { toast(`Pul yetmaydi (${som(tot)} so'm kerak)`, 'bad'); return false; }
-    for (const m of list) { const n = m.tb.sum, id = ++xseq; game.addMoney(-n, `Choyxona: ${m.name} uchun`); xfer.set(id, { n, pid: m.pid, t: performance.now(), kind: 'tab' }); sendTo(m, { t: 'tq', id, n, k: tab.k }); m.tb.sum = 0; }
+    for (const m of list) { const n = m.tb.sum, id = ++xseq; game.addMoney(-n, `Choyxona: ${m.name} uchun`); const q = { t: 'tq', id, n, k: tab.k }; xfer.set(id, { n, pid: m.pid, t: performance.now(), kind: 'tab', q, tr: 0 }); sendTo(m, q); m.tb.sum = 0; }
     game.audio.sfx('buy'); toast(`Stol hisobini siz to'ladingiz — ${som(tot)} so'm 🍵`, 'gold'); changed(); return true;
   };
   function onTabPay(m, d) {
-    const n = d.n, id = d.id | 0, no = (why) => sendTo(m, { t: 'tr', id, ok: 0, why });
+    const n = d.n, id = d.id | 0, no = (why) => sendTo(m, { t: 'tr', id, ok: 0, why }); if (again(m, id)) return;
     if (!rl(m, 'tqq', 6, 10000)) return no('Juda tez');
     if (IN.inside !== 'cafe' || !tab.k || d.k !== tab.k) return no(`${C.myName()} boshqa stolda`);
     if (!Number.isInteger(n) || n < 1 || n > 5000 || n !== tab.sum) return no("Hisob o'zgardi — qayta urining");
-    tab.sum = 0; gift(n, `Choyxona: ${m.name} to'ladi`); sendTo(m, { t: 'tr', id, ok: 1, n }); game.audio.sfx('coin'); toast(`🍵 ${N(m)} stol hisobini to'ladi — ${som(n)} so'm qaytdi`, 'gold');
+    tab.sum = 0; gift(n, `Choyxona: ${m.name} to'ladi`); okTo(m, { t: 'tr', id, ok: 1, n }); game.audio.sfx('coin'); toast(`🍵 ${N(m)} stol hisobini to'ladi — ${som(n)} so'm qaytdi`, 'gold');
   }
 
   // ---------- 4. Do'stga pul o'tkazish ----------
@@ -853,19 +853,24 @@ export function initCoop(game) {
     if (!(n >= 1 && n <= MAXT)) { toast(`O'tkazma 1 dan ${som(MAXT)} so'mgacha`, 'bad'); return false; }
     if (V.money() < n) { toast('Pul yetmaydi', 'bad'); return false; }
     if (!rl(C, 'mtq', 5, 60000)) { toast("Juda tez — bir daqiqada ko'pi bilan 5 ta o'tkazma", 'bad'); return false; }
-    const id = ++xseq; game.addMoney(-n, `O'tkazma → ${m.name}`); xfer.set(id, { n, pid, t: performance.now(), kind: 'mt' }); sendTo(m, { t: 'mt', id, n }); game.audio.sfx('coin'); toast(`💸 ${N(m)}ga ${som(n)} so'm yuborilmoqda…`); changed(); return true;
+    const id = ++xseq; game.addMoney(-n, `O'tkazma → ${m.name}`); const q = { t: 'mt', id, n }; xfer.set(id, { n, pid, t: performance.now(), kind: 'mt', q, tr: 0 }); sendTo(m, q); game.audio.sfx('coin'); toast(`💸 ${N(m)}ga ${som(n)} so'm yuborilmoqda…`); changed(); return true;
   };
   function onMoney(m, d) {
-    const n = d.n, id = d.id | 0; if (!Number.isInteger(n) || n < 1 || n > MAXT || !rl(m, 'mtr', 6, 60000)) return sendTo(m, { t: 'mr', id, ok: 0, why: "O'tkazma qabul qilinmadi" });
-    gift(n, `O'tkazma ← ${m.name}`); sendTo(m, { t: 'mr', id, ok: 1, n }); game.audio.sfx('coin'); toast(`💸 ${N(m)} sizga ${som(n)} so'm o'tkazdi`, 'gold'); addLog(`${m.name} sizga ${som(n)} so'm o'tkazdi`);
+    const n = d.n, id = d.id | 0; if (again(m, id)) return; if (!Number.isInteger(n) || n < 1 || n > MAXT || !rl(m, 'mtr', 6, 60000)) return sendTo(m, { t: 'mr', id, ok: 0, why: "O'tkazma qabul qilinmadi" });
+    gift(n, `O'tkazma ← ${m.name}`); okTo(m, { t: 'mr', id, ok: 1, n }); game.audio.sfx('coin'); toast(`💸 ${N(m)} sizga ${som(n)} so'm o'tkazdi`, 'gold'); addLog(`${m.name} sizga ${som(n)} so'm o'tkazdi`);
   }
+  // qabul qiluvchi: muvaffaqiyatli javob 2 daqiqa eslab qolinadi — javob yo'qolib so'rov qayta kelsa, pul qayta qo'shilmaydi, o'sha javob qayta yuboriladi
+  const xkey = (m, id) => `${m.pid}:${id}`, okTo = (m, r) => { xdone.set(xkey(m, r.id), { r, t: performance.now() }); sendTo(m, r); };
+  const again = (m, id) => { const o = xdone.get(xkey(m, id)); if (!o) return false; sendTo(m, o.r); return true; };
   function onXferRes(m, d) { // o'tkazma yoki stol hisobi javobi
     const id = d.id | 0, p = xfer.get(id); if (!p || p.pid !== m.pid) return; xfer.delete(id);
     if (d.ok) toast(p.kind === 'mt' ? `✓ ${N(m)}ga ${som(p.n)} so'm o'tkazildi` : `${N(m)}: «Rahmat!» 🍵`, 'good');
     else { gift(p.n, p.kind === 'mt' ? "O'tkazma qaytdi" : 'Choyxona: qaytarildi'); toast(`${esc(String(d.why || 'Rad etildi').slice(0, 80))} — ${som(p.n)} so'm qaytdi`, 'bad'); }
     changed();
   }
-  setInterval(() => { const t = performance.now(); for (const [id, p] of xfer) if (t - p.t > 12000) { xfer.delete(id); gift(p.n, p.kind === 'mt' ? "O'tkazma qaytdi" : 'Choyxona: qaytarildi'); toast(`Do'stingiz javob bermadi — ${som(p.n)} so'm qaytdi`, 'bad'); } }, 1000);
+  // yuboruvchi: javob kelmasa so'rov 4 s da qayta yuboriladi (do'st onlayn bo'lsa, 3 martagacha); pul faqat do'st chiqib ketsa yoki umuman javob bermasa qaytadi
+  setInterval(() => { const t = performance.now(); for (const [k, o] of xdone) if (t - o.t > 120000) xdone.delete(k);
+    for (const [id, p] of xfer) { if (t - p.t < 4000) continue; const m = C.members.get(p.pid); if (m && m.conn && m.conn.open && p.tr < 3) { p.tr++; p.t = t; sendTo(m, p.q); continue; } xfer.delete(id); gift(p.n, p.kind === 'mt' ? "O'tkazma qaytdi" : 'Choyxona: qaytarildi'); toast(`Do'stingiz javob bermadi — ${som(p.n)} so'm qaytdi`, 'bad'); changed(); } }, 1000);
 
   // ---------- 5. "Shu yerga kel" belgisi ([8]) ----------
   const pings = new Map(); // pid → { x, z, t }
