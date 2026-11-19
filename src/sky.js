@@ -274,11 +274,13 @@ export class Sky {
     if (this.lightDir.y < 0.08) { this.lightDir.y = 0.08; this.lightDir.normalize(); }
     // osmon yoritishi: Lambert materiallar uchun yarim shar chirog'i (Standard'lar atrof-muhit xaritasidan oladi)
     const gAlb = G_ALB, sunIrr = this.sun.intensity * Math.max(this.lightDir.y, 0) / SUNK;
-    const flo = dark * 1.25 + 0.04 + 0.5 * smoothstep(-0.2, -0.02, sunEl) * (1 - smoothstep(-0.02, 0.06, sunEl)); // + tong/shom oralig'i (oy botgan, quyosh hali chiqmagan payt) qorong'i chuqur bo'lmasin // tunda o'ynash uchun minimal yorug'lik (oy nuri ostidagi ko'z moslashuvi)
+    // oltin soat (quyosh ufqqa yaqin): quyosh qarshisidagi yer qop-qora bo'lmasin — osmondan qo'shimcha yumshoq yorug'lik
+    const gold = smoothstep(-0.03, 0.03, sunEl) * (1 - smoothstep(0.12, 0.32, sunEl)); this._gold = gold;
+    const flo = dark * 1.25 + 0.04 + 0.5 * smoothstep(-0.2, -0.02, sunEl) * (1 - smoothstep(-0.02, 0.06, sunEl)) + 1.6 * gold; // + tong/shom oralig'i (oy botgan, quyosh hali chiqmagan payt) qorong'i chuqur bo'lmasin // tunda o'ynash uchun minimal yorug'lik (oy nuri ostidagi ko'z moslashuvi)
     const fl = this._fl; fl[0] = 0.05 * flo; fl[1] = 0.058 * flo; fl[2] = 0.15 * flo;
     this.du.uEnvFloor.value.setRGB(fl[0], fl[1], fl[2]);
     const g = this.du.uGround.value.setRGB(gAlb[0] * (sunIrr * this.sun.color.r + amb.r * 1.0), gAlb[1] * (sunIrr * this.sun.color.g + amb.g * 1.0), gAlb[2] * (sunIrr * this.sun.color.b + amb.b * 1.0));
-    this.hemi.color.setRGB(amb.r + fl[0], amb.g + fl[1], amb.b + fl[2]); this.hemi.groundColor.setRGB(g.r + fl[0], g.g + fl[1], g.b + fl[2]); this.hemi.intensity = Math.PI * ENV_K; this.scene.environmentIntensity = ENV_K;
+    this.hemi.color.setRGB(amb.r + fl[0], amb.g + fl[1], amb.b + fl[2]); this.hemi.groundColor.setRGB(g.r + fl[0], g.g + fl[1], g.b + fl[2]); this.hemi.intensity = Math.PI * ENV_K; this.scene.environmentIntensity = ENV_K * (1 + 0.7 * gold);
     // gumbaz uniformlari
     const E = this.lutU.uE.value; this.du.uSunDisc.value.setRGB(ST[0], ST[1], ST[2]).multiplyScalar(E * 4.0);
     const moonK = 0.9 * (0.4 + 0.6 * dark); this.du.uMoonCol.value.setRGB(0.95 * moonK, 0.96 * moonK, 1.0 * moonK);
