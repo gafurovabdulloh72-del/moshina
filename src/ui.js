@@ -14,6 +14,7 @@ const stars = (n, max = 3) => `<span class="stars">${'★'.repeat(n)}<i>${'★'.
 const TYPE = { del: 'Yetkazish', frag: "Mo'rt yuk", taxi: "Yo'lovchi", col: "Yig'ish", multi: 'Pochta', race: 'Poyga', drift: 'Drift', smash: 'Sindirish', radar: 'Radar', jump: 'Sakrash' };
 const WHY = { time: 'Vaqt tugadi', cargo: 'Yuk sindi', comfort: "Yo'lovchi tushib ketdi", wreck: 'Transport ishdan chiqdi', sunk: 'Suvga botdingiz', slow: 'Bronza vaqtiga yetmadi', low: "Ochko yetarli bo'lmadi", left: 'Maydonni tark etdingiz' };
 const VICON = { velo: '🚲', skuter: '🛵', kart: '🏎', moto: '🏍', kvadro: '🛺', xetch: '🚗', traktor: '🚜', sedan: '🚘', pikap: '🛻', jip: '🚙', furgon: '🚐', bagi: '🏜', ralli: '🏁', yuk: '🚚', avtobus: '🚌', kupe: '🚗', otochar: '🚒', muskul: '💪', limuzin: '🎩', monstr: '👹', super: '⚡', bolid: '🏎' };
+const BAR_ICON = { M: '🗺', I: '🎒', Tab: '📘', C: '🎥', P: '📷', O: '🌐', 4: '📱', 6: '📅', U: '💬', 5: '🎙', Esc: '☰' }; // yuqori qator: sensorli ekranda ikonka-plitkalar
 const MPX = 0.25; // xarita: 1 m = 0.25 px (1600 px)
 const som = (n) => Math.round(n).toLocaleString('ru-RU');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -88,7 +89,7 @@ export class UI {
     joy.addEventListener('pointermove', (e) => { if (e.pointerId === jid) jmove(e); });
     const jend = (e) => { if (e.pointerId !== jid) return; jid = null; t.jx = t.jy = 0; knob.style.transform = ''; joy.classList.remove('act'); };
     joy.addEventListener('pointerup', jend); joy.addEventListener('pointercancel', jend);
-    this.touchOn = () => { tc.classList.add('on'); hud.classList.add('touch'); };
+    this.touchOn = () => { tc.classList.add('on'); hud.classList.add('touch'); document.documentElement.classList.add('touch'); };
     addEventListener('touchstart', this.touchOn, { once: true, passive: true });
   }
   // Interfeysni yashirish (surat rejimi) — hech qachon "yo'qolib qolmaydi": yozuv turadi va 20 soniyadan keyin o'zi qaytadi
@@ -134,7 +135,7 @@ export class UI {
   // tugmalar qatorini chizish (faqat tarkib o'zgarganda)
   drawBar(box, items, key) {
     const sig = items.map((b) => b.code + b.text).join('|'); if (this[key] === sig) return; this[key] = sig;
-    box.innerHTML = items.map((b) => `<button tabindex="-1" class="ab${b.hold ? ' hold' : ''}" data-code="${b.code}" title="${b.text} (${b.key})"><kbd>${b.key}</kbd><span>${b.text}</span></button>`).join('');
+    box.innerHTML = items.map((b) => `<button tabindex="-1" class="ab${b.hold ? ' hold' : ''}" data-code="${b.code}" title="${b.text} (${b.key})"><kbd>${b.key}</kbd>${BAR_ICON[b.key] ? `<i class="ic">${BAR_ICON[b.key]}</i>` : ''}<span>${b.text}</span></button>`).join('');
   }
   drawDmg() {
     const d = this.g.damage, key = `${Math.round(d.zone.front / 4)},${Math.round(d.zone.rear / 4)},${Math.round(d.zone.left / 4)},${Math.round(d.zone.right / 4)},${Math.round(d.engine / 4)},${d.tires.join('')}`;
