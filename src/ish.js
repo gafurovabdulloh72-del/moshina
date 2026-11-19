@@ -162,7 +162,7 @@ export function initIsh(game) {
   const tempNow = () => { const p = pl.onFoot ? pl.p : car.p, b = T.biomeAt(p[0], p[2]), h = game.hour; return Math.round(TEMP[b] - 7 + 7 * Math.cos((h - 14.5) / 24 * 6.283)); };
   PH.callTaxi = () => { if (IN.inside) return toast('Avval tashqariga chiqing 🙂', 'bad'); if (!pl.onFoot) return toast('Siz allaqachon rul ortidasiz 🙂'); const fee = 60; if (st.money < fee) return toast("Pul yetarli emas (60 so'm)", 'bad');
     const nr = T.nearestRoad(pl.p[0], pl.p[2], 45); let x, z, yaw;
-    if (nr.edge >= 0 && nr.d < 40) { const R = T.roads, off = nr.hw * 0.5; x = R.x[nr.i] - R.tz[nr.i] * off; z = R.z[nr.i] + R.tx[nr.i] * off; yaw = Math.atan2(R.tx[nr.i], R.tz[nr.i]); }
+    if (nr.edge >= 0 && nr.d < 12) { const R = T.roads, off = nr.hw * 0.5; x = R.x[nr.i] - R.tz[nr.i] * off; z = R.z[nr.i] + R.tx[nr.i] * off; yaw = Math.atan2(R.tx[nr.i], R.tz[nr.i]); }
     else { yaw = pl.yaw + Math.PI / 2; x = pl.p[0] + Math.sin(pl.yaw + 1.2) * 4.5; z = pl.p[2] + Math.cos(pl.yaw + 1.2) * 4.5; }
     car.place(x, z, yaw); game.prevP = car.p.slice(); game.addMoney(-fee, 'Taksi chaqirish'); sfx('horn'); game.ui.close(); toast(`🚕 Haydovchi ${game.carModel.v.name}ingizni yoningizga olib keldi · −${fee} so'm`, 'good'); return true; };
   PH.mechCost = () => { const d = game.damage; return Math.round(40 + ((100 - d.health) * 9 + d.tires.reduce((a, b) => a + b, 0) * 60) * Math.max(0.4, Math.sqrt(car.mass / 1500)) * 1.2); };

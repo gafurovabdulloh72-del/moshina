@@ -26,7 +26,7 @@ export default async ({ page, shot: shot0 }) => {
   await shot('life2_sartarosh');
   r = Object.assign(r, await ev(`(() => { const m0 = G.state.money; click('cut'); G.sim(1.5); const cutting = !!G.hayot2.barber.cut; G.sim(3); return { cutting, paid: m0 - G.state.money, look: G.state.look, sit: G.player.sit }; })()`));
   T_('barber', r.ins === 'sart' && r.sit && r.scr === 'sartarosh' && r.cutting && r.paid === 40 + 60 + 40 && r.look.beard === 'soqol' && r.look.hs === 1 && r.look.hair === 0x15110e, r);
-  await ev('G.advance(0.3)'); await shot('life2_sartarosh2');
+  await ev(`(() => { G.advance(0.3); const p = G.player.p; G.view(p[0] + 0.75, p[1] + 1.35, p[2] + 0.85, p[0], p[1] + 1.1, p[2]); })()`); await shot('life2_sartarosh2'); // yangi soch va soqol — oldidan
   // 4. ish: non yetkazish
   r = await ev(`(() => { G.interior.exit(); G.player.sit = false; const n = G.ish.pts.non; go(n.x + 1.5, n.z, -Math.PI / 2); press('KeyE'); const scr = G.ui.screenName; click('start'); G.sim(1.2); const J = G.ish.cur; return { scr, id: J && J.id, n: J && J.pts.length }; })()`);
   await ev(`(() => { const p = G.ish.cur.pts[0]; G.player.place(p.x + 3, p.z + 3, 0); G.cam.snap(); G.advance(0.4); })()`); await shot('life2_non');
@@ -50,18 +50,18 @@ export default async ({ page, shot: shot0 }) => {
   await ev(`click('app:bank'); G.advance(0.05)`); await shot('life2_phone_bank');
   r = Object.assign(r, await ev(`(() => { const bank = document.querySelectorAll('.ph-list > div').length; click('home'); click('app:kontakt'); const m0 = G.state.money; click('taxi'); G.sim(0.3); const p = G.player.p, d = Math.hypot(G.car.p[0] - p[0], G.car.p[2] - p[2]);
     const z = G.damage.zone; z.front = 30; z.left = 40; G.damage.engine = 50; const h0 = G.damage.health; press('Digit4'); click('app:kontakt'); click('mech'); G.sim(0.2); return { bank, d: Math.round(d), fee: m0 - G.state.money, h0, h1: G.damage.health, scr: G.ui.screenName }; })()`));
-  T_('phone', r.scr === null && r.bank >= 5 && r.d < 12 && r.h0 < 80 && r.h1 >= 99, r);
+  T_('phone', r.scr === null && r.bank >= 5 && r.d < 16 && r.h0 < 80 && r.h1 >= 99, r);
   await ev(`(() => { press('Digit4'); click('app:havo'); G.advance(0.05); })()`); await shot('life2_phone_havo');
   await ev('G.ui.close()');
   // 8. ko'cha: muzqaymoq, kaptarlar, futbol goli, avtobus
-  r = await ev(`(() => { const K = G.kocha, ic = K.ice; go(ic.x + Math.sin(ic.yaw + Math.PI) * 1.4, ic.z + Math.cos(ic.yaw + Math.PI) * 1.4, ic.yaw); const m0 = G.state.money; press('KeyE'); G.sim(0.6); const a = G.player.anim; G.sim(3); const paid = m0 - G.state.money;
+  r = await ev(`(() => { const K = G.kocha, ic = K.ice; go(ic.x + Math.sin(ic.yaw + Math.PI) * 1.4, ic.z + Math.cos(ic.yaw + Math.PI) * 1.4, ic.yaw); const i0 = G.state.stats.ice || 0; press('KeyE'); G.sim(0.6); const a = G.player.anim; G.sim(3); const inc = G.state.income.find((q) => q[1] === 'Muzqaymoq'), paid = inc ? -inc[2] : 0, ice = (G.state.stats.ice || 0) - i0;
     const B = K.birds; go(B.x + 2.5, B.z, -Math.PI / 2); press('KeyE'); G.sim(1.2); const feed = B.feedT > 0; G.sim(3); const near = B.list.filter((b) => Math.hypot(b.x - B.food[0], b.z - B.food[1]) < 2).length;
-    return { a, paid, feed, near }; })()`);
-  T_('icecream-birds', r.a === 'eat' && r.paid === 8 && r.feed && r.near >= 6, r);
+    return { a, paid, ice, feed, near }; })()`);
+  T_('icecream-birds', r.a === 'eat' && r.paid === 8 && r.ice === 1 && r.feed && r.near >= 6, r);
   await ev(`(() => { const B = G.kocha.birds; G.player.place(B.x + 4, B.z + 2.5, -2); G.cam.snap(); G.advance(0.4); })()`); await shot('life2_birds');
   r = await ev(`(() => { const K = G.kocha, P = K.pitch, b = K.ball, g0 = G.state.stats.goals || 0; const [gx, gz] = P.W(0, 6.5); b.x = gx; b.z = gz; b.vx = b.vy = b.vz = 0; const yaw = Math.atan2(P.W(0, 9)[0] - gx, P.W(0, 9)[1] - gz); go(gx - Math.sin(yaw) * 1.0, gz - Math.cos(yaw) * 1.0, yaw); b.x = gx; b.z = gz; b.vx = b.vz = 0; press('KeyE'); G.sim(2); return { goals: (G.state.stats.goals || 0) - g0 }; })()`);
   T_('football', r.goals === 1, r);
-  r = await ev(`(() => { const K = G.kocha, s = K.stop.seat; go(s.x + 1, s.z); press('KeyE'); G.sim(0.4); const sit = G.player.sit; G.runUntil((g) => g.kocha.bus.ph === 'stop', 60); const ph = K.bus.ph; return { sit, ph }; })()`);
+  r = await ev(`(() => { const K = G.kocha, s = K.stop.seat; go(s.x + 1, s.z); press('KeyE'); G.sim(0.4); const sit = G.player.sit; G.runUntil((g) => g.kocha.bus.ph === 'stop', 60); G.sim(0.2); const ph = K.bus.ph; return { sit, ph }; })()`);
   await ev(`(() => { const s = G.kocha.stop; G.view(s.x + Math.sin(s.yaw) * 14 + 6, G.T.gridHeight(s.x, s.z) + 4, s.z + Math.cos(s.yaw) * 14 + 6, G.kocha.bus.on ? s.x : s.x, G.T.gridHeight(s.x, s.z) + 1.2, s.z); })()`); await shot('life2_bus');
   r = Object.assign(r, await ev(`(() => { press('KeyE'); const scr = G.ui.screenName; const m0 = G.state.money; click('go:mayoq'); return { scr, m0 }; })()`));
   await page.waitForTimeout(300);

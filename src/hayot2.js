@@ -236,10 +236,12 @@ export function initHayot2(game) {
   const spotAct = (sp) => { const sit = pl.sit && HY.seat === sp;
     switch (sp.k) {
       case 'csit': if (!sit) return sitCafe(sp); if (H2.dishes.length) return eatNext(); if (!WT.carry.length) return game.ui.open('choyxona'); return;
-      case 'kiyim': case 'kassa': { const s = IN.cur().spots.find((q) => q.k === 'kiyim'); pl.p[0] = s.x; pl.p[2] = s.z; pl.yaw = s.yaw; pl.v[0] = pl.v[2] = 0; pl.sit = false; return game.ui.open('kiyim', { mode: 'shop' }); }
-      case 'wardrobe': pl.yaw = sp.yaw + Math.PI; return game.ui.open('kiyim', { mode: 'own' });
+      case 'kiyim': case 'kassa': { const s = IN.cur().spots.find((q) => q.k === 'kiyim'); pl.p[0] = s.x; pl.p[2] = s.z; pl.yaw = s.yaw; pl.v[0] = pl.v[2] = 0; pl.sit = false; settle(); return game.ui.open('kiyim', { mode: 'shop' }); }
+      case 'wardrobe': pl.yaw = sp.yaw + Math.PI; settle(); return game.ui.open('kiyim', { mode: 'own' });
       case 'sartarosh': if (BR.cut) return; if (!sit) { pl.p[0] = sp.x; pl.p[2] = sp.z + 0.05; pl.yaw = 0; pl.v[0] = pl.v[2] = 0; pl.sit = true; pl.emote = null; HY.seat = sp; return; } return game.ui.open('sartarosh');
     } };
+  // ko'zgu oldiga ko'chirilgach oyoqlar eski joyda qolmasin: oyna ochilganda o'yin to'xtaydi, shuning uchun holatni darhol joyiga keltiramiz
+  const settle = () => { const r = pl.rig; r.root.position.set(pl.p[0], pl.p[1], pl.p[2]); r.root.rotation.y = pl.yaw; pl.ctl.vx = pl.ctl.vz = 0; for (let i = 0; i < 45; i++) poseRig(r, 'idle', 1 / 30, 0, pl.ctl); };
   H2.spotAct = spotAct; H2.spotText = spotText; H2.spot = (k) => { const I = IN.cur(); return I && I.spots.find((s) => s.k === k); };
   const ex0 = L.extra;
   L.extra = (offer, px, pz, p) => { ex0(offer, px, pz, p); if (HY.dlg) return; const I = IN.cur();
@@ -285,7 +287,8 @@ export function initHayot2(game) {
     const sn = game.ui && game.ui.screenName; if (H2.pv && sn !== 'kiyim' && sn !== 'sartarosh') { const pv = H2.pv; H2.pv = null; if (!pv.keep) restyle(lookOf()); }
     if (sn !== 'kiyim' && sn !== 'sartarosh') return; const I = IN.cur(); if (!I) return; const r = I.rooms[0], o = I.o, cam = game.camera, f = [Math.sin(pl.yaw), Math.cos(pl.yaw)], seat = sn === 'sartarosh';
     const d = seat ? 1.45 : 2.5, hy = seat ? 1.3 : 1.3, sh = seat ? 0.32 : 0.55; camP.set(clamp(pl.p[0] + f[0] * d, o[0] + r.x0 + 0.25, o[0] + r.x1 - 0.25), pl.p[1] + hy, clamp(pl.p[2] + f[1] * d, o[2] + r.z0 + 0.25, o[2] + r.z1 - 0.25));
-    cam.position.copy(camP); lk.set(pl.p[0] + f[1] * sh, pl.p[1] + (seat ? 1.1 : 0.95), pl.p[2] - f[0] * sh); // qahramon ekranning chap yarmida (o'ngda — oyna) cam.lookAt(lk); if (cam.near !== 0.08) { cam.near = 0.08; cam.updateProjectionMatrix(); }
+    cam.position.copy(camP); lk.set(pl.p[0] + f[1] * sh, pl.p[1] + (seat ? 1.1 : 0.95), pl.p[2] - f[0] * sh); cam.lookAt(lk); // qahramon ekranning chap yarmida (o'ngda — oyna)
+    if (cam.near !== 0.08) { cam.near = 0.08; cam.updateProjectionMatrix(); }
   });
 
   // ================= OYNALAR =================
