@@ -8,6 +8,11 @@ const PAR = [-1, 0, 1, 2, 3, 4, 3, 6, 7, 8, 9, 3, 11, 12, 13, 14, 1, 16, 17, 18,
 // Umumiy muhit: kamera (uzoqlik bo'yicha tejash), o'yinchi (NPC nigohi), barcha odamlar ro'yxati
 const ENV = { cam: null, player: null, rigs: [], time: 0, grips: null };
 export function rigEnv(o) { Object.assign(ENV, o); }
+const SHADOW_D = [24, 34, 46]; // sifat pog'onasi bo'yicha odam soyasi masofasi (m)
+// kamera ko'rish konusida (odam radiusi bilan) — ENV.cam matritsasi bo'yicha, ajratmasiz
+function inView(P) { const c = ENV.cam, e = c.matrixWorldInverse.elements, x = P.x, y = P.y + 0.9, z = P.z;
+  const vx = e[0] * x + e[4] * y + e[8] * z + e[12], vy = e[1] * x + e[5] * y + e[9] * z + e[13], vz = e[2] * x + e[6] * y + e[10] * z + e[14];
+  if (vz > 1.6) return false; const d = Math.max(0, -vz), tv = Math.tan((c.fov || 60) * Math.PI / 360); return Math.abs(vy) < d * tv + 1.6 && Math.abs(vx) < d * tv * (c.aspect || 1.8) + 1.6; }
 
 // ---- kanallar ----
 const CH = {}; let nch = 0; for (const k of ['PX', 'PY', 'PZ', 'BX', 'BY', 'BZ', 'HX', 'HY', 'HZ', 'SX', 'SY', 'SZ', 'CX', 'CY', 'CZ', 'NX', 'NY', 'KX', 'KY', 'KZ', 'LOOK']) CH[k] = nch++;
@@ -35,8 +40,8 @@ const V3 = () => new THREE.Vector3(), Q4 = () => new THREE.Quaternion();
 const _e = new THREE.Euler(), _q = Q4(), _q2 = Q4(), _q3 = Q4(), _v = V3(), _v2 = V3(), _v3 = V3(), _v4 = V3(), _m = new THREE.Matrix4(), _Y = new THREE.Vector3(0, 1, 0);
 const qE = (q, x, y, z, o) => q.setFromEuler(_e.set(x, y, z, o));
 
-const STATES = ['loco', 'air', 'swim', 'sit', 'bend', 'shake', 'dance', 'wave', 'talk', 'play', 'fish', 'swing', 'fall', 'pet', 'lie', 'eat', 'cook', 'drink', 'wash', 'shower', 'read'];
-const BLEND = { loco: 0.16, air: 0.07, swim: 0.3, sit: 0.35, bend: 0.2, shake: 0.18, dance: 0.3, wave: 0.2, talk: 0.3, play: 0.3, fish: 0.25, swing: 0.15, fall: 0.08, pet: 0.25, lie: 0.45, eat: 0.35, cook: 0.25, drink: 0.2, wash: 0.25, shower: 0.3, read: 0.3 };
+const STATES = ['loco', 'air', 'swim', 'sit', 'bend', 'shake', 'dance', 'wave', 'talk', 'play', 'fish', 'swing', 'fall', 'pet', 'lie', 'eat', 'cook', 'drink', 'wash', 'shower', 'read', 'horn'];
+const BLEND = { loco: 0.16, air: 0.07, swim: 0.3, sit: 0.35, bend: 0.2, shake: 0.18, dance: 0.3, wave: 0.2, talk: 0.3, play: 0.3, fish: 0.25, swing: 0.15, fall: 0.08, pet: 0.25, lie: 0.45, eat: 0.35, cook: 0.25, drink: 0.2, wash: 0.25, shower: 0.3, read: 0.3, horn: 0.35 };
 const MAP = { idle: 'loco', walk: 'loco', run: 'loco', jump: 'air' };
 const IVAR = ['look', 'stretch', 'watch', 'scratch', 'hips', 'cross', 'shrug', 'look'];
 const IVAR_M = ['look', 'roll', 'watch', 'neck', 'cross', 'look', 'stretch', 'roll', 'scratch', 'hips']; // erkak: yelka aylantirish, bo'yin cho'zish, atrofga qarash
@@ -401,6 +406,14 @@ function sDrink(rig, A, o, t, dt) {
   o[CH.KX] -= 0.38 * sip; o[CH.NX] -= 0.12 * sip; o[CH.CX] -= 0.04 * sip; o[CH.LOOK] = 0.3 * (1 - sip);
   idleLayer(rig, A, o, 0.6, t, dt, false);
 }
+// Karnay chalish (to'y): o'ng qo'l og'iz oldida karnayni tutadi, chap qo'l oldinda-yuqorida quvurni ushlaydi, bosh ko'tarilgan; har nafasda ko'krak kengayadi
+function sHorn(rig, A, o, t, dt) {
+  const e = sm(0, 0.5, t), br = sn(t * 1.6) * 0.5 + 0.5;
+  armMix(o, AR, { cle: 0.02, uf: 1.05, ua: 0.32, ur: 0.62, ef: 2.15, ep: -0.15, wf: -0.25, fg: 0.95 }, e);
+  armMix(o, AL, { cle: 0.06, uf: 1.8, ua: -0.06, ur: 0.55, ef: 0.5, ep: 0.2, wf: 0.15, fg: 0.95 }, e);
+  o[CH.KX] -= (0.3 + 0.04 * br) * e; o[CH.NX] -= 0.08 * e; o[CH.CX] -= (0.05 + 0.03 * br) * e; o[CH.LOOK] = 0;
+  idleLayer(rig, A, o, 0.35, t, dt, false);
+}
 // Qo'l yuvish (rakovina): ikki kaft oldinda past, bir-biriga ishqalanadi, nigoh pastda
 function sWash(rig, A, o, t, dt) {
   const e = sm(0, 0.3, t), r = sn(t * 11);
@@ -427,9 +440,12 @@ export function animate(rig, anim, dt, speed, ctl) {
   rig.t += dt;
   // uzoqdagi odamlar: kamroq tezlikda yoki muzlatilgan (kamera masofasi bo'yicha)
   if (ENV.cam && rig !== ENV.player) {
-    const c = ENV.cam.position, dx = c.x - root.position.x, dz = c.z - root.position.z, d2 = dx * dx + dz * dz;
+    const c = ENV.cam.position, dx = c.x - root.position.x, dz = c.z - root.position.z, d2 = dx * dx + dz * dz, q = ENV.state ? ENV.state.set.gfx : 2, sd = SHADOW_D[q] ?? 45;
+    if (rig.mesh) rig.mesh.castShadow = d2 < sd * sd; // uzoqdagi odamning soyasi ko'rinmaydi — soya xaritasiga chizilmaydi (to'y, bozor, ko'cha olomoni)
     if (d2 > 140 * 140 && !A.first) return;
-    if (d2 > 60 * 60 && !A.first) { A.lodAcc += dt; if (A.lodAcc < (d2 > 95 * 95 ? 0.25 : 0.12)) return; dt = A.lodAcc; } A.lodAcc = 0;
+    // uzoqda yoki ekrandan tashqarida — siyrakroq yangilanadi (ko'rinmaydigan odamga har kadr skelet hisoblanmaydi)
+    const off = d2 > 12 * 12 && !inView(root.position), iv = Math.max(d2 > 95 * 95 ? 0.25 : d2 > 60 * 60 ? 0.12 : 0, off ? 0.3 : 0);
+    if (iv > 0 && !A.first) { A.lodAcc += dt; if (A.lodAcc < iv) return; dt = A.lodAcc; } A.lodAcc = 0;
     A.near = d2 < 35 * 35;
   } else A.near = true;
   dt = Math.min(dt, 0.25);
@@ -494,6 +510,7 @@ export function animate(rig, anim, dt, speed, ctl) {
       case 'wash': sWash(rig, A, o, A.stT, dt); break;
       case 'shower': sShower(rig, A, o, A.stT, dt); break;
       case 'read': sRead(rig, A, o, A.stT, dt); break;
+      case 'horn': sHorn(rig, A, o, A.stT, dt); break;
     }
     for (let i = 0; i < NCH; i++) acc2[i] += o[i] * w;
     for (let i = 0; i < 12; i++) rqa[i] += rq[i] * w;

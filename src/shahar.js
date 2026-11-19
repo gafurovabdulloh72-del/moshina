@@ -165,7 +165,7 @@ export function initShahar(game) {
       if (!on) { if (w.vis) { w.vis = false; w.rig.root.visible = false; } if (w.cross) { w.cross = null; w.side = -w.side; w.d = 16; w.dir = 1; } w.curb = false; continue; }
       stepWalker(w, dt);
       // mashina yaqinlashsa — chetga
-      const d = Math.hypot(w.x - cp.x, w.z - cp.z), show = d < 170; w.vis = show; w.rig.root.visible = show; if (!show) continue; wv++;
+      const d = Math.hypot(w.x - cp.x, w.z - cp.z), show = d < [110, 140, 170][q]; w.vis = show; w.rig.root.visible = show; if (!show) continue; wv++;
       w.y = T.ground(w.x, w.z, 1e9).y; w.rig.root.position.set(w.x, w.y, w.z); w.rig.root.rotation.y += angDiff(w.yaw, w.rig.root.rotation.y) * Math.min(1, dt * 8);
       if (d < 90 || (game.time * 10 + i) % 3 < 1) poseRig(w.rig, w.moving ? 'walk' : 'idle', d < 90 ? dt : dt * 3, w.moving ? w.sp : 0);
     }

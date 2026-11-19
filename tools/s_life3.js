@@ -1,5 +1,6 @@
 // Kundalik hayot 3 sinovi: tetiklik (charchoq, sekin yurish, uyqu), ish jadvali bonusi va «Bugungi reja», biznes (sotib olish, daromad, kassa, tovar, ishchi, daraja, mijozlar),
-// uy kengaytmalari (mehmon xonasi, oshxona — duxovka/samovar, garaj, hovli jihozlari), qishloq topshiriqlari (10 tur), haydovchi ko'rinishi, saqlov
+// uy kengaytmalari (mehmon xonasi, oshxona — duxovka/samovar, garaj, hovli jihozlari), qishloq topshiriqlari (10 tur), haydovchi ko'rinishi, saqlov,
+// bajarilayotgan topshiriqning saqlanishi va qayta yuklanganda davom etishi (tiklab bo'lmasa — xabar, beruvchi qayta taklif qiladi)
 export default async ({ page, shot: shot0 }) => {
   const shot = async (n) => { for (let k = 0; ; k++) { try { return await shot0(n); } catch (e) { if (k >= 3) throw e; console.log('skrinshot sekin, qayta:', n); } } };
   await page.waitForFunction('window.__ready === true', null, { timeout: 120000 });
@@ -107,4 +108,25 @@ export default async ({ page, shot: shot0 }) => {
   await page.reload(); await page.waitForFunction('window.__ready === true', null, { timeout: 120000 });
   r = await ev(`(() => { const st = G.state; G.sim(0.3); return { biz: G.biznes.own('choyxona') && st.biz.choyxona.lvl, garage: !!G.uy2.garageDisp(), yard: Object.values(G.uy2.yard).filter((o) => o && o.grp && o.grp.visible).length, rooms: G.interior.H.rooms.length, hurmat: st.hurmat }; })()`);
   T_('reload', r.biz === 5 && r.garage && r.yard >= 5 && r.rooms >= 5 && r.hurmat >= 20, r);
+
+  // 8. bajarilayotgan topshiriq: saqlanadi (st.errCur), qayta yuklanganda o'sha bosqichdan davom etadi
+  const helpers = `window.press = (c) => { G.input.pressed.add(c); G.advance(1 / 60); }; window.go = (x, z, yaw = 0) => { G.player.place(x, z, yaw); G.sim(0.3); }; G.live.dismount(true); G.hour = 10; G.freezeTime = true; 1`;
+  await ev(helpers);
+  r = await ev(`(() => { const E = G.topshiriq, npcs = G.live._dbg.npcs; const o = npcs.find((q) => q.role === 'talk' && !q.away && (q.err = 'tovuq', q.errCool = 0, q.draft = null, E.offer(q))); if (!o) return { none: 1 }; E.start(o); const D = E.cur, h = D.hens[0];
+    go(h.x + 0.5, h.z + 0.3); G.sim(0.2); press('KeyE'); G.sim(1.1); G.save(); const sv = JSON.parse(localStorage.getItem('safar_save_v2')).errCur;
+    return { name: o.name, got: D.hens.filter((q) => q.got).length, sv: sv && sv.type, svGot: sv && sv.hens && sv.hens.filter((q) => q.got).length }; })()`);
+  T_('errand-save', r.got === 1 && r.sv === 'tovuq' && r.svGot === 1, r);
+  const giver = r.name;
+  await page.reload({ timeout: 180000 }); await page.waitForFunction('window.__ready === true', null, { timeout: 180000 }); await ev(helpers);
+  r = await ev(`(() => { G.sim(0.5); const E = G.topshiriq, D = E.cur; if (!D) return { none: 1, toast: G.ui.toasts.innerText }; return { type: D.type, name: D.o.name, got: D.hens.filter((q) => q.got).length, way: !!G.way, toast: G.ui.toasts.innerText.slice(0, 120), offer: E.offerOf(D.o) === 'tovuq' }; })()`);
+  T_('errand-restore', r.type === 'tovuq' && r.name === giver && r.got === 1 && r.way && /davom etmoqda/.test(r.toast), r);
+  r = await ev(`(() => { const E = G.topshiriq, D = E.cur, st = G.state, h0 = st.hurmat, m0 = st.money; for (const hh of D.hens) { if (hh.got) continue; go(hh.x + 0.5, hh.z + 0.3); G.sim(0.2); press('KeyE'); G.sim(1.1); }
+    const o = D.o; go(o.x + 1.1, o.z + 0.3); press('KeyE'); G.sim(1.4); G.save(); return { done: !E.cur, paid: st.money > m0, hurmat: st.hurmat > h0, sv: JSON.parse(localStorage.getItem('safar_save_v2')).errCur }; })()`);
+  T_('errand-finish', r.done && r.paid && r.hurmat && r.sv === null, r);
+  // tiklab bo'lmaydigan saqlov (xat oluvchisi yo'q): o'yin buzilmaydi, xabar chiqadi, beruvchi topshiriqni qayta taklif qiladi
+  r = await ev(`(() => { const npcs = G.live._dbg.npcs, o = npcs.find((q) => q.role === 'talk' && !q.away); const sv = JSON.parse(localStorage.getItem('safar_save_v2')); sv.errCur = { type: 'xat', oi: npcs.indexOf(o), on: o.name, rw: 99, h: 2, t: 5, wi: 999, wn: "Yo'q odam" }; localStorage.setItem('safar_save_v2', JSON.stringify(sv)); G.noSave = true; return o.name; })()`);
+  const g2 = r;
+  await page.reload({ timeout: 180000 }); await page.waitForFunction('window.__ready === true', null, { timeout: 180000 });
+  r = await ev(`(() => { G.sim(0.5); const E = G.topshiriq, o = G.live._dbg.npcs.find((q) => q.name === ${JSON.stringify(g2)}); return { cur: !!E.cur, offer: o && E.offerOf(o), toast: G.ui.toasts.innerText.slice(0, 160) }; })()`);
+  T_('errand-restore-fail', !r.cur && r.offer === 'xat' && /davom ettirib bo'lmadi/.test(r.toast), r);
 };

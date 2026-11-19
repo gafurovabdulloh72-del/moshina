@@ -12,6 +12,7 @@ const hash = (n) => { const s = Math.sin(n * 91.7 + 17.3) * 43758.5453; return s
 export const EV = { toy: ["To'y", '💍', '#ff6ab0', 14, 23], bozor: ['Bozor kuni', '🧺', '#7ad040', 7, 15], navruz: ["Navro'z sayli", '🌷', '#ffcc33', 8, 20] };
 // taqvim: Navro'z — yil boshi (12 kunlik yilning 1-kuni), bozor — chorshanba va yakshanba, to'y — shanba (ba'zan payshanba)
 export function eventsOn(d) { const yd = ((d % YEAR) + YEAR) % YEAR, wd = ((d % 7) + 7) % 7, out = []; if (yd === 0) { out.push('navruz'); return out; } if (wd === 2 || wd === 6) out.push('bozor'); if (wd === 5 || (wd === 3 && hash(d) < 0.5)) out.push('toy'); return out; }
+const VISD = [100, 125, 150]; // tadbir odamlari ko'rinadigan masofa (sifat pog'onasi bo'yicha)
 const CALLS = ['Olma, shirin olma!', 'Qovun — asaldek!', 'Keling, aka, tatib ko\'ring!', 'Arzon, arzon!', 'Issiq non, yangi non!', 'Uzum, mayiz, yong\'oq!', "Pomidor — o'z bog'imizdan!", 'Opa, qarab keting!'];
 
 export function initTadbir(game) {
@@ -118,7 +119,7 @@ export function initTadbir(game) {
   const pool = LOOKS.map((l, i) => { const r = makeRig({ shirt: l[0], pants: l[1], long: !!l[2], seed: 900 + i * 17, vest: i % 5 === 0 ? 0x2a2c33 : undefined, hat: undefined }); r.root.visible = false; scene.add(r.root); return { rig: r, slot: null }; });
   const mkFixed = (o) => { const r = makeRig(o); r.root.visible = false; scene.add(r.root); return r; };
   const karnay = mkFixed({ shirt: 0x2a3a6a, pants: 0x1d1e22, seed: 951, vest: 0xc8a040, stache: true }), doira = mkFixed({ shirt: 0xd8283a, pants: 0x1d1e22, seed: 952, vest: 0x1d1e22 });
-  { const k = gb(5401); k.color(0xd8b040).push().rotX(-Math.PI / 2 + 0.55).cyl(10, 0.025, 0.2, 0, 2.2, { cap: false }).pop(); const m = new THREE.Mesh(k.build(), MAT.flat); m.position.set(0, 0.02, 0.08); karnay.head.add(m);
+  { const k = gb(5401); k.color(0xd8b040).push().rotX(1.34).cyl(10, 0.022, 0.2, 0, 2.2, { cap: false }).color(0x8a6a2a).cyl(8, 0.03, 0.03, 0, 0.08, { cap: true }).pop(); const m = new THREE.Mesh(k.build(), MAT.flat); m.castShadow = true; m.position.set(0, 0.035, 0.1); karnay.head.add(m); // og'izdan oldinga va biroz yuqoriga — bosh ko'tarilgani bilan ~30°
     const d = gb(5402); d.push().rotX(Math.PI / 2).color(0x8a5a36).cyl(18, 0.27, 0.27, -0.04, 0.04).color(0xe8d8b0).cyl(18, 0.25, 0.25, 0.041, 0.042, { cap: true }).pop(); const dm = new THREE.Mesh(d.build(), MAT.flat); dm.position.set(0, 0.25, 0.42); doira.chest.add(dm); }
   const kelin = mkFixed({ shirt: 0xf8f6f0, pants: 0xf8f6f0, long: true, dress: true, seed: 953, hair: 0x2a1d16 }), kuyov = mkFixed({ shirt: 0xf6f6f2, pants: 0x1d1e22, seed: 954, vest: 0x1d1e22 });
   { const v = gb(5403); v.color(0xf6f4f0).blob(0.24, 1, { cy: 0.12, sy: 1.2 }); const m = new THREE.Mesh(v.build(), MAT.flat); m.position.set(0, 0.06, -0.05); kelin.head.add(m); } // kelin ro'moli
@@ -202,7 +203,7 @@ export function initTadbir(game) {
     if (E.seat && ((!pl.sit && pl.lockAnim !== 'eat') || !foot)) E.seat = null;
     const t = game.time;
     for (let i = 0; i < Math.min(maxN, slots.length); i++) { const P = pool[i], s = P.slot, r = P.rig; if (!s) continue; const d = Math.hypot(s.x - cp.x, s.z - cp.z);
-      if (s.seat && E.seat === s.seat) { r.root.visible = false; continue; } r.root.visible = d < 150;
+      if (s.seat && E.seat === s.seat) { r.root.visible = false; continue; } r.root.visible = d < VISD[q];
       let an = s.anim, sp = 0;
       if (s.wander) { if (s.wait > 0) { s.wait -= dt; } else { const dx = s.tx - s.x, dz = s.tz - s.z, dl = Math.hypot(dx, dz); if (dl < 0.4) { const st2 = E.bozorRef.stalls[(rnd() * E.bozorRef.stalls.length) | 0]; s.tx = st2 ? st2.x + Math.sin(st2.yaw) * 2.2 + (rnd() - 0.5) * 2 : near.c.x; s.tz = st2 ? st2.z + Math.cos(st2.yaw) * 2.2 + (rnd() - 0.5) * 2 : near.c.z; s.wait = 2 + rnd() * 5; } else { const v = 1.2; s.x += dx / dl * v * dt; s.z += dz / dl * v * dt; s.yaw = Math.atan2(dx, dz); an = 'walk'; sp = v; } }
         r.root.position.set(s.x, gy(s.x, s.z), s.z); r.root.rotation.y += angDiff(s.yaw, r.root.rotation.y) * Math.min(1, dt * 6); }
@@ -214,7 +215,7 @@ export function initTadbir(game) {
     // musiqachilar va kelin-kuyov
     const showFixed = live && near.mus;
     if (showFixed) { const m = near.mus, c = Math.cos(m.yaw), sn = Math.sin(m.yaw); const pos = [[m.x, m.z], [m.x + c * 1.2, m.z - sn * 1.2]];
-      [karnay, doira].forEach((r, k) => { r.root.visible = nd < 160; r.root.position.set(pos[k][0], gy(pos[k][0], pos[k][1]), pos[k][1]); r.root.rotation.y = m.yaw; r.actDur = 99; if (nd < 90) poseRig(r, k ? 'play' : 'idle', dt, 0); });
+      [karnay, doira].forEach((r, k) => { r.root.visible = nd < 160; r.root.position.set(pos[k][0], gy(pos[k][0], pos[k][1]), pos[k][1]); r.root.rotation.y = m.yaw; r.actDur = 99; if (nd < 90) poseRig(r, k ? 'play' : 'horn', dt, 0); });
       const hd = near === E.toyRef && E.toyRef.head; [kelin, kuyov].forEach((r, k) => { r.root.visible = !!hd && nd < 160; if (hd) { r.root.position.set(hd[k].x, gy(hd[k].x, hd[k].z), hd[k].z); r.root.rotation.y = hd[k].yaw; r.actDur = 99; if (nd < 90) poseRig(r, 'sit', dt, 0); } }); }
     else for (const r of fixedRigs) if (r.root.visible) r.root.visible = false;
     // Navro'z: qozondan bug', o'choqdan uchqun

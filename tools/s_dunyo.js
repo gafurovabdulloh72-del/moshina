@@ -1,4 +1,4 @@
-// Dunyo sinovi: har bir ob-havo (tutish ko'paytuvchisi, zarrachalar), taqvim, to'y/bozor/Navro'z tadbirlari, gavjum ko'cha (mashina va piyodalar, svetofor), bug'doy dalasida o't yo'qligi
+// Dunyo sinovi: har bir ob-havo (tutish ko'paytuvchisi, zarrachalar), ob-havo sur'ati (kam va uzoq yomon havo, ravon o'tish), tom ostida yog'in yo'qligi, qoplangan osmon, taqvim, to'y/bozor/Navro'z tadbirlari, gavjum ko'cha (mashina va piyodalar, svetofor), bug'doy dalasida o't yo'qligi
 // Skrinshotlar: SHOTS=1 bo'lsa shots/dunyo_*.jpg
 export default async ({ page, shot }) => {
   await page.waitForFunction('window.__ready === true', null, { timeout: 180000 });
@@ -15,6 +15,30 @@ export default async ({ page, shot }) => {
   const br = await ev(`(() => { const run = (t) => { G.dunyo.set(t); G.drive(['west', 'karvon'], 30); G.auto = null; G.car.place(G.car.p[0], G.car.p[2], G.car.yaw); G.prevP = G.car.p.slice(); G.input.keys.add('KeyW'); G.sim(6); G.input.keys.delete('KeyW'); const v0 = G.car.fwd, p0 = G.car.p.slice(); G.input.keys.add('KeyS'); let t2 = 0; while (G.car.fwd > 0.5 && t2 < 15) { G.sim(0.1); t2 += 0.1; } G.input.keys.delete('KeyS'); return [+Math.hypot(G.car.p[0] - p0[0], G.car.p[2] - p0[2]).toFixed(1), +v0.toFixed(1)]; }; const dry = run('ochiq'), snow = run('qor'); return { dry, snow }; })()`);
   T_('brake-slippery', br.snow[0] / Math.max(1, br.snow[1]) > br.dry[0] / Math.max(1, br.dry[1]) * 1.1, br);
   await ev(`G.dunyo.set('ochiq'); G.dunyo.set(null); 1`);
+  // 1b. ob-havo sur'ati: ochiq havo ustun, yomon havo kamdan-kam (fasl ichida ko'pi bilan bitta), 9 soatdan qisqa emas, oralari uzoq; prognoz bilan bir xil
+  let r = await ev(`(() => { const n = G.T.roads.nodeBy.vil, cnt = {}, bad = (t) => t === 'yomgir' || t === 'dovul' || t === 'qor'; let prev = null, ch = 0, run = 0, runs = [], gaps = [], lastEnd = null, inB = false; const H = 24 * 48;
+    for (let i = 0; i < H * 2; i++) { const h = i / 2, t = G.dunyo.typeAt(Math.floor(h / 24), h % 24, n.x, n.z); cnt[t] = (cnt[t] || 0) + 1; if (t !== prev) { ch++; if (prev && bad(prev)) runs.push(run); run = 0; } run += 0.5; prev = t; const b = bad(t); if (b && !inB && lastEnd != null) gaps.push(h - lastEnd); if (!b && inB) lastEnd = h; inB = b; }
+    const tot = H * 2, f = (k) => (cnt[k] || 0) / tot; return { clear: +(f('ochiq') + f('bulut')).toFixed(2), bad: +(f('yomgir') + f('dovul') + f('qor')).toFixed(2), perDay: +(ch / 48).toFixed(2), minRun: Math.min(...runs), minGap: Math.min(...gaps), spells: runs.length }; })()`);
+  T_('weather-pacing', r.clear >= 0.7 && r.bad <= 0.2 && r.perDay <= 2.5 && r.minRun >= 9 && r.minGap >= 24 && r.spells >= 3, r);
+  // ravon o'tish: tabiiy yomg'ir boshlanganda yog'in birdan emas, ~1 daqiqada kuchayadi
+  r = await ev(`(() => { const n = G.T.roads.nodeBy.vil; let d0 = -1, h0 = 0, prev = null; for (let i = 0; i < 24 * 40 * 20 && d0 < 0; i++) { const H = i / 20, d = Math.floor(H / 24), h = H % 24, a = G.dunyo.typeAt(d, h, n.x, n.z); if (prev === 'bulut' && a === 'yomgir' && h > 0.5 && h < 22) { d0 = d; h0 = h; } prev = a; }
+    if (d0 < 0) return { none: 1 }; G.live.mount(true); G.car.place(n.x - 60, n.z + 10, 1.4); G.prevP = G.car.p.slice(); G.dunyo.set(null); G.state.dunyo.day = d0; G.hour = h0 - 0.3; G.sim(3); G.dunyo.snap(); G.sim(0.5); const r0 = G.dunyo.cur.rain;
+    G.hour = h0 + 0.05; G.sim(2); const r1 = G.dunyo.cur.rain; G.sim(90); const r2 = G.dunyo.cur.rain; const t = G.dunyo.type; G.dunyo.set('ochiq'); return { d0, h0, r0: +r0.toFixed(2), r1: +r1.toFixed(2), r2: +r2.toFixed(2), t }; })()`);
+  T_('weather-smooth', r.t === 'yomgir' && r.r0 < 0.05 && r.r1 > 0 && r.r1 < 0.2 && r.r2 > 0.5, r);
+  // tom ostida yog'in yo'q: yoqilg'i shoxobchasi soyaboni ostida yomg'ir zarrachalari kamida 3 marta kam chiziladi; yangi sheyder kompilyatsiya qilinmaydi; mashina ichi (quti) — faqat yopiq transportda
+  r = await ev(`(() => { const s = G.fuel.stations[0], ux = s.ax - s.x, uz = s.az - s.z, l = Math.hypot(ux, uz), U = [ux / l, uz / l], V = [-U[1], U[0]], W = (a, b) => [s.x + U[0] * a + V[0] * b, s.z + U[1] * a + V[1] * b];
+    G.state.set.gfx = 2; G.applyQuality(); G.advance(0.05); const pr0 = G.renderer.info.programs.length; G.dunyo.set('dovul'); G.live.dismount(true); const p = W(-0.5, 0); G.player.place(p[0], p[1], 0); G.hour = 13; G.cam.snap(); G.sim(2); G.advance(0.1);
+    const e = W(1.5, -3.2), t = W(-1.5, 2.5); G.camera.position.set(e[0], s.y + 2.2, e[1]); G.camera.lookAt(t[0], s.y + 0.6, t[1]); G.camera.updateMatrixWorld(); G.dunyo.parts.material.uniforms.uCam.value.copy(G.camera.position);
+    const R = G.renderer, rt = new G.THREE.WebGLRenderTarget(160, 90), tmp = new G.THREE.Scene(), P = G.dunyo.parts, par = P.parent, buf = new Uint8Array(160 * 90 * 4);
+    const count = () => { R.setRenderTarget(rt); R.setClearColor(0x000000, 0); R.clear(); R.render(tmp, G.camera); R.readRenderTargetPixels(rt, 0, 0, 160, 90, buf); R.setRenderTarget(null); let n = 0; for (let i = 3; i < buf.length; i += 4) if (buf[i] > 3) n++; return n; };
+    par.remove(P); tmp.add(P); const on = count(), w = G.fx.uni.uOccG.value.w; G.fx.uni.uOccG.value.w = 0; const off = count(); G.fx.uni.uOccG.value.w = w; tmp.remove(P); par.add(P); rt.dispose();
+    const occ = G.dunyo.occInfo(); G.live.mount(true); G.setVehicle('jip'); G.sim(0.5); const carJ = G.dunyo.occInfo().car; G.setVehicle('velo'); G.sim(0.5); const carV = G.dunyo.occInfo().car; G.setVehicle('jip'); G.sim(0.2);
+    return { on, off, occ, carJ, carV, programs: G.renderer.info.programs.length - pr0 }; })()`);
+  T_('rain-under-roof', r.off > 200 && r.on * 3 < r.off && r.occ.on === 1 && r.occ.n > 0 && r.carJ && !r.carV && r.programs === 0, r);
+  // qoplangan osmon: yomg'irda osmon kulrang (ko'k "teshik" yo'q), ochiq havoda — o'zgarishsiz
+  r = await ev(`(() => { const U = G.look.U; G.dunyo.set('yomgir'); G.sim(0.5); const a = { ovc: +U.uOvc.value.toFixed(2), cl: +U.uCloud.value.x.toFixed(2) }; G.dunyo.set('ochiq'); G.sim(0.5); const b = { ovc: U.uOvc.value, cl: +U.uCloud.value.x.toFixed(2) }; G.dunyo.set('bulut'); G.sim(0.5); const c = U.uOvc.value; return { a, b, bulut: c }; })()`);
+  T_('overcast-sky', r.a.ovc > 0.6 && r.a.cl > 2.2 && r.b.ovc === 0 && r.b.cl < 0.6 && r.bulut === 0, r);
+  await ev(`G.dunyo.set('ochiq'); 1`);
   // 2. taqvim: kun almashadi, prognoz
   const cal = await ev(`(() => { const d0 = G.state.dunyo.day; G.freezeTime = false; G.hour = 23.95; G.sim(6); G.freezeTime = true; const fc = G.dunyo.forecast(6); return { d0, d1: G.state.dunyo.day, fc: fc.map((f) => f.t), date: G.dunyo.dateStr(), up: G.tadbir.upcoming(4).map((u) => u.k + '+' + u.in) }; })()`);
   T_('calendar', cal.d1 === cal.d0 + 1 && cal.fc.length === 6 && cal.up.length > 0, cal);
@@ -24,7 +48,7 @@ export default async ({ page, shot }) => {
     T_('event-' + k, r.act && r.dec && r.people >= 5 && r.near, r);
   }
   // to'y: dasturxonga o'tirib osh yeyish
-  let r = await ev(`(() => { G.tadbir.set('toy'); const s = G.tadbir.toyRef.seats[1]; G.player.place(s.x + 0.6, s.z + 0.3, 0); G.sim(0.4); const pr0 = G.live.prompt; G.input.pressed.add('KeyE'); G.sim(0.3); const sit = G.player.sit; G.state.sat = 40; const pr1 = G.live.prompt; G.input.pressed.add('KeyE'); G.sim(0.6); const anim = G.player.anim; G.sim(4); return { pr0, sit, pr1, anim, sat: Math.round(G.state.sat), still: G.player.sit }; })()`);
+  r = await ev(`(() => { G.tadbir.set('toy'); const s = G.tadbir.toyRef.seats[1]; G.player.place(s.x + 0.6, s.z + 0.3, 0); G.sim(0.4); const pr0 = G.live.prompt; G.input.pressed.add('KeyE'); G.sim(0.3); const sit = G.player.sit; G.state.sat = 40; const pr1 = G.live.prompt; G.input.pressed.add('KeyE'); G.sim(0.6); const anim = G.player.anim; G.sim(4); return { pr0, sit, pr1, anim, sat: Math.round(G.state.sat), still: G.player.sit }; })()`);
   T_('toy-eat', r.sit && r.anim === 'eat' && r.sat === 100 && r.still, r);
   if (SH) { await HUD(false); await ev(`(() => { const q = G.tadbir.toyRef, Q = G.site.places.bogiston.qorgon, L = (a, b) => [Q.x + a * Math.cos(Q.yaw) + b * Math.sin(Q.yaw), Q.z - a * Math.sin(Q.yaw) + b * Math.cos(Q.yaw)]; G.player.sit = false; const pp = L(4, 13); G.player.place(pp[0], pp[1], 0); G.hour = 17.2; G.sim(1.5); const e = L(9, 17), t = L(-3, 5), y = G.T.ground(t[0], t[1], 1e9).y; return G.view(e[0], y + 6.5, e[1], t[0], y + 0.6, t[1], 17.2); })()`); await shot('dunyo_toy'); }
   if (SH) await HUD(false);

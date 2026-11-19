@@ -38,9 +38,17 @@ export function initTopshiriq(game) {
 
   // ================= MODELLAR =================
   const mesh = (g) => { const m = new THREE.Mesh(g.build(), MAT.flat); m.castShadow = true; return m; };
-  const goat = (() => { const g = new GB(3301); g.jit = 0.02; g.color(0xe8e2d4).blob(0.32, 1, { cy: 0.62, sx: 0.8, sz: 1.5, shade: 0.12 }); g.color(0xe8e2d4).push().translate(0, 0.86, 0.44).rotX(-0.5).blob(0.13, 1, { sz: 1.45 }).pop(); g.color(0x8a7a62); for (const sx of [-0.06, 0.06]) g.push().translate(sx, 1.0, 0.4).rotX(-0.9).cyl(5, 0.02, 0.008, 0, 0.18).pop();
-    g.color(0x6e5a44).blob(0.04, 0, { cx: 0, cy: 0.7, cz: 0.62, sy: 1.6 }); g.color(0x5a4a38); for (const [x, z] of [[-0.12, -0.3], [0.12, -0.3], [-0.12, 0.3], [0.12, 0.3]]) g.box(x, 0.24, z, 0.06, 0.48, 0.06); g.color(0xe8e2d4).box(0, 0.7, -0.5, 0.05, 0.12, 0.05); const m = mesh(g); const r = new THREE.Group(); r.add(m); r.visible = false; scene.add(r); return r; })();
-  const hens = [0, 1, 2].map((i) => { const g = new GB(3311 + i); g.jit = 0.02; const c = [0xf2ead8, 0xb86a2a, 0x3a2a22][i]; g.color(c).blob(0.17, 1, { cy: 0.24, sz: 1.3, shade: 0.1 }); g.color(c).blob(0.09, 1, { cy: 0.42, cz: 0.14 }); g.color(0xd8392b).box(0, 0.53, 0.14, 0.025, 0.06, 0.08); g.color(0xf0b83a).box(0, 0.42, 0.24, 0.03, 0.03, 0.06); g.color(c).push().translate(0, 0.3, -0.2).rotX(0.7).box(0, 0.08, 0, 0.12, 0.16, 0.04).pop(); g.color(0xe0a040); for (const sx of [-0.05, 0.05]) g.box(sx, 0.06, 0, 0.02, 0.12, 0.02); const m = mesh(g); m.visible = false; scene.add(m); return m; });
+  // echki: o'tda ko'rinsin — kattaroq, jigarrang-oq ola, qora bosh va qizil bo'yinbog' (qo'ng'iroqcha)
+  const goat = (() => { const g = new GB(3301); g.jit = 0.02; g.color(0xf2ece0).blob(0.32, 1, { cy: 0.62, sx: 0.8, sz: 1.5, shade: 0.12 }); g.color(0x8a5a32).blob(0.2, 1, { cx: 0.1, cy: 0.74, cz: -0.12, sx: 0.85, sz: 1.3 }).blob(0.15, 1, { cx: -0.12, cy: 0.7, cz: 0.18, sz: 1.2 });
+    g.color(0x3a2e26).push().translate(0, 0.86, 0.44).rotX(-0.5).blob(0.13, 1, { sz: 1.45 }).pop(); g.color(0xd8c8a8); for (const sx of [-0.06, 0.06]) g.push().translate(sx, 1.0, 0.4).rotX(-0.9).cyl(5, 0.02, 0.008, 0, 0.2).pop();
+    g.color(0x3a2e26).blob(0.04, 0, { cx: 0, cy: 0.7, cz: 0.62, sy: 1.6 }); g.color(0xd8392b).push().translate(0, 0.8, 0.36).rotX(-0.9).cyl(10, 0.12, 0.12, -0.025, 0.025, { cap: true }).pop(); g.color(0xf0c040).blob(0.04, 0, { cy: 0.66, cz: 0.46 });
+    g.color(0x4a3a2c); for (const [x, z] of [[-0.12, -0.3], [0.12, -0.3], [-0.12, 0.3], [0.12, 0.3]]) g.box(x, 0.24, z, 0.06, 0.48, 0.06); g.color(0xf2ece0).box(0, 0.7, -0.5, 0.05, 0.12, 0.05);
+    const m = mesh(g); m.scale.setScalar(1.45); const r = new THREE.Group(); r.add(m); r.visible = false; scene.add(r); return r; })();
+  // topshiriq hayvonlari ustidagi yashil ko'rsatkich (uzoqdan ham ko'rinadi: masofaga qarab kattalashadi)
+  const markMat = new THREE.MeshBasicMaterial({ color: 0x7fe08a, fog: false }), markGeo = (() => { const g = new GB(3302); g.jit = 0; g.color(0xffffff).push().rotX(Math.PI).cyl(4, 0.2, 0, -0.22, 0.12, { cap: true }).pop().box(0, 0.24, 0, 0.09, 0.2, 0.09); return g.build(); })();
+  const marks = [0, 1, 2].map(() => { const m = new THREE.Mesh(markGeo, markMat); m.visible = false; scene.add(m); return m; });
+  const placeMark = (m, x, y, z, h, t, i) => { const d = Math.hypot(x - game.camera.position.x, z - game.camera.position.z), k = clamp(d / 14, 1.2, 5); m.visible = true; m.scale.setScalar(k); m.position.set(x, y + h + 0.35 * k + Math.sin(t * 3 + i) * 0.12 * k, z); m.rotation.y = t * 2; };
+  const hens = [0, 1, 2].map((i) => { const g = new GB(3311 + i); g.jit = 0.02; const c = [0xf2ead8, 0xb86a2a, 0x3a2a22][i]; g.color(c).blob(0.17, 1, { cy: 0.24, sz: 1.3, shade: 0.1 }); g.color(c).blob(0.09, 1, { cy: 0.42, cz: 0.14 }); g.color(0xd8392b).box(0, 0.53, 0.14, 0.025, 0.06, 0.08); g.color(0xf0b83a).box(0, 0.42, 0.24, 0.03, 0.03, 0.06); g.color(c).push().translate(0, 0.3, -0.2).rotX(0.7).box(0, 0.08, 0, 0.12, 0.16, 0.04).pop(); g.color(0xe0a040); for (const sx of [-0.05, 0.05]) g.box(sx, 0.06, 0, 0.02, 0.12, 0.02); const m = mesh(g); m.geometry.scale(1.35, 1.35, 1.35); m.visible = false; scene.add(m); return m; });
   const fences = [0, 1, 2].map((i) => { const g = new GB(3321 + i); g.jit = 0.03; g.color(0x8a6a44); for (const sx of [-0.8, 0.8]) g.box(sx, 0.55, 0, 0.1, 1.1, 0.1); for (const y of [0.35, 0.8]) g.box(0, y, 0, 1.8, 0.08, 0.05); g.color(0x6e5232); for (let k = 0; k < 5; k++) g.box(-0.6 + k * 0.3, 0.55, 0.04, 0.08, 0.9, 0.03); const r = new THREE.Group(); const m = mesh(g); m.position.y = 0; r.add(m); r.inner = m; r.visible = false; scene.add(r); return r; });
   const carry = { sumka: (g) => { g.color(0x8a3a5a).blob(0.16, 1, { sy: 1.0, sz: 0.6 }); g.color(0x5a2a3a).push().translate(0, 0.15, 0).rotX(Math.PI / 2).cyl(8, 0.1, 0.1, -0.015, 0.015).pop(); g.color(0x3f9a58).blob(0.07, 0, { cy: 0.17, cz: 0.02 }); },
     suv: (g) => { g.color(0x3d74a6).cyl(10, 0.14, 0.11, -0.16, 0.12, { cap: true }); g.color(0x9fd8ff).cyl(10, 0.13, 0.13, 0.1, 0.11, { cap: true }); g.color(0x8a909c).push().translate(0, 0.12, 0).rotZ(Math.PI / 2).cyl(6, 0.008, 0.008, -0.14, 0.14).pop(); },
@@ -103,14 +111,15 @@ export function initTopshiriq(game) {
       D.dest = { x: dst.x, z: dst.z }; D.destName = nm; D.stage = 'pick'; D.rw += Math.round(Math.hypot(dst.x - o.x, dst.z - o.z) * 0.05); }
     return D; };
   E.offer = (o) => { const type = E.offerOf(o); if (!type) return null; if (!o.draft || o.draft.type !== type) o.draft = prep(type, o); if (!o.draft) { assign(o); return null; } return o.draft; };
+  const showModels = (D) => { const ty = D.type; // topshiriq buyumlarini joyiga qo'yish (boshlanganda va saqlovdan tiklanganda)
+    if (ty === 'echki') { goat.visible = true; goat.position.set(D.goat.x, D.goat.y, D.goat.z); goat.rotation.y = D.goat.a; }
+    if (ty === 'tovuq') D.hens.forEach((p, i) => { const m = hens[i]; m.visible = !p.got; m.position.set(p.x, p.y, p.z); m.rotation.y = p.a; });
+    if (ty === 'devor') D.fence.forEach((p, i) => { const f = fences[i]; f.visible = true; f.position.set(p.x, p.y, p.z); f.rotation.y = p.a; f.inner.rotation.z = p.ok ? 0 : 0.75; }); };
   E.start = (o) => { const D = E.offer(o); if (!D) return false; if (E.cur) { toast('Avval joriy topshiriqni bajaring yoki voz keching [X]', 'bad'); return false; }
-    E.cur = D; o.draft = null; o.waveT = 1.5; sfx('start');
+    E.cur = D; o.draft = null; o.waveT = 1.5; sfx('start'); D.tied = false; showModels(D);
     const ty = D.type;
-    if (ty === 'echki') { goat.visible = true; goat.position.set(D.goat.x, D.goat.y, D.goat.z); goat.rotation.y = D.goat.a; D.tied = false; }
-    if (ty === 'tovuq') D.hens.forEach((p, i) => { const m = hens[i]; m.visible = true; m.position.set(p.x, p.y, p.z); m.rotation.y = p.a; });
-    if (ty === 'devor') D.fence.forEach((p, i) => { const f = fences[i]; f.visible = true; f.position.set(p.x, p.y, p.z); f.rotation.y = p.a; f.inner.rotation.z = 0.75; });
     game.banner(`${ERR[ty][0]} ${ERR[ty][1]}`, `${o.name} · mukofot ~${som(D.rw)} so'm · 🤝 +${D.h}`, 'gold'); route(); return true; };
-  const clearModels = () => { goat.visible = false; for (const m of hens) m.visible = false; for (const f of fences) f.visible = false; wear(null); showBeam(null); game.setWaypoint(null); };
+  const clearModels = () => { for (const m of marks) m.visible = false; goat.visible = false; for (const m of hens) m.visible = false; for (const f of fences) f.visible = false; wear(null); showBeam(null); game.setWaypoint(null); };
   E.quit = () => { const D = E.cur; if (!D) return; if (D.type === 'bozor' && D.stage === 'ride') D.o.ride = false; E.cur = null; clearModels(); D.o.errCool = 30; toast(`${D.o.name}: «Mayli, boshqa safar…» — topshiriqdan voz kechdingiz`); drawHud(); };
   // keyingi nishon: nur, GPS va xaritadagi nuqta
   const target = () => { const D = E.cur; if (!D) return null; const o = D.o;
@@ -119,6 +128,7 @@ export function initTopshiriq(game) {
       case 'echki': return D.tied ? o : D.goat; case 'tovuq': { const h = D.hens.find((q) => !q.got); return h || o; }
       case 'suv': return D.full ? o : D.well; case 'devor': return D.fence.find((q) => !q.ok) || o;
       case 'bozor': return D.stage === 'pick' ? o : D.dest; default: return o; } };
+  const o0 = (D) => D.o;
   const route = () => { const p = target(); if (!p) return; showBeam(p.x, p.z); game.setWaypoint(p.x, p.z, true); };
   const done = (msg) => { const D = E.cur, o = D.o; E.cur = null; clearModels(); const old = Math.floor(st.hurmat / 10);
     game.addMoney(D.rw, `Yordam: ${ERR[D.type][1]}`); st.hurmat += D.h; st.errands.done = (st.errands.done || 0) + 1; st.errands[D.type] = (st.errands[D.type] || 0) + 1; if (L.karma) L.karma(1); L.count && L.count('gift');
@@ -184,12 +194,16 @@ export function initTopshiriq(game) {
       const show = !!ty && !D && vis; if (show || o.bang) { const b = bang(o); b.visible = show; if (show) { b.rotation.y = t * 2.4; b.position.y = 2.42 + Math.sin(t * 3 + o.x) * 0.07; } }
       if (ty && !D && o.role === 'talk' && Math.hypot(o.x - pl.p[0], o.z - pl.p[2]) < 500) L.dots.push([o.x, o.z, '#ffd23a']); }
     if (D) {
-      D.t += dt; const tg = target(); if (tg) { L.dots.push([tg.x, tg.z, '#7fe08a']); if (beam.visible) { beam.position.set(tg.x, gy(tg.x, tg.z), tg.z); beamMat.opacity = 0.3 + 0.1 * Math.sin(t * 4); } if (game.way && Math.hypot(game.way.x - tg.x, game.way.z - tg.z) > 3 && game.way.auto) game.setWaypoint(tg.x, tg.z, true); }
+      D.t += dt; const tg = target(); if (tg) { L.dots.push([tg.x, tg.z, '#7fe08a']); const ani = (D.type === 'echki' && !D.tied && tg === D.goat) || (D.type === 'tovuq' && tg !== o0(D)), pd = foot ? Math.hypot(tg.x - pl.p[0], tg.z - pl.p[2]) : 99; beam.visible = !(ani && pd < 40); // yaqinda hayvonni nur bo'yamasin — yashil ko'rsatkich yetarli
+        if (beam.visible) { beam.position.set(tg.x, gy(tg.x, tg.z), tg.z); beamMat.opacity = 0.3 + 0.1 * Math.sin(t * 4); } if (game.way && Math.hypot(game.way.x - tg.x, game.way.z - tg.z) > 3 && game.way.auto) game.setWaypoint(tg.x, tg.z, true); }
       wear(D.type === 'sumka' ? 'sumka' : D.type === 'suv' && D.full ? 'suv' : D.type === 'xat' ? 'xat' : D.type === 'tovuq' && D.hens.some((q) => q.got) ? 'tovuq' : null);
       if (D.type === 'echki' && goat.visible) { const gp = goat.position; let mv = 0;
         if (D.tied) { const me = foot ? pl.p : car.p, yaw = foot ? pl.yaw : car.yaw, tx = me[0] - Math.sin(yaw) * (foot ? 1.5 : 4), tz = me[2] - Math.cos(yaw) * (foot ? 1.5 : 4), dx = tx - gp.x, dz = tz - gp.z, d = Math.hypot(dx, dz);
           if (d > 30) { gp.x = tx; gp.z = tz; } else if (d > 0.4) { const s = Math.min(d, (2 + d * 1.6) * dt); gp.x += dx / d * s; gp.z += dz / d * s; goat.rotation.y += angDiff(Math.atan2(dx, dz), goat.rotation.y) * Math.min(1, dt * 6); mv = s / dt; } }
         else { goat.rotation.y += Math.sin(t * 0.7) * dt * 0.3; } gp.y = gy(gp.x, gp.z) + Math.abs(Math.sin(t * 9)) * 0.05 * Math.min(1, mv); goat.children[0].rotation.x = mv > 0.3 ? 0 : Math.sin(t * 1.5) * 0.06; }
+      for (const m of marks) m.visible = false;
+      if (D.type === 'echki' && goat.visible && !D.tied) placeMark(marks[0], goat.position.x, goat.position.y, goat.position.z, 1.5, t, 0);
+      if (D.type === 'tovuq') D.hens.forEach((h, i) => { if (!h.got) placeMark(marks[i], hens[i].position.x, hens[i].position.y, hens[i].position.z, 0.75, t, i); });
       if (D.type === 'tovuq') D.hens.forEach((h, i) => { if (h.got) return; const m = hens[i]; m.position.x = h.x + Math.sin(t * 1.3 + i) * 0.6; m.position.z = h.z + Math.cos(t * 1.1 + i * 2) * 0.6; m.position.y = gy(m.position.x, m.position.z) + Math.abs(Math.sin(t * 7 + i)) * 0.04; m.rotation.y = t * 1.2 + i; });
       if (D.type === 'bozor') { if (D.stage === 'pick') { const o = D.o; o.waveT = Math.hypot(o.x - car.p[0], o.z - car.p[2]) < 60 ? 1 : o.waveT; }
         else if (!foot && car.speed < 3 && Math.hypot(D.dest.x - car.p[0], D.dest.z - car.p[2]) < 16) { const o = D.o; o.ride = false; if (!o.away) o.away = { x: o.x, y: o.y, z: o.z, yaw: o.yaw0, t: 300 }; const nx = car.p[0] + Math.cos(car.yaw) * 2.6, nz = car.p[2] - Math.sin(car.yaw) * 2.6; o.x = nx; o.z = nz; o.y = gy(nx, nz); o.rig.root.position.set(nx, o.y, nz); o.rig.root.visible = true; done(); } }
@@ -213,5 +227,37 @@ export function initTopshiriq(game) {
   E.planRows = () => { const D = E.cur; if (D) { const tg = target(); return [{ id: 'err', ic: ERR[D.type][0], t: `Topshiriq: ${ERR[D.type][1]}`, s: line(D).replace(/<[^>]+>/g, ''), ok: true, go: tg ? [tg.x, tg.z] : null }]; }
     let best = null, bd = 1e9, n = 0; for (const o of npcs) if (E.offerOf(o)) { n++; const d = Math.hypot(o.x - pl.p[0], o.z - pl.p[2]); if (d < bd) { bd = d; best = o; } }
     return n ? [{ id: 'err', ic: '🤝', t: `${n} kishi yordam so'ramoqda`, s: `Eng yaqini — ${best.name} (${Math.round(bd)} m) · sariq «!» belgi`, ok: false, go: [best.x, best.z] }] : []; };
+  // ================= SAQLOV: bajarilayotgan topshiriq (st.errCur) — qayta yuklanganda davom etadi =================
+  const r2 = (v) => Math.round(v * 100) / 100, pt = (p) => { const o = { x: r2(p.x), z: r2(p.z) }; if (p.y != null) o.y = r2(p.y); if (p.a != null) o.a = r2(p.a); return o; };
+  const ser = () => { const D = E.cur; if (!D) return null; const o = { type: D.type, oi: npcs.indexOf(D.o), on: D.o.name, rw: D.rw, h: D.h, t: Math.round(D.t) };
+    if (D.dest) o.dest = pt(D.dest); if (D.destName) o.destName = D.destName; if (D.stage) o.stage = D.stage;
+    if (D.who) { o.wi = npcs.indexOf(D.who); o.wn = D.who.name; }
+    if (D.goat) { o.goat = pt(D.goat); o.tied = D.tied ? 1 : 0; if (D.tied) o.gp = pt(goat.position); }
+    if (D.hens) o.hens = D.hens.map((q) => Object.assign(pt(q), { got: q.got ? 1 : 0 }));
+    if (D.well) { o.well = pt(D.well); o.full = D.full ? 1 : 0; }
+    if (D.fence) o.fence = D.fence.map((q) => Object.assign(pt(q), { ok: q.ok ? 1 : 0 }));
+    return o; };
+  const sv0 = game.save; game.save = () => { try { st.errCur = ser(); } catch (e) { st.errCur = null; } sv0(); };
+  E.ser = ser;
+  const npcOf = (i, nm) => { const q = npcs[i]; if (q && q.name === nm) return q; return npcs.find((n) => n.name === nm) || null; };
+  const P = (p) => (p && isFinite(p.x) && isFinite(p.z) ? { x: p.x, z: p.z, y: isFinite(p.y) ? p.y : gy(p.x, p.z), a: isFinite(p.a) ? p.a : 0 } : null);
+  const rebuild = (S, o) => { const ty = S.type, D = { type: ty, o, t: +S.t || 0, rw: isFinite(S.rw) ? S.rw : ERR[ty][3], h: isFinite(S.h) ? S.h : ERR[ty][4] };
+    if (ty === 'sumka') { D.dest = P(S.dest); return D.dest && D; }
+    if (ty === 'xat') { D.who = npcOf(S.wi, S.wn); return D.who && D.who !== o && D; }
+    if (ty === 'echki') { D.goat = P(S.goat); D.tied = !!S.tied; return D.goat && D; }
+    if (ty === 'tovuq' || ty === 'devor') { const a = ty === 'tovuq' ? S.hens : S.fence, k = ty === 'tovuq' ? 'got' : 'ok'; if (!Array.isArray(a) || a.length !== 3) return null; const L2 = a.map((q) => { const p = P(q); if (p) p[k] = q[k] ? 1 : 0; return p; }); if (L2.some((q) => !q)) return null; D[ty === 'tovuq' ? 'hens' : 'fence'] = L2; return D; }
+    if (ty === 'suv') { const w0 = P(S.well); if (!w0) return null; D.well = wells().find((w) => Math.hypot(w.x - w0.x, w.z - w0.z) < 4); D.full = S.full ? 1 : 0; return D.well && D; }
+    if (ty === 'bozor') { D.dest = P(S.dest); D.destName = S.destName || 'Bozor'; D.stage = S.stage === 'ride' && !st.foot ? 'ride' : 'pick'; return D.dest && D; }
+    return D; }; // non, otin, baliq — faqat beruvchi kerak
+  let restMsg = null;
+  { const S = st.errCur; st.errCur = null;
+    if (S && typeof S === 'object' && ERR[S.type]) { const o = npcOf(S.oi, S.on), D = o && rebuild(S, o);
+      if (D) { E.cur = D; o.err = D.type; o.errCool = 0; o.draft = null; showModels(D);
+        if (D.type === 'echki' && D.tied) { const g0 = P(S.gp) || D.goat; goat.position.set(g0.x, gy(g0.x, g0.z), g0.z); }
+        if (D.type === 'bozor' && D.stage === 'ride') o.ride = true; else if (S.stage === 'ride') restMsg = [`${ERR[D.type][0]} ${o.name} sizni kutyapti — mashinada oldiga boring`, ''];
+        route(); restMsg = restMsg || [`${ERR[D.type][0]} Topshiriq davom etmoqda: ${ERR[D.type][1]}`, ''];
+      } else { if (o) { o.err = S.type; o.errCool = 0; o.draft = null; } // tiklab bo'lmadi: beruvchi topshiriqni qayta taklif qiladi, hech narsa yo'qolmaydi
+        restMsg = [`${ERR[S.type][0]} «${ERR[S.type][1]}» topshirig'ini davom ettirib bo'lmadi${o ? ` — ${o.name} uni yana so'raydi (sariq «!»)` : ''}. Hech narsa yo'qotmadingiz`, 'bad']; } } }
+  game.hooks.push(() => { if (restMsg && game.ui && game.mode === 'play') { toast(restMsg[0], restMsg[1]); restMsg = null; drawHud(); } });
   return E;
 }

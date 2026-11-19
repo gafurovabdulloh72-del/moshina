@@ -185,12 +185,21 @@ export function buildProps(scene, game) {
       group.add(hi); group.add(lo);
       if (hc) { hc.castShadow = hi.castShadow; hc.receiveShadow = false; hc.matrixAutoUpdate = false; hc.visible = false; group.add(hc); }
       // [batafsil, barg kartalari, uzoq, 0-daraja yaqin varianti yoki null]
-      c.meshes.push(hi, hc, lo, md); (c.inst || (c.inst = {}))[type] = hi; if (type === 'stone') lo.userData.skip = true;
+      c.meshes.push(hi, hc, lo, md); (c.inst || (c.inst = {}))[type] = hi; (c.los || (c.los = {}))[type] = lo; if (type === 'stone') lo.userData.skip = true;
     }
     c.items = null;
     list.push(c);
   }
   scene.add(group);
+  // Uzoq (lo) variant 3×3 bo'lak guruhlarida bitta InstancedMesh qilib birlashtiriladi: guruhdagi hamma bo'lak uzoq holatda bo'lsa, 9 × tur chizish o'rniga 1 × tur
+  // (o'sha geometriya va material — yangi sheyder yo'q; namunalar nusxasi xotirada, ~70 bayt/daraxt)
+  const SG = 3, supers = new Map();
+  for (const c of list) { if (!c.los) continue; const key = Math.floor(c.ci / SG) + ',' + Math.floor(c.cj / SG); let S = supers.get(key); if (!S) supers.set(key, (S = { cs: [], ms: [], on: false })); S.cs.push(c); c.sup = S; }
+  for (const S of supers.values()) { if (S.cs.length < 2) continue; const types = new Set(); for (const c of S.cs) for (const t in c.los) if (!c.los[t].userData.skip) types.add(t);
+    for (const t of types) { let n = 0; for (const c of S.cs) if (c.los[t]) n += c.los[t].count; const lo0 = S.cs.find((c) => c.los[t]).los[t], im = new THREE.InstancedMesh(lo0.geometry, lo0.material, n); let o = 0;
+      for (const c of S.cs) { const L = c.los[t]; if (!L) continue; im.instanceMatrix.array.set(L.instanceMatrix.array.subarray(0, L.count * 16), o * 16); if (L.instanceColor) { if (!im.instanceColor) im.setColorAt(0, color.setRGB(1, 1, 1)); im.instanceColor.array.set(L.instanceColor.array.subarray(0, L.count * 3), o * 3); } o += L.count; }
+      im.castShadow = false; im.receiveShadow = false; im.matrixAutoUpdate = false; im.visible = false; im.computeBoundingSphere(); group.add(im); S.ms.push(im); } }
+  const superList = [...supers.values()].filter((S) => S.ms.length);
 
   // Sifat darajasi: game.state.set.gfx (applyQuality uni hiD dan oldin yozadi); api.lite = true/false bilan majburlash mumkin
   const tier = () => (api.lite != null ? (api.lite ? 0 : 2) : game && game.state && game.state.set ? game.state.set.gfx : 2);
@@ -204,8 +213,11 @@ export function buildProps(scene, game) {
         const st = (d < api.hiD ? 1 : d < api.far ? 2 : 0) + t0;
         if (st !== c.st) { c.st = st; const M = c.meshes, s1 = st & 3, lite = st & 8;
           for (let k = 0; k < M.length; k += 4) { const h = lite && s1 === 1 && M[k + 3] ? 3 : s1; // h: 1 batafsil (+kartalar), 2 uzoq, 3 o'rta
-            M[k].visible = h === 1; if (M[k + 1]) M[k + 1].visible = h === 1; M[k + 2].visible = h === 2 && !M[k + 2].userData.skip; if (M[k + 3]) M[k + 3].visible = h === 3; } }
+            M[k].visible = h === 1; if (M[k + 1]) M[k + 1].visible = h === 1; M[k + 2].visible = h === 2 && !M[k + 2].userData.skip && !(c.sup && c.sup.on); if (M[k + 3]) M[k + 3].visible = h === 3; } }
       }
+      for (const S of superList) { const on = S.cs.every((c) => (c.st & 3) === 2); if (on === S.on) continue; S.on = on; for (const m of S.ms) m.visible = on;
+        for (const c of S.cs) { c.sup = S; if ((c.st & 3) !== 2) continue; for (const t in c.los) { const L = c.los[t]; L.visible = !on && !L.userData.skip; } } }
+      api.superOn = superList.reduce((n, S) => n + (S.on ? 1 : 0), 0);
     },
   };
   return api;

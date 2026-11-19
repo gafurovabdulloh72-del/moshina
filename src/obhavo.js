@@ -2,24 +2,33 @@
 import * as THREE from 'three';
 import * as T from './terrain.js';
 import { LOOK } from './look.js';
-import { KIND } from './fx.js';
+import { KIND, OCC_GLSL } from './fx.js';
 import { clamp, lerp, smoothstep } from './util.js';
 
 export const WX = { ochiq: ['☀️', 'Ochiq'], bulut: ['⛅', 'Bulutli'], yomgir: ['🌧️', "Yomg'ir"], dovul: ['⛈️', 'Momaqaldiroq'], qor: ['🌨️', 'Qor'], tuman: ['🌫️', 'Tuman'] };
-const TYPES = ['ochiq', 'bulut', 'yomgir', 'dovul', 'qor', 'tuman'];
 // [yomg'ir, qor, tuman, bulut qoplami, chaqmoq]
 const PAR = { ochiq: [0, 0, 0, 0, 0], bulut: [0, 0, 0, 0.55, 0], yomgir: [0.75, 0, 0.12, 0.9, 0], dovul: [1, 0, 0.18, 1, 1], qor: [0, 0.85, 0.22, 0.85, 0], tuman: [0, 0, 1, 0.8, 0] };
-// fasl bo'yicha ehtimollar (ochiq havo eng ko'p): ochiq, bulut, yomg'ir, momaqaldiroq, qor, tuman
-const PROB = [[0.5, 0.17, 0.17, 0.05, 0, 0.11], [0.66, 0.14, 0.08, 0.08, 0, 0.04], [0.48, 0.2, 0.16, 0.04, 0.02, 0.1], [0.44, 0.18, 0.04, 0, 0.24, 0.1]];
+// Tabiiy ob-havo (butun orol uchun "front"). Ochiq havo ustun; yomon havo kamdan-kam, lekin uzoq davom etadi:
+//  - har fasl (3 o'yin kuni ≈ 1 soat real vaqt) ichida KO'PI BILAN BITTA yomon havo (yomg'ir/momaqaldiroq/qor), 9–15 o'yin soati (≈ 8–12 daqiqa);
+//    undan oldin 3 soat bulut yig'iladi, keyin 2 soat bulutli bo'lib ochiladi (keskin almashmaydi)
+//  - qolgan vaqtda 12 soatlik bloklar: ko'pincha ochiq, ba'zan bulutli; ba'zi kunlari tongda tuman
+const SPELL = [0.8, 0.55, 0.75, 0.9]; // fasl (bahor, yoz, kuz, qish) ichida yomon havo bo'lish ehtimoli
+const BAD = [[['yomgir', 0.72], ['dovul', 0.28]], [['dovul', 0.55], ['yomgir', 0.45]], [['yomgir', 0.85], ['dovul', 0.15]], [['qor', 0.85], ['yomgir', 0.15]]];
+const CLOUDP = [0.24, 0.16, 0.26, 0.24], FOGP = [0.2, 0.08, 0.24, 0.18];
 export const YEAR = 12, SEASONS = ['Bahor', 'Yoz', 'Kuz', 'Qish'], WEEK = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
 export const seasonOf = (d) => Math.floor((((d % YEAR) + YEAR) % YEAR) / 3);
 const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
-// tabiiy ob-havo (butun orol uchun "front"): 6 soatlik bloklar, fasl ehtimollari bilan
+const EP = 72; // fasl davomiyligi (o'yin soati)
+// fasl ichidagi yomon havo: [boshlanish, tugash) — fasl boshidan soatlarda; yo'q bo'lsa null
+const has = (e) => hash(e * 1.37 + 0.5) < SPELL[(((e % 4) + 4) % 4)];
+export function spellOf(e) { const s = (((e % 4) + 4) % 4); if (!has(e) || (has(e - 1) && hash(e * 0.71 + 3.3) < 0.4)) return null; // oldingi faslda ham bo'lgan bo'lsa — kamroq
+  const len = 9 + hash(e * 2.71 + 1.3) * 6, a = 18 + hash(e * 0.53 + 7.1) * (EP - len - 30), r = hash(e * 4.13 + 2.9); let t = BAD[s][0][0], acc = 0; for (const [k, p] of BAD[s]) { acc += p; if (r < acc) { t = k; break; } }
+  return { a, b: a + len, t }; }
 export function natural(day, hour) {
-  const blk = Math.floor((day * 24 + hour) / 6), r = hash(blk * 1.37 + 0.5), pr = PROB[seasonOf(day)];
-  let a = 0, k = 0; for (; k < 5; k++) { a += pr[k]; if (r < a) break; }
-  let t = TYPES[k]; if (t === 'tuman' && ((blk % 4) + 4) % 4 > 1) t = 'bulut'; // tuman faqat tun/tongda
-  return t;
+  const H = day * 24 + hour, e = Math.floor(H / EP), u = H - e * EP, sp = spellOf(e), s = (((e % 4) + 4) % 4);
+  if (sp && u >= sp.a - 3 && u < sp.b + 2) return u >= sp.a && u < sp.b ? sp.t : 'bulut';
+  if (hour >= 4 && hour < 9.5 && hash(Math.floor(day) * 5.11 + 0.7) < FOGP[s]) return 'tuman'; // tuman faqat tongda
+  return hash(Math.floor(H / 12) * 3.17 + 2.2) < CLOUDP[s] ? 'bulut' : 'ochiq';
 }
 // hudud bo'yicha: qorli tog'da yomg'ir — qor, cho'lda — bulut, yozda qor — yomg'ir
 export function localType(t, x, z, day) {
@@ -32,7 +41,8 @@ export function localType(t, x, z, day) {
 }
 
 const VS = `attribute vec4 aR; uniform vec3 uCam; uniform float uT; uniform float uSnow; uniform vec2 uWind; uniform float uBox; uniform float uH; uniform float uLen;
-varying vec2 vQ; varying float vA;
+uniform mat4 uCarM; uniform vec3 uCarMin; uniform vec3 uCarMax;
+${OCC_GLSL}varying vec2 vQ; varying float vA;
 void main(){
   float sp = mix(13.0 + 4.0 * aR.w, 1.2 + 0.8 * aR.w, uSnow);
   vec3 vel = vec3(uWind.x, -sp, uWind.y) * vec3(mix(0.7, 1.0, uSnow), 1.0, mix(0.7, 1.0, uSnow));
@@ -46,6 +56,8 @@ void main(){
   else mv = c + vec4(position.xy * (0.045 + 0.04 * aR.w), 0.0, 0.0);
   float d = length(mv.xyz); vA = smoothstep(1.0, 3.5, d) * (1.0 - smoothstep(uBox * 0.3, uBox * 0.5, d));
   vQ = position.xy; gl_Position = projectionMatrix * mv;
+  // tom, ayvon, daraxt ostida va mashina ichida zarracha ko'rinmaydi (chizilmaydi ham)
+  vec3 cl = (uCarM * vec4(w, 1.0)).xyz; if (wxOcc(w) > 0.5 || (all(greaterThan(cl, uCarMin)) && all(lessThan(cl, uCarMax)))) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
 }`;
 const FS = `uniform vec3 uCol; uniform float uSnow; uniform float uAlpha; varying vec2 vQ; varying float vA;
 void main(){ float a = uSnow < 0.5 ? (1.0 - abs(vQ.x)) * (1.0 - vQ.y * vQ.y) : smoothstep(1.0, 0.25, length(vQ)); gl_FragColor = vec4(uCol, a * vA * uAlpha); }`;
@@ -66,9 +78,38 @@ export function initObhavo(game) {
   g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3)); g.setIndex([0, 1, 2, 0, 2, 3]);
   { const a = new Float32Array(MAXN * 4); let s = 9137; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647); for (let i = 0; i < a.length; i++) a[i] = r(); g.setAttribute('aR', new THREE.InstancedBufferAttribute(a, 4)); }
   g.instanceCount = 0;
-  const pu = { uCam: { value: new THREE.Vector3() }, uT: { value: 0 }, uSnow: { value: 0 }, uWind: { value: new THREE.Vector2(1, 0.4) }, uBox: { value: 30 }, uH: { value: 18 }, uLen: { value: 0.55 }, uCol: { value: new THREE.Color(0.7, 0.75, 0.8) }, uAlpha: { value: 0.5 } };
+  const FU = game.fx.uni; // to'siq uniformlari zarrachalar tizimi (fx.js) bilan umumiy — yerdagi halqalar ham tom ostida chiqmaydi
+  const pu = { uCam: { value: new THREE.Vector3() }, uT: { value: 0 }, uSnow: { value: 0 }, uWind: { value: new THREE.Vector2(1, 0.4) }, uBox: { value: 30 }, uH: { value: 18 }, uLen: { value: 0.55 }, uCol: { value: new THREE.Color(0.7, 0.75, 0.8) }, uAlpha: { value: 0.5 },
+    uOccD: FU.uOccD, uOccG: FU.uOccG, uOccY: FU.uOccY, uCarM: { value: new THREE.Matrix4() }, uCarMin: { value: new THREE.Vector3(1, 1, 1) }, uCarMax: { value: new THREE.Vector3(-1, -1, -1) } };
   const pm = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms: pu, transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide });
   const parts = new THREE.Mesh(g, pm); parts.frustumCulled = false; parts.renderOrder = 7; scene.add(parts); W.parts = parts;
+
+  // --- yog'in to'sig'i: kamera ustidan pastga qaragan ortografik kamera kichik nishonga faqat chuqurlikni chizadi (tom, ayvon, soyabon, daraxt) ---
+  // Mavjud materiallar o'zgarmaydi (yangi sheyder kompilyatsiyasi yo'q), soyalar qayta chizilmaydi; yog'in bo'lganda ~0,7–2 marta/s, 2 m to'rga bog'langan
+  const OH = 16, OR = 64, OTOP = 32, ORNG = 64; // yarim o'lcham (m), piksel, kameradan balandlik va chuqurlik oralig'i (m)
+  const ort = new THREE.WebGLRenderTarget(OR, OR, { depthBuffer: true, stencilBuffer: false }); ort.depthTexture = new THREE.DepthTexture(OR, OR); ort.depthTexture.type = THREE.UnsignedIntType;
+  ort.texture.generateMipmaps = false; ort.texture.minFilter = ort.texture.magFilter = THREE.NearestFilter;
+  const ocam = new THREE.OrthographicCamera(-OH, OH, OH, -OH, 0, ORNG); ocam.up.set(0, 0, -1);
+  const OPEN = new Set(['velo', 'skuter', 'kart', 'moto', 'kvadro', 'bagi', 'bolid']), _bb = new THREE.Box3(), _m4 = new THREE.Matrix4();
+  let occT = 9, occX = 1e9, occZ = 1e9;
+  const carBox = (m) => { if (m._wxBox !== undefined) return m._wxBox; if (m.bike || OPEN.has(m.id)) return (m._wxBox = null);
+    const r = m.root; r.updateMatrixWorld(true); const inv = _m4.copy(r.matrixWorld).invert(), box = new THREE.Box3();
+    r.traverse((o) => { if (!o.isMesh || o.isSkinnedMesh || !o.geometry) return; const gg = o.geometry; if (!gg.boundingBox) gg.computeBoundingBox(); _bb.copy(gg.boundingBox).applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)); box.union(_bb); });
+    if (box.isEmpty()) return (m._wxBox = null); const c = box.getCenter(new THREE.Vector3()), h = box.getSize(new THREE.Vector3()).multiplyScalar(0.5); h.x *= 0.92; h.z *= 0.95; // ko'zgu, g'ildirak chetlari hisobga olinmaydi
+    return (m._wxBox = { min: c.clone().sub(h), max: c.clone().add(h) }); };
+  const occUpdate = (dt, cam, on) => { const G4 = FU.uOccG.value; if (!on) { G4.w = 0; occT = 9; return; }
+    const cx = Math.round(cam.position.x / 2) * 2, cz = Math.round(cam.position.z / 2) * 2, mv = Math.hypot(cx - occX, cz - occZ); occT += dt;
+    if (!(occT > 1.5 || (mv > 0.5 && occT > 0.5) || (mv > 10 && occT > 0.2))) return; // turganda 1,5 s da, yurganda 0,5 s da (tez yurganda 10 m da) bir marta occT = 0; occX = cx; occZ = cz;
+    const r = game.renderer, top = cam.position.y + OTOP, m = game.carModel, sm = r.shadowMap, au = sm.autoUpdate, nu = sm.needsUpdate, prev = r.getRenderTarget();
+    ocam.position.set(cx, top, cz); ocam.lookAt(cx, top - 1, cz); ocam.updateMatrixWorld();
+    const fp = game.fx.points, fv = fp.visible; parts.visible = false; fp.visible = false; sm.autoUpdate = false; sm.needsUpdate = false;
+    // o'z mashinamiz (harakatlanadi) bu xaritaga chizilmaydi — uni har kadr quti bilan tekshiramiz; DIQQAT: visible emas, qatlam (layers) — fara chirog'i sahnada qolsin, chiroqlar soni o'zgarsa hamma sheyder qayta kompilyatsiya bo'ladi
+    const cm = m ? m._wxMs || (m._wxMs = (() => { const a = []; m.root.traverse((o) => { if (o.isMesh || o.isLine || o.isPoints) a.push(o); }); return a; })()) : []; for (const o of cm) { o._wxL = o.layers.mask; o.layers.mask = 1 << 30; }
+    try { r.setRenderTarget(ort); r.clear(); r.render(scene, ocam); } finally { r.setRenderTarget(prev); sm.autoUpdate = au; sm.needsUpdate = nu; parts.visible = true; fp.visible = fv; for (const o of cm) o.layers.mask = o._wxL; }
+    FU.uOccD.value = ort.depthTexture; G4.set(cx - OH, cz + OH, 1 / (2 * OH), 1); FU.uOccY.value.set(top, ORNG); W.occN = (W.occN || 0) + 1; };
+  const carSync = () => { const m = game.carModel, b = m && m.root.visible ? carBox(m) : null; if (!b) { pu.uCarMin.value.set(1, 1, 1); pu.uCarMax.value.set(-1, -1, -1); return; }
+    pu.uCarM.value.copy(m.root.matrixWorld).invert(); pu.uCarMin.value.copy(b.min); pu.uCarMax.value.copy(b.max); };
+  W.occInfo = () => ({ on: FU.uOccG.value.w, n: W.occN || 0, car: pu.uCarMax.value.x > pu.uCarMin.value.x });
 
   // --- ovoz: yomg'ir shovqini (sintez), momaqaldiroq ---
   let rainS = null;
@@ -87,7 +128,11 @@ export function initObhavo(game) {
   const sh0 = sky.setHour.bind(sky);
   sky.setHour = (h) => {
     sh0(h); const P = W.cur, F = U.uFog.value, cov = P.cover, fl = W.flash;
-    U.uCloud.value.x = lerp(U.uCloud.value.x, 1.75, cov); // 1 dan katta — bulut chegarasi pasayadi, osmon to'liq qoplanadi U.uCloud.value.w = lerp(0.55, 0.42, cov);
+    // qoplangan osmon (yomg'ir, qor, tuman): bulut chegarasi pastga — osmonda ko'k "teshik" qolmaydi; osmon/tuman rangi kulrangga (yorqinlik saqlanadi);
+    // quyosh allaqachon xiralashgan, shuning uchun bulut soyasi ham yumshaydi (yer ikki marta qoraymasin). Ochiq va oddiy bulutli havoda ovc = 0
+    const ovc = Math.min(0.85, smoothstep(0.6, 0.9, cov) * 0.8 + P.fog * 0.3); U.uOvc.value = ovc;
+    U.uCloud.value.x = lerp(U.uCloud.value.x, 1.75, cov) + 1.2 * ovc; U.uCloud.value.w = lerp(0.55, 0.15, ovc);
+    if (ovc > 0.001) for (const c of [U.uFogOA.value, U.uFogOS.value, U.uFogOZ.value]) { const l = c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722; c.r += (l * 0.97 - c.r) * ovc; c.g += (l - c.g) * ovc; c.b += (l * 1.035 - c.b) * ovc; } // 0-daraja tumani (ekran rangida)
     sky.sun.intensity *= 1 - 0.42 * cov - 0.25 * P.fog; U.uSunCol.value.copy(sky.sun.color).multiplyScalar(sky.sun.intensity);
     U.uCloudSun.value.multiplyScalar(1 - 0.5 * cov);
     const base = F.x; F.x = lerp(base, Math.max(base, 0.011), P.fog) + 0.0022 * P.rain + 0.003 * P.snow; F.y = lerp(F.y, 1 / 320, P.fog);
@@ -110,8 +155,8 @@ export function initObhavo(game) {
     if (game.hour < lastH - 12) { st.dunyo.day++; if (W.onDay) W.onDay(st.dunyo.day); } lastH = game.hour;
     const t = W.force || W.typeAt(st.dunyo.day, game.hour, p[0], p[2]); W.front = natural(st.dunyo.day, game.hour);
     if (t !== W.type) { W.type = t; if (game.mode === 'play' && (t === 'yomgir' || t === 'dovul' || t === 'qor' || t === 'tuman')) game.toast(`${WX[t][0]} ${{ yomgir: "Yomg'ir boshlandi — yo'l sirpanchiq bo'ladi", dovul: "Momaqaldiroq! Kuchli yomg'ir — ehtiyot bo'lib hayding", qor: "Qor yog'yapti — yo'l sirpanchiq", tuman: "Quyuq tuman — faralar avtomatik yoqiladi" }[t]}`); }
-    const a = PAR[t], k = Math.min(1, dt * 0.035), P = W.cur;
-    P.rain += (a[0] - P.rain) * k; P.snow += (a[1] - P.snow) * k; P.fog += (a[2] - P.fog) * k * 0.8; P.cover += (a[3] - P.cover) * k; P.storm += (a[4] - P.storm) * k;
+    const a = PAR[t], k = Math.min(1, dt * 0.035), P = W.cur, kp = Math.min(1, dt * (a[0] + a[1] > P.rain + P.snow ? 0.016 : 0.024)); // yog'in asta boshlanadi (~1 daqiqa), biroz tezroq tinadi; bulut undan oldinroq yig'iladi
+    P.rain += (a[0] - P.rain) * kp; P.snow += (a[1] - P.snow) * kp; P.fog += (a[2] - P.fog) * k * 0.8; P.cover += (a[3] - P.cover) * k; P.storm += (a[4] - P.storm) * kp;
     // namlik va qor qoplami asta yig'iladi va asta ketadi
     W.wet = clamp(W.wet + (P.rain > 0.15 ? P.rain * dt / 35 : -dt / 160), 0, 1);
     W.snowC = clamp(W.snowC + (P.snow > 0.15 ? P.snow * dt / 55 : -dt / (P.rain > 0.2 ? 60 : 260)), 0, 1);
@@ -129,6 +174,7 @@ export function initObhavo(game) {
     // zarrachalar
     const inside = game.interior && game.interior.inside, amt = inside ? 0 : Math.max(P.rain, P.snow), snowy = P.snow > P.rain;
     const n = Math.round([1600, 3800, MAXN][q] * smoothstep(0.03, 0.9, amt)); g.instanceCount = n; parts.visible = n > 0;
+    occUpdate(dt, cam, n > 0 || (P.rain > 0.2 && !inside)); if (n > 0) carSync();
     if (n > 0) { pu.uCam.value.copy(cam.position); pu.uT.value = game.time % 600; pu.uSnow.value = snowy ? 1 : 0; const wd = game.fx ? game.fx.wind : [1.2, 0, 0.4], wk = 1 + 2.5 * P.storm; pu.uWind.value.set(wd[0] * wk, wd[2] * wk);
       const L = U.uSkyAmb.value, lum = clamp(0.25 + (L.r + L.g + L.b) * 0.5, 0.18, 1.1), nt = sky.night; pu.uCol.value.setRGB(lum * (snowy ? 1.25 : 0.95), lum * (snowy ? 1.27 : 1.0), lum * (snowy ? 1.3 : 1.06)).multiplyScalar(1 - 0.55 * nt).addScalar(W.flash * 0.8 + nt * 0.04);
       pu.uAlpha.value = snowy ? 0.95 : 0.5 + 0.2 * P.storm; pu.uLen.value = 0.55 + 0.3 * P.storm; }

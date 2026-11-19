@@ -3,14 +3,19 @@ import * as THREE from 'three';
 import * as T from './terrain.js';
 import * as COL from './colliders.js';
 import { TEX } from './tex.js';
-import { hexLin, clamp } from './util.js';
+import { hexLin, clamp, smoothstep } from './util.js';
 
 // Zarracha turlari: shunga qarab sheyder yoritadi, cho'zadi va aralashtiradi
 export const KIND = { SMOKE: 0, FIRE: 1, SPARK: 2, GRAIN: 3, WATER: 4, RING: 5, RAIN: 6 };
 const S = T.SURF;
 
+// yog'in to'sig'i (obhavo.js to'ldiradi): kamera atrofidagi 32×32 m "tepadan chuqurlik" xaritasi — nuqta tom/ayvon/daraxt ostida bo'lsa 1
+export const OCC_GLSL = `uniform sampler2D uOccD; uniform vec4 uOccG; uniform vec2 uOccY;
+float wxOcc(vec3 w){ if (uOccG.w < 0.5) return 0.0; vec2 uv = vec2(w.x - uOccG.x, uOccG.y - w.z) * uOccG.z; if (uv.x <= 0.002 || uv.y <= 0.002 || uv.x >= 0.998 || uv.y >= 0.998) return 0.0;
+  float d = texture2D(uOccD, uv).r; return d < 0.9999 && w.y < uOccY.x - d * uOccY.y - 0.12 ? 1.0 : 0.0; }
+`;
 const VS = `attribute vec4 iA; attribute vec4 iB; attribute vec4 iC; attribute vec4 iD;
-uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGnd; uniform vec2 uFogR;
+${OCC_GLSL}uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGnd; uniform vec2 uFogR;
 varying vec2 vUv; varying vec4 vCol; varying vec3 vInfo; varying vec3 vLight; varying float vFog; varying float vGH;
 void main(){
   float kind = iC.w, sz = iA.w, r = iD.x; vec3 wp = iA.xyz; vec2 c = position.xy; vUv = c;
@@ -28,6 +33,7 @@ void main(){
     mv.xy += o2; up = o2.y;
   }
   gl_Position = projectionMatrix * mv;
+  if (kind > 4.5 && kind < 6.5 && wxOcc(wp) > 0.5) gl_Position = vec4(2.0, 2.0, 2.0, 1.0); // tom ostida yomg'ir tomchisi/halqasi yo'q
   float dep = -mv.z;
   // kameraga juda yaqin katta zarracha ekranni to'sib qo'ymasin
   float a = iB.a * smoothstep(0.6, 0.6 + sz * 2.0, dep);
@@ -127,6 +133,7 @@ export class FX {
       uScale: { value: 600 }, uTime: { value: 0 }, tNoise: { value: TEX.noise },
       uSunDir: { value: new THREE.Vector3(0.4, 0.8, 0.3) }, uSunCol: { value: new THREE.Vector3(2, 2, 2) }, uSky: { value: new THREE.Vector3(0.6, 0.7, 0.9) }, uGnd: { value: new THREE.Vector3(0.4, 0.4, 0.35) },
       uFogR: { value: new THREE.Vector2(260, 5600) }, uFogCol: { value: new THREE.Color(0xbfd0e0) },
+      uOccD: { value: null }, uOccG: { value: new THREE.Vector4(0, 0, 0, 0) }, uOccY: { value: new THREE.Vector2(0, 1) }, // yog'in to'sig'i (obhavo.js); w = 0 — o'chiq
     };
     this.mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms: this.uni, transparent: true, depthWrite: false,
       side: THREE.DoubleSide, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor });
@@ -149,7 +156,7 @@ export class FX {
       blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
     this.skid.frustumCulled = false; this.skid.renderOrder = 1; scene.add(this.skid); this.skNext = 0; this.skLast = [null, null, null, null]; this.skDirty = -1; this.skDirtyN = 0;
     // transport effektlari holati
-    this.q = 2; this.dens = 1; this.auto = 0; this.cold = null; this.rain = 0; this.time = 0;
+    this.q = 2; this.dens = 1; this.auto = 0; this.cold = null; this.rain = 0; this.time = 0; this._exW = 0; this._exOff = 0; this._exTh = 0; this._exP = 0; // chiqindi gaz: dvigatel ishlagan vaqt, o'chiq turgan vaqt, oldingi gaz, puflash
     this.wind = [1.3, 0, 0.5]; this.acc = new Float32Array(64); this.air = 0; this.vyAir = 0; this.wasWater = 0; this.track = null;
     this.lights = null;
   }
@@ -338,14 +345,17 @@ export class FX {
       for (let n = this._n(49, 5 * k, dt); n > 0; n--) this.emit(p[0] - Fx * sc.len * 0.4 + rs(1), wy + 0.04, p[2] - Fz * sc.len * 0.4 + rs(1), 0, 0, 0, 3.2 + rnd(), sc.wid * 1.2, C_FOAM, 0.38, 2.2, 0, 0, K.RING);
     }
     this.wasWater = car.inWater;
-    // --- chiqindi gaz: salt ishlashda siyrak, gaz bosilganda ko'p; sovuq ertalab/tunda oq va quyuq ---
+    // --- chiqindi gaz: oddiy yurishda deyarli ko'rinmaydi; faqat gaz oxirigacha bosilganda (keskin bosilsa — bir puflash) va sovuq dvigatelda (ishga tushgandan ~40 s) ---
     const ex = sc.power > 1500 && !car.cut && car.inWater < 0.3;
     const ee = this._ex || (this._ex = [0, 0, 0]), exh = (sd) => { const b = sc.len * 0.48, h = sc.clr + 0.12 - sc.com, o = sc.wid * 0.28 * sd; ee[0] = p[0] - Fx * b + Lx * o + Ux * h; ee[1] = p[1] - Fy * b + R[3] * o + Uy * h; ee[2] = p[2] - Fz * b + Lz * o + Uz * h; return ee; };
+    if (this._exOff > 60) this._exW = 0; this._exOff = 0; this._exW += dt; // uzoq to'xtab turgan (yoki piyoda yurilgan) bo'lsa — dvigatel yana sovuq
     if (ex) {
-      const th = car.throttle || 0, rpm = car.rpm || 0.2, rate = (3 + th * rpm * 18 + cold * 9) * (car.bike ? 0.6 : 1);
+      const th = car.throttle || 0, rpm = car.rpm || 0.2, hard = smoothstep(0.72, 1, th) * (0.35 + 0.65 * smoothstep(0.3, 0.8, rpm)), cs = 1 - smoothstep(0, 40, this._exW);
+      if (th > 0.85 && this._exTh < 0.35) this._exP = 0.7; this._exTh = th; this._exP = Math.max(0, this._exP - dt); const puff = this._exP > 0 ? this._exP / 0.7 : 0; // gaz keskin bosildi — qisqa puflash
+      const wk = clamp(cs + cold * 0.5, 0, 1), rate = (0.5 + 12 * hard + 16 * puff + 9 * cs + 1.5 * cold) * (car.bike ? 0.6 : 1);
       for (let n = this._n(50, rate, dt); n > 0; n--) {
-        const e = exh(car.bike ? 0 : 1), gr = cold ? 0.8 + rnd() * 0.08 : 0.36 + rnd() * 0.06, al = cold ? 0.16 + th * 0.1 : 0.05 + th * rpm * 0.12; dc[0] = gr; dc[1] = gr * 1.01; dc[2] = gr * 1.05;
-        this.emit(e[0], e[1], e[2], v[0] - Fx * (1 + th * 2.5) + rs(0.4), v[1] + 0.2 + rnd() * 0.3, v[2] - Fz * (1 + th * 2.5) + rs(0.4), (cold ? 1.8 : 1) + rnd() * (cold ? 1.2 : 0.6), 0.14 + rnd() * 0.08, dc, al * 0.8, cold ? 9 : 6, -0.25, 2.4, K.SMOKE);
+        const e = exh(car.bike ? 0 : 1), gr = 0.36 + 0.46 * wk + rnd() * 0.06, al = 0.02 + 0.1 * hard + 0.12 * puff + 0.12 * cs * (0.6 + 0.4 * cold) + 0.025 * cold; dc[0] = gr; dc[1] = gr * 1.01; dc[2] = gr * 1.05;
+        this.emit(e[0], e[1], e[2], v[0] - Fx * (1 + th * 2.5) + rs(0.4), v[1] + 0.2 + rnd() * 0.3, v[2] - Fz * (1 + th * 2.5) + rs(0.4), 1 + 0.5 * hard + 0.8 * wk + rnd() * (0.6 + 0.6 * wk), 0.13 + rnd() * 0.08, dc, al * 0.8, 6 + 3 * wk, -0.25, 2.4, K.SMOKE);
       }
     }
     // --- nitro alangasi: ko'k o'zak, uchi zarg'aldoq, juda qisqa umr ---
@@ -389,7 +399,7 @@ export class FX {
     this._lights();
     // kuzatilayotgan transport (camera.js `userData.safar`) yoki `fx.track`
     const link = cam && cam.userData && cam.userData.safar, car = this.track || (link && !link.foot && link.tgt && link.tgt.wheels ? link.tgt : null);
-    if (car && dt > 0) { this.vehicle(dt, car); this.auto = 0.3; } else { this.auto = Math.max(0, this.auto - dt); if (!car) for (let i = 0; i < 4; i++) this.skLast[i] = null; }
+    if (car && dt > 0) { this.vehicle(dt, car); this.auto = 0.3; } else { this.auto = Math.max(0, this.auto - dt); this._exOff += dt; if (!car) for (let i = 0; i < 4; i++) this.skLast[i] = null; }
     // shamol: yo'nalishi va kuchi asta o'zgaradi
     const wa = 0.4 + Math.sin(t * 0.021) * 0.9 + Math.sin(t * 0.0053) * 1.6, wsp = 1.2 + 0.7 * Math.sin(t * 0.037) + 0.4 * Math.sin(t * 0.21);
     this.wind[0] = Math.cos(wa) * wsp; this.wind[2] = Math.sin(wa) * wsp;

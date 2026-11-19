@@ -10,7 +10,7 @@ export class Player {
     this.game = game; this.p = [0, 0, 0]; this.v = [0, 0, 0]; this.yaw = 0; this.speed = 0; this.onFoot = false; this.grounded = true; this.swim = false; this.sit = false;
     this.lock = 0; this.lockAnim = null; this.emote = null; this.stepT = 0; this.fwd = 0; this.nitroOn = false; this.R = new Float64Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
     this.rig = makeRig({ shirt: 0xf0b83a, pants: 0x2f4a78, hair: 0x2a1d16, skin: 0xdcae86, seed: 7, height: 1, build: 1, sleeve: 0.42, stache: false, player: true }); this.rig.root.visible = false; game.scene.add(this.rig.root);
-    rigEnv({ cam: game.camera, player: this.rig }); warmSkin(game.scene); // teri sheyderi yuklanishda tayyorlanadi
+    rigEnv({ cam: game.camera, player: this.rig, state: game.state }); warmSkin(game.scene); // teri sheyderi yuklanishda tayyorlanadi
     this.ctl = { vx: 0, vz: 0, vy: 0, grounded: true, swim: false, energy: 100, moveYaw: null, camYaw: 0 }; // animatsiya uchun harakat holati
     this.lamp = new THREE.SpotLight(0xfff2d8, 0, 40, 0.62, 0.6, 1.0); game.scene.add(this.lamp); game.scene.add(this.lamp.target);
     this.lampOn = false;

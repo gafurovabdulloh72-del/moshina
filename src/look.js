@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { TEX } from './tex.js';
 
-const VER = 'lk5'; // sheyder kaliti versiyasi (umumiy yamoq o'zgarsa oshiriladi)
+const VER = 'lk6'; // sheyder kaliti versiyasi (umumiy yamoq o'zgarsa oshiriladi)
 const v3 = (x, y, z) => ({ value: new THREE.Vector3(x, y, z) }), v4 = (x, y, z, w) => ({ value: new THREE.Vector4(x, y, z, w) }), col = (r, g, b) => ({ value: new THREE.Color(r, g, b) });
 
 // Umumiy uniformlar — har materialga avtomatik beriladi (bir xil obyekt, qiymat bir joyda yangilanadi)
@@ -30,9 +30,10 @@ const U = {
   uHemiStd: { value: 0 }, // atrof-muhit xaritasi bor Standard materiallarda yarim shar chirog'i ulushi
   uScotopic: { value: 0 }, // tungi ko'rish kuchi (= LOOK.scotopic × qorong'ilik, sky.js har soatda yozadi): qorong'i joylar rangsizlanib ko'kish tusga kiradi
   uShadowEdge: v4(0.7, 0.97, 0, 0), // soya xaritasi chetida yo'qolish: smoothstep(x, y, |koord|)
+  uOvc: { value: 0 }, // bulutli/yomg'irli osmon 0..1 (obhavo.js yozadi): osmon va tuman rangi kulrangga yaqinlashadi (yorqinlik saqlanadi); ochiq havoda 0 — hech narsa o'zgarmaydi
   tSunOcc: { value: null }, uOccMap: v4(0, 0, 0, 0), // relyef soyasi: tSunOcc.r = soya balandligi (m; nuqta undan baland bo'lsa yorug'), uv = xz·x + y, z = kuch
 };
-const DECL = { uSunDir: 'vec3', uMoonDir: 'vec3', uLightDir: 'vec3', uSunCol: 'vec3', uSkyZen: 'vec3', uSkyHor: 'vec3', uSkyAmb: 'vec3', uSkyHorS: 'vec3', uSkyHorA: 'vec3', uSkyGlow: 'vec3', uFogOA: 'vec3', uFogOS: 'vec3', uFogOZ: 'vec3', uFogOG: 'vec3', uFog: 'vec4', uFogCam: 'float', uTimeL: 'float', uQ: 'float', uWet: 'float', uSnowC: 'float', uNight: 'float', tNoise: 'sampler2D', tNrm: 'sampler2D', tSkyLut: 'sampler2D', uCloud: 'vec4', uCloudOff: 'vec2', uCloudSun: 'vec3', uCloudAmb: 'vec3', uViewPos: 'vec3', uHemiStd: 'float', uScotopic: 'float', uShadowEdge: 'vec4', tSunOcc: 'sampler2D', uOccMap: 'vec4' };
+const DECL = { uSunDir: 'vec3', uMoonDir: 'vec3', uLightDir: 'vec3', uSunCol: 'vec3', uSkyZen: 'vec3', uSkyHor: 'vec3', uSkyAmb: 'vec3', uSkyHorS: 'vec3', uSkyHorA: 'vec3', uSkyGlow: 'vec3', uFogOA: 'vec3', uFogOS: 'vec3', uFogOZ: 'vec3', uFogOG: 'vec3', uFog: 'vec4', uFogCam: 'float', uTimeL: 'float', uQ: 'float', uWet: 'float', uSnowC: 'float', uNight: 'float', tNoise: 'sampler2D', tNrm: 'sampler2D', tSkyLut: 'sampler2D', uCloud: 'vec4', uCloudOff: 'vec2', uCloudSun: 'vec3', uCloudAmb: 'vec3', uViewPos: 'vec3', uHemiStd: 'float', uScotopic: 'float', uShadowEdge: 'vec4', tSunOcc: 'sampler2D', uOccMap: 'vec4', uOvc: 'float' };
 
 // --- GLSL kutubxonasi (har biri #ifndef bilan himoyalangan: bir sheyderga ikki marta qo'shilsa ham xato bermaydi) ---
 const noise = `#ifndef LK_NOISE
@@ -47,9 +48,10 @@ float fbm2(vec2 p){ return texture(tNoise, p).r * 0.62 + texture(tNoise, p * 2.1
 const sky = `#ifndef LK_SKY
 #define LK_SKY
 float lkP128(float w){ w *= w; w *= w; w *= w; w *= w; w *= w; w *= w; return w * w; } // w^128 ≈ exp(-64·(1−cosθ)) (w = 0.5 + 0.5·cosθ)
+vec3 lkOvc(vec3 c){ if (uOvc < 0.001) return c; float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return mix(c, vec3(l * 0.97, l, l * 1.035), uOvc); } // qoplangan osmon: ko'k rang kulrangga
 vec3 lkSkyCheap(vec3 d){ float w = dot(d, uSunDir) * 0.5 + 0.5, a = 1.0 - clamp(d.y, 0.0, 1.0), a2 = a * a, a8 = a2 * a2; a8 *= a8; // ufq yo'li keng (a^4), quyosh tomondagi yorug'lik tor (a^8)
-  return uSkyZen + (uSkyHorA - uSkyZen) * (a2 * a2) + (uSkyHorS - uSkyHorA) * (w * w * a8) + uSkyGlow * lkP128(w); }
-vec3 safarSky(vec3 d){ if (uQ < 0.5) return lkSkyCheap(d); float y = d.y; float v = 0.5 + 0.5 * sign(y) * sqrt(min(abs(y), 1.0)); float u = sqrt(clamp(0.5 - 0.5 * dot(d, uSunDir), 0.0, 1.0)); return texture(tSkyLut, vec2(u, v)).rgb; }
+  return lkOvc(uSkyZen + (uSkyHorA - uSkyZen) * (a2 * a2) + (uSkyHorS - uSkyHorA) * (w * w * a8) + uSkyGlow * lkP128(w)); }
+vec3 safarSky(vec3 d){ if (uQ < 0.5) return lkSkyCheap(d); float y = d.y; float v = 0.5 + 0.5 * sign(y) * sqrt(min(abs(y), 1.0)); float u = sqrt(clamp(0.5 - 0.5 * dot(d, uSunDir), 0.0, 1.0)); return lkOvc(texture(tSkyLut, vec2(u, v)).rgb); }
 #endif
 `;
 const fog = sky + `#ifndef LK_FOG
