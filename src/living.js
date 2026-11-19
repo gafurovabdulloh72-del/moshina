@@ -271,6 +271,7 @@ export function initLiving(game) {
     if (L.extra) L.extra(offer, px, pz, p); // kundalik hayot (hayot.js): uy/do'kon ichi, kanistr, o'rnidan turish
     // baliq ovi
     // uy/do'kon ichi dengiz ustida joylashgan — u yerda baliq ovi taklif qilinmaydi
+    L.ctxD = best ? bd : 1e9; // eng yaqin harakat masofasi — e'lonlar taxtasi (7.5 m) yaqin harakatni to'sib qo'ymasin
     if (!best && !(game.interior && game.interior.inside)) { const w = waterAhead(); if (w && !pl.swim) return st.tools.rod ? { text: '<kbd>E</kbd> Baliq ovlash 🎣', fn: () => startFish(w) } : null; }
     return best;
   };
@@ -360,7 +361,7 @@ export function initLiving(game) {
     if (L.fishing) { const f = L.fishing; if (!foot || pl.emote !== 'fish') { L.fishing = null; bob.visible = false; setTool(pl.rig, null); } else { f.t -= dt; if (f.ph === 0) { bob.position.y = f.w.y + 0.05 + Math.sin(t * 2) * 0.03; if (f.t <= 0) { f.ph = 1; f.t = 0.95; sfx('bite'); fx().burst(6, f.w.x, f.w.y + 0.1, f.w.z, 2, 0.5, 0.3, 0xffffff, 0.9, 1.3, 6, 0); } } else { bob.position.y = f.w.y - 0.12 + Math.sin(t * 30) * 0.03; if (f.t <= 0) { f.ph = 0; f.t = 2 + rnd() * 5; toast('Baliq qochib ketdi…'); } } } }
     if (foot && pl.emote === 'play') { L.noteT -= dt; if (L.noteT <= 0) { L.noteT = [0.26, 0.26, 0.52, 0.26][noteI % 4]; noteI += 1 + ((rnd() * 3) | 0); game.audio.note(SCALE[noteI % SCALE.length] + (rnd() < 0.2 ? 12 : 0), 0.4); }
       L.tipT -= dt; if (L.tipT <= 0) { L.tipT = 4; let s = 0; for (const o of npcs) if (Math.hypot(o.x - px, o.z - pz) < 16) s += 4 + ((rnd() * 8) | 0); if (s) { game.addMoney(s, 'Dutor chalish'); L.count('music', s); sfx('coin'); toast(`Tinglovchilar pul tashladi 🎶 +${s} so'm`, 'gold'); } } }
-    ctx = foot && pl.lock <= 0 ? findCtx() : null;
+    L.ctxD = 1e9; ctx = foot && pl.lock <= 0 ? findCtx() : null;
     let pr = ''; if (foot) { if (pl.lock > 0) pr = ''; else if (ctx) pr = ctx.text; else if (Math.hypot(car.p[0] - px, car.p[2] - pz) < car.spec.len / 2 + 2.4) pr = `<kbd>F</kbd> ${game.carModel.v.name}ga chiqish`; }
     else { for (const h of hikers) if (h.on && Math.hypot(h.x - car.p[0], h.z - car.p[2]) < 10 && car.speed < 3 && !L.fare && !game.act) pr = `<kbd>E</kbd> Yo'lovchini olish → ${h.dest.name}`; }
     L.prompt = pr;

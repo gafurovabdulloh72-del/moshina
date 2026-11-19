@@ -31,7 +31,7 @@ export const ACTIONS = [
   { key: 'X', codes: ['KeyX'], ok: (g) => !g.act && !!(g.ish && g.ish.cur), bar: () => 'Ishni tugatish', run: (g) => g.ish.quit() }, // non/taksi/dala ishi (ish.js)
   { key: 'T', codes: ['KeyT'], ok: (g) => g.damage.wrecked, bar: (g) => (g.player.onFoot ? null : 'Evakuator'), run: (g) => g.tow() },
   { key: 'E', codes: ['KeyE', 'Enter'], run: (g) => { // [E] — yaqindagi narsaga mos harakat (yozuvi pastdagi katta tugmada)
-    const pt = g.nearPoint, ui = g.ui;
+    const pt = g.nearPoint && !(g.nearPoint.kind === 'board' && g.player.onFoot && g.live.ctxD < 1.2) ? g.nearPoint : null, ui = g.ui; // yonidagi aniq harakat taxtadan ustun
     if (pt && g.player.lock <= 0) { if (pt.kind === 'board') { if (!g.act) ui.open('board', pt.place); } else if (pt.kind === 'garage') ui.open('garage', pt); else if (pt.kind === 'home') { if (g.player.onFoot && g.hayot) g.hayot.enterHome(); else ui.open('home'); } }
     else g.live.useE(); } },
   { key: 'F', codes: ['KeyF'], ok: (g) => !counting(g), bar: (g) => (g.player.onFoot ? (near(g) ? 'Transportga chiqish' : null) : 'Tushish'), run: (g) => { if (g.player.onFoot) g.live.tryMount(); else g.live.dismount(); } },

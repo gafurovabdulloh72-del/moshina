@@ -120,7 +120,7 @@ export class UI {
     } else { if (this._ah) { this._ah = null; this.actP.style.display = 'none'; } this.countEl.textContent = ''; }
     // [E] taklifi
     let pr = '';
-    const np = g.nearPoint;
+    const np = g.nearPoint && !(g.nearPoint.kind === 'board' && foot && g.live.ctxD < 1.2) ? g.nearPoint : null;
     if (g.damage.wrecked && !foot) pr = '<kbd>T</kbd> Evakuator chaqirish (ustaxonaga)';
     else if (np && np.kind === 'home') pr = '<kbd>E</kbd> Uyga kirish';
     else if (np && !a) pr = np.kind === 'board' ? "<kbd>E</kbd> E'lonlar taxtasi" : '<kbd>E</kbd> Ustaxona va transport saloni';
