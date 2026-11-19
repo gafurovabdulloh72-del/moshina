@@ -28,7 +28,7 @@ export function initInterior(game) {
   const tvCan = document.createElement('canvas'); tvCan.width = 256; tvCan.height = 144; const tvX = tvCan.getContext('2d');
   const tvTex = new THREE.CanvasTexture(tvCan); tvTex.colorSpace = THREE.SRGBColorSpace;
   const matTV = new THREE.MeshBasicMaterial({ map: tvTex, fog: false });
-  const IN = { inside: null, room: null, lights: true, tvOn: false, tvCh: 0, ret: null, H: null, S: null };
+  const IN = { inside: null, room: null, lights: true, tvOn: false, tvCh: 0, ret: null, H: null, S: null, X: {} }; // X — boshqa modullar qo'shgan ichki makonlar (hayot2.js: choyxona, kiyim, sartarosh)
   game.interior = IN;
 
   // ---------- yordamchilar ----------
@@ -212,7 +212,7 @@ export function initInterior(game) {
       putF(I, g, gl, bx + 1.1, Z1 - 0.3, Math.PI, (q) => F.nightstand(q, frame), [0.24, 0.2, 0.6], o); putF(I, g, gl, bx + 1.1, Z1 - 0.3, Math.PI, (q, ql) => { q.translate(0, 0.56, 0); ql.translate(0, 0.56, 0); F.clock(q, ql); }, null, o);
       spot(I, 'alarm', bx + 1.1, Z1 - 0.95, 0, { r: 0.8 });
       putF(I, g, gl, bx - 1.1, Z1 - 0.3, Math.PI, (q) => F.nightstand(q, frame), [0.24, 0.2, 0.6], o); putF(I, g, gl, bx - 1.1, Z1 - 0.3, Math.PI, (q, ql) => { q.translate(0, 0.56, 0); F.lantern(q, ql.translate(0, 0.56, 0)); }, null, o);
-      putF(I, g, gl, -A + 0.32, B + D / 2 + 0.3, Math.PI / 2, (q) => F.wardrobe(q, 1.2, frame), [0.62, 0.3, 2], o);
+      putF(I, g, gl, -A + 0.32, B + D / 2 + 0.3, Math.PI / 2, (q) => F.wardrobe(q, 1.2, frame), [0.62, 0.3, 2], o); spot(I, 'wardrobe', -A + 0.95, B + D / 2 + 0.3, -Math.PI / 2, { r: 1.0 });
       putF(I, g, gl, C - 0.32, B + 0.75, -Math.PI / 2, (q) => F.desk(q, wood), [0.56, 0.3, 0.8], o); putF(I, g, gl, C - 0.85, B + 0.75, Math.PI / 2, (q) => F.chair(q, wood), null, o); spot(I, 'desk', C - 0.95, B + 0.75, Math.PI / 2, { r: 1.0 });
       putF(I, g, gl, bx, B + D / 2 - 0.2, 0, (q) => F.rug(q, 1.8, 1.2, 0xe6dccb, 0x7a8a9a), null, o);
       putF(I, g, gl, bx, Z1 - 0.06, Math.PI, (q) => { q.translate(0, 1.65, 0); F.frame(q, 0.7, 0.5, 0xf0c070); }, null, o);
@@ -302,13 +302,13 @@ export function initInterior(game) {
   drawTV(0);
 
   // ---------- kirish va chiqish ----------
-  const cur = () => (IN.inside === 'home' ? H : IN.inside === 'shop' ? S : null);
+  const cur = () => (IN.inside === 'home' ? H : IN.inside === 'shop' ? S : IN.X[IN.inside] || null);
   const mini = () => document.getElementById('mini');
   const fadeFlash = () => { const f = game.ui && game.ui.fade; if (!f) return; f.style.opacity = 1; setTimeout(() => { f.style.opacity = 0; }, 260); };
   IN.enter = (kind, ret) => {
     if (kind === 'home' && H.lvl !== game.state.home.lvl) buildHome(game.state.home.lvl);
-    const I = kind === 'home' ? H : S; fadeFlash();
-    IN.ret = ret || [pl.p[0], pl.p[2], pl.yaw + Math.PI]; IN.inside = kind; I.grp.visible = true; (kind === 'home' ? S : H).grp.visible = false;
+    const I = kind === 'home' ? H : kind === 'shop' ? S : IN.X[kind]; fadeFlash();
+    IN.ret = ret || [pl.p[0], pl.p[2], pl.yaw + Math.PI]; IN.inside = kind; for (const J of [H, S, ...Object.values(IN.X)]) J.grp.visible = J === I;
     pl.place(I.o[0] + I.entry[0], I.o[2] + I.entry[1], I.entry[2]); pl.sit = false; pl.emote = null;
     shopkeeper.root.visible = kind === 'shop'; if (kind === 'shop') { shopkeeper.root.position.set(S.keeper[0], S.keeper[1], S.keeper[2]); shopkeeper.root.rotation.y = Math.PI; }
     tvMesh.visible = kind === 'home' && !!H.tv; if (H.tv) { tvMesh.position.set(H.tv[0], H.tv[1], H.tv[2] + 0.034); tvMesh.rotation.y = 0; }
@@ -354,5 +354,6 @@ export function initInterior(game) {
   };
   IN.shopkeeper = shopkeeper;
   IN.F = F;
+  IN.lib = { buildShell, putF, spot, finish, newGB, clearI }; // boshqa ichki makonlarni shu qurollar bilan quriladi
   return IN;
 }

@@ -8,11 +8,15 @@ const HATS = {
   somon: (g) => { g.color(0xd8bf74).cyl(12, 0.34, 0.3, 0.1, 0.13, { cap: true }); g.cyl(10, 0.17, 0.15, 0.12, 0.26, { cap: true }); g.color(0x9a4434).cyl(10, 0.175, 0.17, 0.13, 0.17); },
   kepka: (g) => { g.color(0xb83a2e).blob(0.185, 1, { cy: 0.1, sy: 0.7 }); g.box(0, 0.1, 0.2, 0.26, 0.03, 0.2); },
   doppi: (g) => { g.color(0x1d1e24).box(0, 0.19, 0, 0.27, 0.12, 0.27, { tx: 0.86, tz: 0.86 }); g.color(0xf2f2ee); for (const [x, z] of [[0.09, 0.136], [-0.09, 0.136], [0.09, -0.136], [-0.09, -0.136], [0.136, 0.09], [0.136, -0.09], [-0.136, 0.09], [-0.136, -0.09]]) g.box(x, 0.17, z, Math.abs(x) > 0.13 ? 0.01 : 0.05, 0.05, Math.abs(z) > 0.13 ? 0.01 : 0.05); },
+  qalpoq: (g) => { g.color(0x2f5aa8).blob(0.19, 1, { cy: 0.08, sy: 0.82 }); g.color(0xf2f2ee).cyl(12, 0.19, 0.19, 0.02, 0.07); g.blob(0.05, 0, { cy: 0.24 }); }, // jun qalpoq (popukli)
+  shlyapa: (g) => { g.color(0x3a2e26).cyl(14, 0.3, 0.3, 0.1, 0.12, { cap: true }); g.cyl(12, 0.17, 0.15, 0.11, 0.28, { cap: true }); g.color(0x8a3a2a).cyl(12, 0.172, 0.168, 0.12, 0.16); }, // keng hoshiyali shlyapa
+  panama: (g) => { g.color(0xf2ead8).cyl(14, 0.27, 0.24, 0.07, 0.12, { cap: true }); g.cyl(12, 0.175, 0.16, 0.1, 0.25, { cap: true }); g.color(0x3d74a6).cyl(12, 0.177, 0.172, 0.11, 0.145); }, // yozgi panama
   toj: (g) => { g.color(0xffd23a).cyl(8, 0.17, 0.18, 0.13, 0.24); for (let i = 0; i < 8; i++) { const a = (i / 8) * 6.283; g.push().translate(Math.sin(a) * 0.17, 0.24, Math.cos(a) * 0.17); g.cyl(4, 0.03, 0, 0, 0.1); g.pop(); } g.color(0xd8392b).blob(0.035, 0, { cy: 0.19, cz: 0.18 }); },
 };
 // shlyapa joylashuvi yangi (haqiqiy o'lchamdagi) boshga: [masshtab, y, z] — bosh suyagiga nisbatan
-const HAT_FIT = { somon: [0.58, 0.035, -0.006], kepka: [0.53, 0.072, -0.006], doppi: [0.6, 0.018, -0.008], toj: [0.55, 0.035, -0.008] };
+const HAT_FIT = { qalpoq: [0.56, 0.04, -0.006], shlyapa: [0.58, 0.035, -0.006], panama: [0.58, 0.035, -0.006], somon: [0.58, 0.035, -0.006], kepka: [0.53, 0.072, -0.006], doppi: [0.6, 0.018, -0.008], toj: [0.55, 0.035, -0.008] };
 export const HAT_LIST = [['somon', 'Somon shlyapa', 200], ['kepka', 'Kepka', 250], ['doppi', "Do'ppi", 400], ['toj', 'Oltin toj', 5000]];
+export const HAT_SHOP = [['qalpoq', 'Jun qalpoq', 180], ['panama', 'Panama', 220], ['shlyapa', 'Shlyapa', 450]]; // kiyim do'konida (hayot2.js)
 
 // Teri ranglari va kiyim uchun qo'shimcha xilma-xillik
 const SKINS = [0xe2b48e, 0xd6a17a, 0xc48d66, 0xb07a55, 0xe8c3a0, 0x9a6a48, 0xd9ad86];
@@ -133,9 +137,11 @@ export function makeRig(o = {}) {
     }
     ell(0, -0.0205, 0.0815, 0.021, 0.0052, 0.0065, 6, 3, lip); // lab
     if (stache) ell(0, -0.0075, 0.0855, 0.024, 0.0055, 0.0065, 6, 3, mul(hair, 0.9), { surf: 0 }); // mo'ylov
+    if (o.beard) { ell(0, -0.047, 0.06, 0.05, 0.03, 0.03, 8, 5, mul(hair, 0.82), { surf: 0 }); for (const sx of [1, -1]) ell(sx * 0.05, -0.022, 0.046, 0.022, 0.036, 0.034, 6, 4, mul(hair, 0.82), { surf: 0 }); } // soqol (sartaroshxona)
+    const hs = o.hairStyle | 0, hy0 = hs === 1 ? 0.074 : 0.062, hr = hs === 1 ? 0.975 : hs === 3 ? 1.07 : 1; // soch turmagi: 0 oddiy, 1 kalta, 2 taqir, 3 qalin
     // soch: bosh ustidagi qobiq, soch chizig'idan pastki uchlar ichkariga tortiladi (ko'rinmaydi)
-    const hairY = (c) => (c > 0 ? 0.062 + 0.04 * Math.pow(c, 0.6) : 0.062 + (fem ? -0.05 : -0.068) * -c);
-    g.ell(hp(0, 0.06, -0.006), 0.0855 * s * fw, 0.114 * s, 0.106 * s, 14, 8, hair, H, { rot: Math.PI / 14, surf: 0, open: true,
+    const hairY = (c) => (c > 0 ? hy0 + 0.04 * Math.pow(c, 0.6) : hy0 + (fem ? -0.05 : hs === 1 ? -0.035 : -0.068) * -c);
+    if (hs !== 2) g.ell(hp(0, 0.06, -0.006), 0.0855 * s * fw * hr, 0.114 * s * hr, 0.106 * s * hr, 14, 8, hair, H, { rot: Math.PI / 14, surf: 0, open: true,
       sculpt: (p, th) => { const c = Math.cos(th), yl = p[1] / s + 0.06; const hy = hairY(c); if (yl < hy) { const q = (hy - 0.06) / 0.114, f = Math.sqrt(Math.max(0, 1 - q * q)) * 0.955; p[1] = (hy - 0.06) * s; p[0] = Math.sin(th) * 0.0855 * s * fw * f; p[2] = c * 0.106 * s * f; } return p; },
       col: (p, th) => mul(hair, 0.85 + 0.25 * clamp((p[1] - HJ[1]) / (0.17 * s), 0, 1)) });
     if (fem) g.ell(hp(0, -0.035, -0.062), 0.08 * s, 0.13 * s, 0.05 * s, 12, 6, mul(hair, 0.9), [B.head, B.neck, 0.75], { surf: 0, rx: 0.12 }); // uzun soch (yelkagacha)
@@ -226,6 +232,12 @@ const TOOLS = {
   cup: (g) => { g.color(0xdfeef5).cyl(8, 0.034, 0.04, -0.05, 0.06, { cap: true }); g.color(0x5aa8e0).cyl(8, 0.03, 0.036, -0.04, 0.03, { cap: true }); },
   spoon: (g) => { g.color(0x9a6a42); g.push().rotX(1.35); g.cyl(5, 0.012, 0.01, -0.05, 0.36); g.pop(); g.color(0xb9bec8).push().rotX(1.35).translate(0, 0.38, 0).blob(0.04, 0, { sy: 0.45 }).pop(); },
   paper: (g) => { g.color(0xf2efe4).box(0.13, 0.02, 0.06, 0.3, 0.24, 0.01); g.color(0x3a3d46).box(0.13, 0.1, 0.066, 0.24, 0.035, 0.004); for (let i = 0; i < 4; i++) g.color(0x8a8d96).box(0.13, 0.05 - i * 0.035, 0.066, 0.24, 0.012, 0.004); },
+  phone: (g) => { g.color(0x1d1e22).box(0, 0.02, 0.03, 0.075, 0.15, 0.012); g.color(0x4fb0ff).box(0, 0.025, 0.037, 0.064, 0.125, 0.003); }, // telefon (hayot2)
+  sickle: (g) => { g.color(0x9a6a42).cyl(5, 0.016, 0.016, -0.06, 0.12); g.color(0xb9bec8); for (let i = 0; i < 6; i++) { const a = 0.3 + i * 0.42; g.box(Math.sin(a) * 0.12, 0.13 + Math.cos(a) * 0.1 - 0.02, 0, 0.05, 0.016, 0.008); } }, // o'roq
+  sheaf: (g) => { g.color(0xe2c060); g.push().rotX(1.3); g.cyl(7, 0.07, 0.09, -0.05, 0.55); g.color(0xf0d070).cyl(7, 0.12, 0.06, 0.5, 0.75); g.color(0x8a6a3a).cyl(7, 0.085, 0.085, 0.2, 0.25); g.pop(); }, // bog'langan bug'doy boyi
+  basket: (g) => { g.color(0xb8854a).cyl(8, 0.15, 0.12, -0.2, -0.02, { cap: true }); g.color(0x8a5a36).box(0, 0.02, 0, 0.02, 0.06, 0.26); g.color(0xe0a050); for (const [x, z] of [[-0.06, -0.05], [0.06, 0.02], [-0.02, 0.07]]) g.blob(0.065, 0, { cx: x, cy: -0.02, cz: z, sy: 0.45 }); }, // non savat
+  tray: (g) => { g.color(0xc8ccd4).push().translate(0.1, 0.02, 0.12).cyl(14, 0.2, 0.2, 0, 0.015, { cap: true }); g.color(0xf6f6f2).cyl(10, 0.09, 0.07, 0.015, 0.04, { cap: true }); g.color(0xe8a040).blob(0.06, 1, { cy: 0.05, sy: 0.5 }); g.color(0x3d74a6).push().translate(0.11, 0, 0.05).cyl(8, 0.05, 0.04, 0.015, 0.07, { cap: true }).pop().pop(); }, // ofitsiant patnisi
+  icecream: (g) => { g.color(0xd8a050).cyl(8, 0.005, 0.035, -0.03, 0.09, { cap: true }); g.color(0xfff0f4).blob(0.042, 0, { cy: 0.11 }); g.color(0xff8ab0).blob(0.034, 0, { cy: 0.15 }); }, // muzqaymoq
   bottle: (g) => { g.color(0x7fc8f0).cyl(8, 0.032, 0.032, -0.08, 0.1, { cap: true }); g.cyl(8, 0.03, 0.012, 0.1, 0.15); g.color(0x2f7fd0).cyl(6, 0.014, 0.014, 0.15, 0.18, { cap: true }); g.color(0xf2f2ee).cyl(8, 0.034, 0.034, -0.02, 0.05); },
 };
 // Asbob o'qi (qo'l koordinatasida): ikkinchi qo'l shu chiziq bo'ylab ushlaydi — [yo'nalish burchagi rotX, ikkinchi qo'l masofasi]

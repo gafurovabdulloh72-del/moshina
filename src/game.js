@@ -31,7 +31,8 @@ function defState() {
     tools: {}, hats: [], hat: null, karma: 0, sat: 100, energy: 100,
     home: { lvl: 0, decor: {}, beds: [0, 0, 0, 0, 0, 0], wat: [0, 0, 0, 0, 0, 0], eggT: 0, mailT: 0, incT: 0, fund: 0 }, // fund — onlayn xonada do'stlar qo'shgan pul (keyingi darajaga)
     flowers: [], trees: [], flags: [], tasks: [], cnt: {}, seen: {}, peaks: {},
-    thirst: 100, fuel: {}, fridge: {}, alarm: 6.5 }; // kundalik hayot (hayot.js): chanqoq, transport yoqilg'isi (%), muzlatkich, budilnik soati
+    thirst: 100, fuel: {}, fridge: {}, alarm: 6.5, // kundalik hayot (hayot.js): chanqoq, transport yoqilg'isi (%), muzlatkich, budilnik soati
+    look: null, clothes: [], income: [], jobs: {} }; // hayot2/ish: kiyim-soch ko'rinishi (null — boshlang'ich), sotib olingan kiyimlar, pul tarixi (telefon banki), ishlar hisobi
 }
 function loadState() {
   const d = defState(); let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* saqlangan o'yin yo'q */ }
