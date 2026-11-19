@@ -485,7 +485,7 @@ export function initCoop(game) {
     for (const t of s.getAudioTracks()) t.onended = () => { if (VC.stream === s) { voiceOff(); game.toast('Mikrofon uzildi — ovozli chat o\'chdi', 'bad'); } };
     const ctx = game.audio.ctx; if (ctx) { try { VC.src = ctx.createMediaStreamSource(s); VC.an = ctx.createAnalyser(); VC.an.fftSize = 2048; VC.src.connect(VC.an); } catch { VC.src = VC.an = null; } }
     applyMic(); bcast({ t: 'vo', on: 1 }); for (const m of C.members.values()) reconcile(m);
-    game.toast(VC.ptt ? 'Ovozli chat yoqildi — gapirish uchun [4] ni bosib turing' : 'Ovozli chat yoqildi 🎙 — [4] mikrofonni o\'chiradi/yoqadi', 'good'); changed(); return true;
+    game.toast(VC.ptt ? 'Ovozli chat yoqildi — gapirish uchun [5] ni bosib turing' : 'Ovozli chat yoqildi 🎙 — [5] mikrofonni o\'chiradi/yoqadi', 'good'); changed(); return true;
   };
   function voiceOff(silent) {
     if (!VC.on && !VC.stream) return; VC.on = false; VC.talk = false; VC.lvl = 0;
@@ -550,8 +550,8 @@ export function initCoop(game) {
       if (m.call && !m.vs && ms - m.callT > 20000) { endCall(m); reconcile(m); } // qo'ng'iroq ulanmay qoldi — qaytadan
     }
   }, 100);
-  // bosib gapirish: [4] (yoki ekrandagi tugma) bosib turilganda mikrofon ochiq
-  game.hooks.push(() => { if (!VC.on || !VC.ptt) return; const d = game.mode === 'play' && game.input.down('Digit4'); if (d !== VC.pttDown) { VC.pttDown = d; applyMic(); } });
+  // bosib gapirish: [5] (yoki ekrandagi tugma) bosib turilganda mikrofon ochiq
+  game.hooks.push(() => { if (!VC.on || !VC.ptt) return; const d = game.mode === 'play' && game.input.down('Digit5'); if (d !== VC.pttDown) { VC.pttDown = d; applyMic(); } });
   // sinov va tashxis uchun: har do'st bo'yicha ovoz holati; qabul qilingan baytlar — WebRTC statistikasidan
   VC.info = () => [...C.members.values()].map((m) => ({ pid: m.pid, vr: !!m.vr, call: !!m.call, live: !!(m.vs && m.vs.getAudioTracks().some((t) => t.readyState === 'live')), lvl: m.vlvl || 0, pk: m.vpk || 0, talk: !!m.vtalk, vol: m.vg ? m.vg.gain.value : null, mute: !!m.vmute }));
   VC.bytesIn = async (pid) => { const m = C.members.get(pid), pc = m && m.call && m.call.peerConnection; if (!pc) return 0; let b = 0; (await pc.getStats()).forEach((r) => { if (r.type === 'inbound-rtp' && (r.kind === 'audio' || r.mediaType === 'audio')) b += r.bytesReceived || 0; }); return b; };

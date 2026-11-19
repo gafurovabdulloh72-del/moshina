@@ -22,8 +22,8 @@ export const ACTIONS = [
   { key: '4', codes: ['Digit4', 'Numpad4'], top: 1, bar: () => 'Telefon', run: (g) => g.phone && g.phone.open() }, // telefon (ish.js)
   { key: 'U', codes: ['KeyU'], ok: (g) => !!(g.coop && g.coop.room), bar: () => 'Chat', run: (g) => g.coop.openChat() }, // onlayn xonada chat
   // onlayn xonada ovozli chat: [4] — yoqish, keyin mikrofonni o'chirish/yoqish; "bosib gapirish" rejimida — bosib turilganda gapiradi (barcha harf tugmalari band)
-  { key: '4', codes: ['Digit4'], ok: (g) => !!(g.coop && g.coop.room && !(g.coop.voice.on && g.coop.voice.ptt)), bar: (g) => (g.coop.voice.on ? (g.coop.voice.mute ? 'Mikrofon 🔇' : 'Mikrofon 🎙') : null), run: (g) => g.coop.voice.key() },
-  { key: '4', codes: ['Digit4'], ok: (g) => !!(g.coop && g.coop.room && g.coop.voice.on && g.coop.voice.ptt), hold: 1, bar: () => 'Gapirish 🎙' },
+  { key: '5', codes: ['Digit5', 'Numpad5'], ok: (g) => !!(g.coop && g.coop.room && !(g.coop.voice.on && g.coop.voice.ptt)), bar: (g) => (g.coop.voice.on ? (g.coop.voice.mute ? 'Mikrofon 🔇' : 'Mikrofon 🎙') : null), run: (g) => g.coop.voice.key() },
+  { key: '5', codes: ['Digit5', 'Numpad5'], ok: (g) => !!(g.coop && g.coop.room && g.coop.voice.on && g.coop.voice.ptt), hold: 1, bar: () => 'Gapirish 🎙' },
   { key: 'N', codes: ['KeyN'], run: (g) => { const s = g.state.set; s.music = !s.music; g.audio.setMusic(s.music); g.toast(s.music ? 'Musiqa yoqildi' : "Musiqa o'chirildi"); } },
   // --- vaziyatga qarab ---
   { key: 'X', codes: ['KeyX'], ok: (g) => !!g.act, bar: () => 'Bekor qilish', run: (g) => g.endAct(false, 'cancel') },

@@ -106,10 +106,10 @@ P.s_online = function (w, d, btn, x) {
       vc.appendChild(el('p', VC.err || why ? 'onl-err' : 'onl-note', esc(VC.err || why || "Mikrofon faqat shu tugmani bosganingizda so'raladi. Ovozli chatni yoqqan do'stlar bir-birini eshitadi; uzoqdagi do'st ovozi pastroq.")));
     } else {
       const r1 = el('div', 'row'); r1.style.flexWrap = 'wrap'; vc.appendChild(r1);
-      if (!VC.ptt) r1.appendChild(btn(VC.mute ? '🔇 Mikrofon o\'chiq (4)' : '🎙 Mikrofon yoniq (4)', () => VC.setMute(!VC.mute), VC.mute ? 'bad' : 'sec'));
+      if (!VC.ptt) r1.appendChild(btn(VC.mute ? '🔇 Mikrofon o\'chiq (5)' : '🎙 Mikrofon yoniq (5)', () => VC.setMute(!VC.mute), VC.mute ? 'bad' : 'sec'));
       r1.appendChild(btn("Ovozli chatni o'chirish", () => VC.stop(), 'sec'));
       const ck = (txt, val, set, tip) => { const l = el('label', 'onl-ck', `<input type="checkbox"${val ? ' checked' : ''}> ${txt}`); l.title = tip; l.querySelector('input').onchange = (e) => set(e.target.checked); vc.appendChild(l); };
-      ck('Bosib gapirish — [4] ni bosib turing', VC.ptt, VC.setPtt, "Yoqilsa mikrofon faqat [4] tugmasi bosib turilganda ochiq bo'ladi");
+      ck('Bosib gapirish — [5] ni bosib turing', VC.ptt, VC.setPtt, "Yoqilsa mikrofon faqat [5] tugmasi bosib turilganda ochiq bo'ladi");
       ck('Hamma eshitsin (masofasiz)', VC.all, VC.setAll, "O'chiq bo'lsa do'st ovozi masofaga qarab pasayadi: 15 m gacha to'liq, 150 m dan uzoqda 25%");
     }
     const rc = el('div', 'onl-race'); room.appendChild(rc);
