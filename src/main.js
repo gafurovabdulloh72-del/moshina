@@ -29,6 +29,9 @@ import { runKeys } from './controls.js';
 import { initNet } from './net.js';
 import { initCoop } from './coop.js';
 import { initOnlineUI } from './onlineui.js';
+import { initObhavo } from './obhavo.js';
+import { initShahar } from './shahar.js';
+import { initTadbir } from './tadbir.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -82,6 +85,7 @@ async function boot() {
   game.localLight = new THREE.PointLight(0xffe4c4, 0, 26, 2); scene.add(game.localLight);
   initHayot(game); // kundalik hayot: uy ichi, do'kon, yoqilg'i, chanqoq, suhbatlar (UI'ga keyin ulanadi)
   initHayot2(game); // kundalik hayot 2: choyxona, kiyim do'koni, sartarosh, ishlar, telefon, ko'cha mayda narsalari
+  initObhavo(game); initShahar(game); initTadbir(game); // ob-havo va taqvim, gavjum ko'chalar (svetofor, piyodalar), tadbirlar (to'y, bozor, Navro'z)
   // boshlang'ich joy: yangi o'yin — uy oldida
   if (st.pos && !st.fresh) { car.place(st.pos[0], st.pos[1], st.pos[2]); game.hour = st.hour || 9.5; }
   else car.place(home.park[0], home.park[1], home.parkYaw);
@@ -148,7 +152,7 @@ function syncCar(alpha) {
   syncWheels(m, car, dm.tires);
   const night = game.sky.night;
   // faralar oldi qattiq urilgandagina so'nadi (butunlay o'chmaydi — tunda yo'l ko'rinmay qolardi); xira bo'lsa biroz miltillaydi
-  const on = ((night > 0.3 && !foot) || game.lightsForced) && !(dm.wrecked && m.v.eng > 0), fr = dm.zone.front;
+  const on = (((night > 0.3 || game.wxDark) && !foot) || game.lightsForced) && !(dm.wrecked && m.v.eng > 0), fr = dm.zone.front;
   m.spot.intensity = on ? 560 * (fr < 12 ? 0.45 * (0.85 + 0.15 * Math.sin(game.time * 23)) : fr < 35 ? 0.75 : 1) : 0;
   if (on) m.headMat.color.setRGB(2.6, 2.4, 1.9); else m.headMat.color.setHex(0xb8b8b0);
   const braking = !foot && ((game.input.state.brake > 0.1 && car.fwd > 1) || game.input.state.handbrake);

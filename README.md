@@ -277,6 +277,31 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | **Telefon** | **4** (yoki yuqoridagi «Telefon» tugmasi): Xarita, Bank (balans va so'nggi pul harakatlari), Kontaktlar (taksi — transportingizni yoningizga 60 so'm; mexanik Rustam — joyida ta'mir; onam; dispetcher), Kamera (surat rejimi), Ob-havo va soat, Ishlar (yo'l ko'rsatish), Musiqa, Uyim |
 | **Ko'cha** | muzqaymoqchi (8 so'm, **E**), kaptarlarga don sepish (to'planib keladi; yugursangiz uchib ketadi), futbol maydoni (to'pni yurib surasiz, **E** — tepish, gol — 15 so'm), avtobus bekati (o'tirib kutasiz, avtobus keladi — **E**, 15 so'mga istalgan manzilga), o'tayotgan mashinaga **3** bilan qo'l silkisangiz signal chaladi |
 
+### 2.12. Ob-havo, tadbirlar va gavjum ko'chalar
+
+**Ob-havo** o'zi almashadi (6 o'yin soatlik bloklar, ~5 daqiqa): ochiq havo eng ko'p, keyin bulutli, yomg'ir, momaqaldiroq, qor, tuman. Fasl va hudud hisobga olinadi: qorli tog'da yomg'ir o'rniga qor, cho'lda yog'in bo'lmaydi, qishda tayga ham qorli, tuman faqat tun va tongda. O'tish ~30 soniyada silliq.
+
+| Holat | Nima bo'ladi |
+|---|---|
+| Yomg'ir / momaqaldiroq | tomchilar (GPU), osmon bulut bilan qoplanadi, yerga tushgan tomchi halqalari, yo'l asta namlanadi (to'qroq, yaltiroq, tekis joyda ko'lmaklarda osmon aksi), g'ildirak ortidan suv changi, yomg'ir shovqini; momaqaldiroqda chaqmoq chaqadi (yorug'lik kuchi bir lahza oshadi), masofaga qarab kechikib momaqaldiroq gumburlaydi. Kabinadan (kamera 2) qaraganda oyna tozalagichlari ishlaydi |
+| Qor | qor parchalari shamolda tebranib tushadi, yer, tom va tepaga qaragan hamma sirt asta oqaradi (yo'l izlarida kamroq), piyoda qahramon og'zidan bug' chiqadi; qor yomg'irda tezroq eriydi |
+| Tuman | ko'rinish ~250 m gacha tushadi, faralar o'zi yoqiladi |
+| Tutish | nam yo'lda shinalar tutishi −20 %, qorda −36 % — tormoz yo'li uzayadi, burilishda sirpanadi (o'yinchiga ogohlantirish chiqadi) |
+
+**Taqvim:** o'yin kuni (soat 24:00 dan o'tganda keyingisi), hafta kuni (Dushanba…Yakshanba) va 12 kunlik yil (Bahor, Yoz, Kuz, Qish — har biri 3 kun). Telefon → **Ob-havo** ilovasida hozirgi holat, yo'l sirpanchiqligi, 18 soatlik prognoz va yaqin tadbirlar ro'yxati bor.
+
+**Tadbirlar (Bog'iston):**
+
+| Tadbir | Qachon | Nima bor, nima qilsa bo'ladi |
+|---|---|---|
+| 💍 To'y | shanba (ba'zan payshanba), 14:00–23:00 | katta hovli bezatiladi: bayroqcha va chiroq shodalari, darvozada lentalar va «TO'YINGIZ MUBORAK!» yozuvi, dasturxon (lagan osh, non, meva), kelin-kuyov o'rni, karnay va doira chaluvchilar (musiqa sintez qilinadi), davra raqsi. O'rindiqda **E** — dasturxonga o'tirish, yana **E** — osh yeyish (to'qlik 100 %, kuniga bir marta ❤ +3). Davrada **1** (raqs) — 6 soniyadan keyin olqish (kuniga bir marta ❤ +2, 15 so'm). 12:00–15:00 qishloq yo'llarida lentali kortej (4 mashina, oq boshlovchi, sharlar) signal chalib aylanadi |
+| 🧺 Bozor kuni | chorshanba va yakshanba, 07:00–15:00 | maydon atrofida 9 ta qo'shimcha rasta, xaridorlar olomoni, sotuvchilar chaqiradi (ustida yozuv + ovoz). Rasta oldida **E** — bozor oynasi |
+| 🌷 Navro'z sayli | har yilning 1-kuni, 08:00–20:00 | qishloq chetidagi maydonda sumalak qozoni (bug' va olov), bezatilgan darvoza, bayroqlar, lolalar, dasturxon, arg'imchoqda bola, raqs davrasi va musiqa. Qozon oldida **E** — sumalak kavlash (kuniga bir marta ❤ +3 va 20 so'm), stol oldida **E** — sumalak tatib ko'rish. Raqs — xuddi to'ydagidek |
+
+Bugungi tadbir xaritada katta rangli nuqta bo'lib chiqadi, ertalab e'lon qilinadi.
+
+**Gavjum ko'chalar:** Bog'iston markazidagi chorrahada svetofor (yashil → sariq → keyingi yo'l → hamma qizil: piyodalar o'tadi) va uchta zebra. Qishloq yo'llarida qo'shimcha 14 mashina (sifatga qarab 4/8/14) va 12 piyoda (4/8/12) bor: mashinalar egrilik va oldidagini hisobga olib yuradi, qizilda va o'tish joyida piyoda bo'lsa to'xtaydi (oddiy yo'l mashinalari ham), piyodalar trotuardan yurib, piyoda fazasida zebradan o'tadi. Qishloqdan 1,1 km uzoqlashsangiz hammasi to'xtatiladi.
+
 ---
 
 ## 3. Boshqaruv
@@ -374,6 +399,9 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `living.js` | "hayot" tizimlari: terimchilik, ekish, baliq ovi, aholi, yo'lovchilar, hayvonlar, uy xo'jaligi, qurish, topshiriqlar, albom, bozor |
 | `life.js` | yo'ldagi boshqa mashinalar, qushlar, havo sharlari |
 | `ads.js` | "Kasb Egalari" reklama taxtalari (CanvasTexture) |
+| `obhavo.js` | ob-havo va taqvim: o'yin kuni, fasl, prognoz, yomg'ir/qor zarrachalari (bitta GPU chizish), osmon/tuman/chaqmoq (`sky.setHour` ustidan), nam yo'l va qor qoplami (`uWet`, `uSnowC` uniformlari), yomg'ir va momaqaldiroq ovozi, tozalagich, tutish ko'paytuvchisi (`car.wetGrip`) |
+| `tadbir.js` | tadbirlar: to'y (hovli bezagi, dasturxon, mehmonlar, musiqachilar, kelin-kuyov), bozor kuni (rastalar, olomon, chaqiriqlar), Navro'z (sumalak qozoni, arg'imchoq, raqs); rig hovuzi, sintez musiqa, **E** harakatlari, xarita va telefon |
+| `shahar.js` | gavjum ko'cha: svetofor (`life.stopFor` ilgagi orqali yo'l mashinalari ham to'xtaydi), zebralar, qo'shimcha mashinalar (InstancedMesh), piyodalar, to'y korteji |
 | `net.js`, `coop.js`, `onlineui.js` | onlayn rejim: kirish, bulutli saqlov, reyting; birga o'ynash xonasi; onlayn oynalar ([13](#13-onlayn-rejim)) |
 | `camera.js` | kuzatuvchi kamera: transport, piyoda, durbin |
 | `fx.js` | zarrachalar (chang, tutun, uchqun), parchalar, shina izlari |
@@ -429,7 +457,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 `localStorage`, kalit `safar_save_v2`. Yuklashda saqlangan holat standart holat (`defState()` — `game.js`) ustiga qo'shiladi, shuning uchun **yangi maydon qo'shilganda eski saqlovlar buzilmaydi** — faqat `defState()` ga standart qiymat yozish kerak. v1 saqlovlari ham ochiladi.
 
-Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
+Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
 
 Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
@@ -446,6 +474,8 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `G.runUntil(shart, maxSoniya)` | shart bajarilguncha yuritadi |
 | `G.view(x, y, z, tx, ty, tz, soat)` | kamerani qo'yadi (skrinshot uchun) |
 | `G._adapt(kadrVaqti, n)` | moslashuvchan grafikaga sun'iy kadr vaqtini beradi |
+| `G.dunyo.set('yomgir' \| 'dovul' \| 'qor' \| 'tuman' \| 'bulut' \| 'ochiq' \| null)` | ob-havoni majburlash (null — tabiiy), darhol qo'llanadi; `G.dunyo.forecast()`, `G.car.wetGrip` |
+| `G.tadbir.set('toy' \| 'bozor' \| 'navruz' \| null)` | tadbirni vaqtdan qat'i nazar yoqish; `G.tadbir.upcoming()`, `G.shahar.convoy(true)` |
 
 ### 4.11. Qanday qo'shiladi
 
@@ -471,7 +501,8 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `npm run test:save` | v1 saqlovi ochiladi; yangi holat saqlanib, qayta yuklanadi | ~40 s |
 | `npm run test:life` | kundalik hayot: uyga kirish, uxlash, o'tirish/turish, pishirish va stolda ovqatlanish, suv ichish, do'kon xaridi, yoqilg'i quyish, bo'sh bak, NPC suhbati | ~1 daq |
 | `npm run test:life2` | kundalik hayot 2: choyxona buyurtmasi va ovqatlanish, kiyim sotib olish/qaytishi va saqlanishi, sartarosh, 3 ta ish (non, taksi, dala), telefon (bank, taksi, mexanik), muzqaymoq, kaptarlar, futbol goli, avtobus | ~3 daq |
-| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life) | ~5–6 daq |
+| `npm run test:world` | ob-havo (har biri: tutish, tuman, zarrachalar, 3 sifat pog'onasi), sirpanchiq yo'lda tormoz yo'li, taqvim, to'y/bozor/Navro'z (odamlar, osh yeyish, sumalak), kortej, ko'cha mashinalari va piyodalar, svetofor qizilida o'tib ketmaslik, dala o'ti. `SHOTS=1` — skrinshotlar | ~3–5 daq |
+| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world) | ~8–10 daq |
 
 Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuterda Google Chrome o'rnatilgan bo'lishi kerak). Xato bo'lsa yoki `TEST … FAIL` satri chiqsa — chiqish kodi 1.
 
@@ -582,7 +613,13 @@ Sinovlar ekransiz brauzerda (dasturiy render) o'tgan. Quyidagilar **haqiqiy quri
 - Vercel'ga joylashning o'zi (A ham, B ham);
 - havola ulashilganda rasm va matnning Telegram, WhatsApp, Facebook'da chiqishi (sayt joylangach tekshiriladi).
 
+- ob-havo, to'y musiqasi, momaqaldiroq va bozor chaqiriqlari ovozi — quloq bilan; yomg'ir/qor zarrachalari va 30+ odamli tadbirlarning haqiqiy videokartadagi tezligi.
+
 Ma'lum cheklovlar:
+
+- Ob-havo saqlanmaydi (kun va soatdan qayta hisoblanadi), yerdagi namlik/qor yuklashda darhol joriy holatga o'rnatiladi.
+- Yomg'ir transport tomi yoki uy ayvoni ostida ham ko'rinadi (faqat ichki makonda yo'q); tozalagich — ekran ustidagi oddiy shakl.
+- Kortej va qo'shimcha mashinalar o'yinchini itaradi, lekin o'zi shikastlanmaydi; piyodalar mashina ostida qolmaydi (o'tish joyida mashinalar to'xtaydi, boshqa joyda yo'lga chiqmaydi).
 
 - "Panel ko'rinmayapti" shikoyatining aniq sababi topilmagan ([8](#8-tarix)).
 - `npm test` natijani jadval qilib chiqaradi, lekin o'zi "o'tdi/o'tmadi" demaydi — raqamlarni ko'z bilan qarash kerak.

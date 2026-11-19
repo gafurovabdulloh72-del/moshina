@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { TEX } from './tex.js';
 
-const VER = 'lk4'; // sheyder kaliti versiyasi (umumiy yamoq o'zgarsa oshiriladi)
+const VER = 'lk5'; // sheyder kaliti versiyasi (umumiy yamoq o'zgarsa oshiriladi)
 const v3 = (x, y, z) => ({ value: new THREE.Vector3(x, y, z) }), v4 = (x, y, z, w) => ({ value: new THREE.Vector4(x, y, z, w) }), col = (r, g, b) => ({ value: new THREE.Color(r, g, b) });
 
 // Umumiy uniformlar — har materialga avtomatik beriladi (bir xil obyekt, qiymat bir joyda yangilanadi)
@@ -18,7 +18,8 @@ const U = {
   uFogCam: { value: 1.6e-4 }, // kamera balandligidagi tuman zichligi = uFog.x·exp(−uFog.y·(kameraY − uFog.z)) — sky.update har kadrda yozadi (pikselda exp hisoblanmasin)
   uTimeL: { value: 0 }, // soniya (o'yin vaqti)
   uQ: { value: 2 }, // sifat darajasi 0/1/2
-  uWet: { value: 0 }, // yomg'ir namligi 0..1 (hozircha 0)
+  uWet: { value: 0 }, // yomg'ir namligi 0..1 (obhavo.js yozadi)
+  uSnowC: { value: 0 }, // qor qoplami 0..1 (obhavo.js yozadi): tepaga qaragan sirtlar oqaradi
   uNight: { value: 0 }, // tun 0..1 (sky.night)
   tNoise: { value: null }, tNrm: { value: null }, // tex.js teksturalari
   tSkyLut: { value: null }, // osmon jadvali (128×96, HalfFloat): u = sin(quyoshgacha burchak/2), v = 0.5 + 0.5·sign(y)·sqrt|y|
@@ -31,7 +32,7 @@ const U = {
   uShadowEdge: v4(0.7, 0.97, 0, 0), // soya xaritasi chetida yo'qolish: smoothstep(x, y, |koord|)
   tSunOcc: { value: null }, uOccMap: v4(0, 0, 0, 0), // relyef soyasi: tSunOcc.r = soya balandligi (m; nuqta undan baland bo'lsa yorug'), uv = xz·x + y, z = kuch
 };
-const DECL = { uSunDir: 'vec3', uMoonDir: 'vec3', uLightDir: 'vec3', uSunCol: 'vec3', uSkyZen: 'vec3', uSkyHor: 'vec3', uSkyAmb: 'vec3', uSkyHorS: 'vec3', uSkyHorA: 'vec3', uSkyGlow: 'vec3', uFogOA: 'vec3', uFogOS: 'vec3', uFogOZ: 'vec3', uFogOG: 'vec3', uFog: 'vec4', uFogCam: 'float', uTimeL: 'float', uQ: 'float', uWet: 'float', uNight: 'float', tNoise: 'sampler2D', tNrm: 'sampler2D', tSkyLut: 'sampler2D', uCloud: 'vec4', uCloudOff: 'vec2', uCloudSun: 'vec3', uCloudAmb: 'vec3', uViewPos: 'vec3', uHemiStd: 'float', uScotopic: 'float', uShadowEdge: 'vec4', tSunOcc: 'sampler2D', uOccMap: 'vec4' };
+const DECL = { uSunDir: 'vec3', uMoonDir: 'vec3', uLightDir: 'vec3', uSunCol: 'vec3', uSkyZen: 'vec3', uSkyHor: 'vec3', uSkyAmb: 'vec3', uSkyHorS: 'vec3', uSkyHorA: 'vec3', uSkyGlow: 'vec3', uFogOA: 'vec3', uFogOS: 'vec3', uFogOZ: 'vec3', uFogOG: 'vec3', uFog: 'vec4', uFogCam: 'float', uTimeL: 'float', uQ: 'float', uWet: 'float', uSnowC: 'float', uNight: 'float', tNoise: 'sampler2D', tNrm: 'sampler2D', tSkyLut: 'sampler2D', uCloud: 'vec4', uCloudOff: 'vec2', uCloudSun: 'vec3', uCloudAmb: 'vec3', uViewPos: 'vec3', uHemiStd: 'float', uScotopic: 'float', uShadowEdge: 'vec4', tSunOcc: 'sampler2D', uOccMap: 'vec4' };
 
 // --- GLSL kutubxonasi (har biri #ifndef bilan himoyalangan: bir sheyderga ikki marta qo'shilsa ham xato bermaydi) ---
 const noise = `#ifndef LK_NOISE
@@ -178,6 +179,14 @@ function patchChunks() {
 	#endif`);
 }
 
+const WX_F = `if ( uSnowC > 0.003 || uWet > 0.003 ) { vec3 lkNw = normalize( ( vec4( normal, 0.0 ) * viewMatrix ).xyz ); float lkUp = smoothstep( 0.35, 0.85, lkNw.y );
+  float lkSn = uSnowC * lkUp * smoothstep( 0.3, 0.6, texture( tNoise, vLookW.xz * 0.21 ).r * 0.7 + uSnowC * 0.45 );
+  diffuseColor.rgb = mix( diffuseColor.rgb * ( 1.0 - 0.3 * uWet * ( 0.35 + 0.65 * lkUp ) ), vec3( 0.84, 0.86, 0.9 ), lkSn );
+#ifdef STANDARD
+  roughnessFactor = mix( mix( roughnessFactor, max( 0.1, roughnessFactor * 0.4 ), uWet * ( 0.3 + 0.7 * lkUp ) ), 0.72, lkSn );
+#endif
+}
+`;
 // --- har materialga qo'llanadigan umumiy yamoq ---
 const reDecl = {}; for (const k in DECL) reDecl[k] = new RegExp('uniform\\s+\\w+\\s+' + k + '\\b');
 const decl = (src) => { let s = ''; for (const k in DECL) if (!reDecl[k].test(src)) s += 'uniform ' + DECL[k] + ' ' + k + ';\n'; return s; };
@@ -196,6 +205,8 @@ function globalPatch(sh) {
   if (iF >= 0) { const iT = fs.indexOf('#include <tonemapping_fragment>'), iC = fs.indexOf('#include <colorspace_fragment>'); if ((iT >= 0 && iT < iF) || (iC >= 0 && iC < iF)) fpre += '#define LK_FOG_POST\n'; }
   // tungi (skotopik) ko'rish: tonemapping'dan oldin, chiziqli rangda; yorqin chiroqlar rangini saqlaydi
   if (!/#define\s+LK_NO_SCOTOPIC/.test(fs)) fs = fs.replace('#include <tonemapping_fragment>', 'if ( uScotopic > 0.001 && uQ > 0.5 ) { float lkL = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722)); float lkS = uScotopic * (1.0 - smoothstep(0.03, 0.3, lkL)); gl_FragColor.rgb = mix(gl_FragColor.rgb, lkL * vec3(0.86, 0.9, 1.16), lkS); }\n#include <tonemapping_fragment>');
+  // ob-havo: nam sirt (to'qroq, silliqroq) va qor qoplami (tepaga qaragan joy oqaradi) — yorug'lik hisobidan oldin; ochiq havoda (0 qiymatda) hech narsa o'zgarmaydi
+  if (lit && !/#define\s+LK_NO_WX/.test(fs)) fs = fs.replace('#include <emissivemap_fragment>', WX_F + '#include <emissivemap_fragment>');
   const body = (iF >= 0 ? fog : '') + (lit ? sunocc : '');
   const iM = fs.search(/void\s+main\s*\(/); // yordamchi funksiyalar main'dan oldin (sheyderning o'z uniformlaridan keyin)
   sh.fragmentShader = decl(fs) + fpre + (iM >= 0 ? fs.slice(0, iM) + body + fs.slice(iM) : body + fs);
