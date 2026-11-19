@@ -264,7 +264,7 @@ export class FX {
       // --- izlar: yumshoq yerda doim (chuqurcha), qattiq yerda faqat sirpanganda (rezina) ---
       if (!wet && sp > 0.4) {
         let t = -1, a = 0;
-        if (hard) { const on = this.skLast[i] && this.skLast[i][6] === 0; if (w.slip > (on ? 0.18 : 0.32) && slide > (on ? 1.2 : 2.2)) { t = 0; a = clamp(0.22 + w.slip * 0.5, 0, 0.8); } } // boshlanish va to'xtash chegarasi har xil — iz uzuq-uzuq bo'lmasin
+        if (hard) { const on = this.skLast[i] && this.skLast[i][6] === 0; if (w.slip > (on ? 0.25 : 0.45) && slide > (on ? 1.8 : 3.2)) { t = 0; a = clamp(0.22 + w.slip * 0.5, 0, 0.8); } } // boshlanish va to'xtash chegarasi har xil — iz uzuq-uzuq bo'lmasin
         else if (s === S.GRASS) { t = 1; a = 0.36 + clamp(slide * 0.06, 0, 0.35); }
         else if (s === S.SAND) { t = 2; a = 0.66 + clamp(slide * 0.05, 0, 0.3); }
         else if (s === S.SNOW) { t = 3; a = 0.62 + clamp(slide * 0.05, 0, 0.3); }
@@ -303,9 +303,11 @@ export class FX {
         }
       }
       // --- shina tutuni: qattiq yo'lda drift yoki joyida aylantirishda — qalin, uzoq turadi ---
-      if (hard && s !== S.ICE && w.slip > 0.35 && slide > 2.5) {
-        const k = clamp((w.slip - 0.35) * 1.6, 0, 1.6) * clamp(slide / 6, 0.3, 1.5);
-        for (let n = this._n(sl + 4, 26 * k, dt); n > 0; n--) { const g = 0.74 + rnd() * 0.12; dc[0] = g; dc[1] = g; dc[2] = g * 1.03; this.emit(x + rs(0.3), y + 0.3, z + rs(0.3), v[0] * 0.18 + rs(1.2), 0.5 + rnd() * 0.7, v[2] * 0.18 + rs(1.2), 2.8 + rnd() * 2.4, (0.7 + rnd() * 0.5) * big, dc, 0.22 + rnd() * 0.14, 4.5 + rnd() * 2.5, -0.25, 0.9, K.SMOKE); }
+      // oddiy burilishda emas — faqat haqiqiy yon sirpanish (drift) yoki joyida aylantirishda
+      const spin = w.slip > 0.7 && sp < 6, drift = Math.abs(w.vlat) > 3.5 && w.slip > 0.5;
+      if (hard && s !== S.ICE && (spin || drift)) {
+        const k = clamp((w.slip - 0.5) * 1.4, 0, 1.2) * clamp((Math.abs(w.vlat) - 2) / 6, 0.3, 1.3);
+        for (let n = this._n(sl + 4, 16 * k, dt); n > 0; n--) { const g = 0.74 + rnd() * 0.12; dc[0] = g; dc[1] = g; dc[2] = g * 1.03; this.emit(x + rs(0.3), y + 0.3, z + rs(0.3), v[0] * 0.18 + rs(1.2), 0.5 + rnd() * 0.7, v[2] * 0.18 + rs(1.2), 2.8 + rnd() * 2.4, (0.7 + rnd() * 0.5) * big, dc, 0.22 + rnd() * 0.14, 4.5 + rnd() * 2.5, -0.25, 0.9, K.SMOKE); }
       }
       // --- osma oxirigacha siqilsa (pastga urilish) — tagidan uchqun ---
       if (w.comp > car.maxComp * 0.99 && sp > 5 && (s === S.ROAD || s === S.ASPHALT || s === S.ROCK)) for (let n = this._n(sl + 5, 60, dt); n > 0; n--) this._spark(x, y + 0.05, z, v, 0.6);
