@@ -270,7 +270,8 @@ export function initLiving(game) {
     if (tent) { const d = Math.hypot(tent.x - px, tent.z - pz); if (d < 3.2) offer(d, '<kbd>E</kbd> Chodirda dam olish', () => game.ui.open('rest')); }
     if (L.extra) L.extra(offer, px, pz, p); // kundalik hayot (hayot.js): uy/do'kon ichi, kanistr, o'rnidan turish
     // baliq ovi
-    if (!best) { const w = waterAhead(); if (w && !pl.swim) return st.tools.rod ? { text: '<kbd>E</kbd> Baliq ovlash 🎣', fn: () => startFish(w) } : null; }
+    // uy/do'kon ichi dengiz ustida joylashgan — u yerda baliq ovi taklif qilinmaydi
+    if (!best && !(game.interior && game.interior.inside)) { const w = waterAhead(); if (w && !pl.swim) return st.tools.rod ? { text: '<kbd>E</kbd> Baliq ovlash 🎣', fn: () => startFish(w) } : null; }
     return best;
   };
   const shake = (r) => {
