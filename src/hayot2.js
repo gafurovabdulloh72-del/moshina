@@ -154,7 +154,7 @@ export function initHayot2(game) {
   const putDishes = (sp, ids) => { const [tx, tz] = [C.o[0] + sp.table[0], C.o[2] + sp.table[1]], dx = (pl.p[0] - tx) || Math.sin(sp.yaw + Math.PI), dz = (pl.p[2] - tz) || Math.cos(sp.yaw + Math.PI), a = Math.atan2(-Math.sin(sp.yaw), -Math.cos(sp.yaw)); void dx; void dz;
     for (const id of ids) { if (H2.dishes.length >= 4) break; const m = takeDish(id); if (!m) continue; const sl = SLOTS[H2.dishes.length], c = Math.cos(a), s = Math.sin(a); m.position.set(tx + sl[0] * c + sl[1] * s, C.o[1] + sp.top, tz - sl[0] * s + sl[1] * c); m.rotation.y = a + Math.PI; m.scale.setScalar(1); m.visible = true; H2.dishes.push({ id, m, sp }); } };
   const clearDishes = () => { for (const d of H2.dishes) d.m.visible = false; H2.dishes.length = 0; };
-  H2.menu = MENU; H2.clearDishes = clearDishes;
+  H2.menu = MENU; H2.clearDishes = clearDishes; H2.DISH = DISH; // DISH — onlayn do'stlar stolidagi taomlar ham shu modellarda (coop.js)
   // buyurtma: pul olinadi, ofitsiant oshxonadan stolga olib keladi
   H2.order = (id) => { const m = MENU.find((q) => q[0] === id); const sp = HY.seat; if (!m || !sp || sp.k !== 'csit') return false; if (st.money < m[3]) { toast("Pul yetarli emas", 'bad'); return false; }
     if (H2.dishes.length + WT.carry.length >= 4) { toast("Stolga boshqa sig'maydi — avval yeb oling 🙂"); return false; }

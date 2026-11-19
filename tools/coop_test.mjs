@@ -1,6 +1,6 @@
 // Onlayn rejimning brauzer sinovi: mahalliy "Vercel" (tools/dev-server.mjs: api/ + soxta Redis + mahalliy PeerJS brokeri) va ekransiz Chrome'da bir nechta o'yinchi.
 // Tekshiradi: Telegram orqali kirish (sinov tokeni bilan imzolangan ma'lumot), bulutli saqlov (yuklash, boshqa qurilmada olish, tanlov oynasi), reyting,
-// xona ochish va kod bilan qo'shilish, ovozli chat (soxta mikrofon: qo'ng'iroq, ovoz darajasi, masofa, o'chirish, chiqqanda tozalash), mehmon xona egasining uyida yashashi (hissa, bezak, poliz, o'z uyi tiklanishi), bir-birini ko'rish (skrinshot), chat, birga poyga va natija, xona egasi chiqib ketganda egalik o'tishi, yuklab olingan faylda "mavjud emas".
+// xona ochish va kod bilan qo'shilish, birga o'ynash (egasining uy kengaytmalari, topchan, pul o'tkazish, «Shu yerga kel», yo'lovchi, birga ish va ulush, choyxonada «Men to'layman»), ovozli chat (soxta mikrofon: qo'ng'iroq, ovoz darajasi, masofa, o'chirish, chiqqanda tozalash), mehmon xona egasining uyida yashashi (hissa, bezak, poliz, o'z uyi tiklanishi), bir-birini ko'rish (skrinshot), chat, birga poyga va natija, xona egasi chiqib ketganda egalik o'tishi, yuklab olingan faylda "mavjud emas".
 // Ishlatish: npm run build && npm run test:online      (skrinshotlar: shots/online_*.jpg)
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -222,6 +222,105 @@ try {
   ok(res.join(',') === 'Jasur:61.5,Malika:64.2', 'natija tartibi', res.join(','));
   await shot(B, 'online_race_result');
   await A.evaluate(() => G.ui.close()); await B.evaluate(() => G.ui.close());
+
+  // ---------- 4b. Birga o'ynash: mehmon uyda, pul o'tkazish, belgi, yo'lovchi, birga ish, choyxona ----------
+  const apidB = await A.evaluate(() => G.coop.myId()), bpidA = await B.evaluate(() => G.coop.myId());
+  // (a) egasining uy kengaytmalari mehmonga ko'rinadi (hovli topchani, mangal, garaj va undagi transport, mehmon xonasi)
+  await A.evaluate(() => { const H = G.state.home2; H.yard.topchan = 1; H.yard.mangal = 1; H.garage = 1; H.guest = 1; H.gVeh = 'sedan'; G.uy2.show(); G.interior.rebuildHome(true); G.coop.sendHome(true); });
+  ok(await until(B, () => { const U = G.uy2; return U.vh && U.vh.yard.topchan && U.vh.garage && U.vh.guest && U.yard.topchan && U.yard.topchan.grp.visible && U.yard.mangal.grp.visible && U.garageDisp() && U.garageDisp().id === 'sedan'; }, null, 45, A), "birga: mehmon egasining kengaytmalarini ko'radi (topchan, mangal, garaj + sedan)");
+  ok(await until(B, () => G.interior.H.rooms.some((r) => r.t === 'guest'), null, 45, A), "birga: mehmonda egasining mehmon xonasi (uy ichi)");
+  ok(await B.evaluate(() => { G.save(); const s = JSON.parse(localStorage.getItem('safar_save_v2')); return !G.state.home2.yard.topchan && !G.state.home2.garage && !(s.home2 && (s.home2.garage || (s.home2.yard || {}).topchan)); }), "birga: mehmon saqlovida o'z kengaytmalari (o'zgarmagan)");
+  // mehmon va egasi topchanda — bir joyga o'tirsa ustma-ust tushmaydi
+  const topAt = await A.evaluate(() => G.site.places.uy.home.W(-4.4, 8.6));
+  for (const p of [A, B]) await p.evaluate((q) => { if (!G.player.onFoot) G.live.dismount(true); G.player.place(q[0], q[1], 0); }, topAt);
+  await run(0.6, A, B);
+  const sitB = await B.evaluate(() => { const t = G.live.prompt || ''; G.live.useE(); return t; });
+  await A.evaluate(() => G.live.useE());
+  await run(1.2, A, B);
+  ok(/Topchanga/.test(sitB) && await B.evaluate(() => G.player.sit), "birga: mehmon egasining topchaniga o'tiradi", sitB.replace(/<[^>]+>/g, ''));
+  const sepTop = await A.evaluate(() => { const m = [...G.coop.members.values()][0]; return [G.player.sit, m.remote.anim, Math.hypot(m.remote.fpos.x - G.player.p[0], m.remote.fpos.z - G.player.p[2])]; });
+  ok(sepTop[0] && sepTop[1] === 'sit' && sepTop[2] > 0.4, "birga: ikkalasi topchanda o'tiribdi, ustma-ust emas", JSON.stringify(sepTop));
+  await B.evaluate(() => { const h = G.site.places.uy.home, q = h.W(-1, 13.5), c = h.W(-6, 5); const y = G.T.ground(q[0], q[1], 1e9).y; G.view(q[0], y + 4.5, q[1], c[0], y + 0.8, c[1]); });
+  await shot(B, 'birga_guest_yard');
+  for (const p of [A, B]) await p.evaluate(() => { G.player.sit = false; });
+
+  // (b) do'stga pul o'tkazish (tasdiqlash oynasi, ikkala bankda yozuv, noto'g'ri summa rad etiladi)
+  await B.evaluate((p) => { G.ui.open('pulot', { pid: p, n: 250 }); G.advance(0.02); }, apidB); await shot(B, 'birga_money_confirm'); await B.evaluate(() => G.ui.close());
+  const [tA0, tB0] = [await A.evaluate(() => G.state.money), await B.evaluate(() => G.visit.money())];
+  ok(await B.evaluate((p) => G.coop.sendMoney(p, 250), apidB), "birga: B 250 so'm yubordi");
+  ok(await until(A, (m0) => G.state.money === m0 + 250 && G.state.income.some((r) => r[1] === "O'tkazma ← Malika" && r[2] === 250), tA0, 45, B), "birga: A ga 250 so'm keldi, bankda «O'tkazma ← Malika»");
+  ok(await until(B, (m0) => G.visit.money() === m0 - 250 && G.state.income.some((r) => r[1] === "O'tkazma → Jasur" && r[2] === -250) && !G.coop.voice.busy, tB0, 45, A), "birga: B dan 250 so'm olindi, bankda «O'tkazma → Jasur»");
+  await B.evaluate(() => { const m = [...G.coop.members.values()][0]; m.conn.send({ t: 'mt', id: 901, n: -5 }); m.conn.send({ t: 'mt', id: 902, n: 999999 }); m.conn.send({ t: 'mt', id: 903, n: 12.5 }); });
+  await run(1, A, B);
+  ok(await A.evaluate((m0) => G.state.money === m0 + 250, tA0), "birga: noto'g'ri o'tkazmalar rad etildi");
+
+  // (c) "Shu yerga kel" belgisi
+  await A.evaluate(() => G.coop.ping());
+  ok(await until(B, () => (G.netDots || []).some((d) => d[3] === '📍 Jasur') && G.coop.pingList().some((p) => p.name === 'Jasur'), null, 45, A), "birga: «Shu yerga kel» belgisi B xaritasida");
+
+  // (d) yo'lovchi: B do'sti mashinasiga o'tiradi, A haydaydi, B o'rindiqda ergashadi; tushish; haydovchi tushsa yo'lovchi ham tushadi
+  await A.evaluate(() => { G.live.mount(true); G.car.v[0] = G.car.v[1] = G.car.v[2] = 0; });
+  await run(1, A, B);
+  await B.evaluate(() => { const r = [...G.coop.members.values()][0].remote; G.player.place(r.pos.x + Math.cos(r.yaw()) * 2.6, r.pos.z - Math.sin(r.yaw()) * 2.6, 0); });
+  await run(0.6, A, B);
+  ok(await B.evaluate(() => /mashinasiga o'tirish/.test(G.live.prompt || '')), "birga: do'st mashinasi yonida [E] o'tirish taklifi", await B.evaluate(() => G.live.prompt));
+  await B.evaluate(() => G.live.useE());
+  ok(await until(B, () => !!G.coop.ride, null, 45, A), "birga: B A ning mashinasiga o'tirdi");
+  ok(await until(A, (p) => G.carModel._pax && G.carModel._pax.has(p) && G.coop.pax.size === 1, bpidA, 45, B), "birga: haydovchi yo'lovchini o'rindiqda ko'radi");
+  // A haydaydi (40 m oldinga silliq)
+  for (let i = 0; i < 20; i++) { await A.evaluate(() => { const c = G.car; c.place(c.p[0] + Math.sin(c.yaw) * 2, c.p[2] + Math.cos(c.yaw) * 2, c.yaw); G.prevP = c.p.slice(); G.advance(0.1, 1 / 30); }); await B.evaluate(() => G.advance(0.1, 1 / 30)); await sleep(20); }
+  await run(1, A, B);
+  const follow = await B.evaluate(() => { const r = [...G.coop.members.values()][0].remote; return [Math.hypot(G.player.p[0] - r.pos.x, G.player.p[2] - r.pos.z), G.cam.link.tgt && G.cam.link.tgt !== G.player && G.cam.link.tgt !== G.car, G.player.rig.root.visible]; });
+  ok(follow[0] < 3 && follow[1] && !follow[2], "birga: yo'lovchi do'st mashinasida ergashadi, kamera o'sha mashinada", JSON.stringify(follow));
+  const seenA = await A.evaluate(() => { const m = [...G.coop.members.values()][0]; return [Math.hypot(m.remote.fpos.x - G.car.p[0], m.remote.fpos.z - G.car.p[2]), m.remote.rig.root.visible]; });
+  ok(seenA[0] < 3 && !seenA[1], "birga: A da B o'rindiqda (piyoda modeli yashirin)", JSON.stringify(seenA));
+  await B.evaluate(() => G.advance(0.05)); await shot(B, 'birga_passenger_view');
+  await A.evaluate(() => { const c = G.car, s = Math.sin(c.yaw), co = Math.cos(c.yaw); const y = c.p[1]; G.view(c.p[0] + co * 4.2 + s * 1.5, y + 1.6, c.p[2] - s * 4.2 + co * 1.5, c.p[0], y + 0.4, c.p[2]); }); await shot(A, 'birga_driver_sees_passenger');
+  await B.evaluate(() => G.coop.rideOff());
+  ok(await until(A, () => G.coop.pax.size === 0 && !(G.carModel._pax && G.carModel._pax.size), null, 45, B) && await B.evaluate(() => !G.coop.ride && G.player.onFoot && G.player.lock <= 0 && G.player.rig.root.visible), "birga: B mashinadan tushdi (F), o'rin bo'shadi");
+  await run(0.5, A, B);
+  await B.evaluate((p) => G.coop.rideReq(p), apidB);
+  ok(await until(B, () => !!G.coop.ride, null, 45, A), "birga: B yana o'tirdi");
+  await A.evaluate(() => G.live.dismount(true));
+  ok(await until(B, () => !G.coop.ride && G.player.lock <= 0, null, 45, A), "birga: haydovchi tushdi — yo'lovchi ham tushdi");
+
+  // (e) birga ish: non yetkazish — A boshlaydi, B qo'shiladi, har to'lov teng bo'linadi, B o'zi ham non topshiradi
+  ok(await A.evaluate(() => { G.ish.startNon(); return !!G.ish.cur; }), 'birga ish: A non yetkazishni boshladi');
+  await A.evaluate(() => G.coop.jobInvite());
+  ok(await until(B, () => !!G.coop.jobInv && [...G.coop.members.values()][0].job, null, 45, A), "birga ish: B ga taklif keldi");
+  await B.evaluate(() => { G.ui.open('online'); G.advance(0.02); document.querySelector('.onl-birga').scrollIntoView({ block: 'end' }); }); await sleep(300); await shot(B, 'birga_online_panel'); await B.evaluate(() => G.ui.close());
+  await B.evaluate((p) => G.coop.jobJoin(p), apidB);
+  ok(await until(A, () => G.coop.job && G.coop.job.team.size === 1, null, 45, B) && await until(B, () => G.coop.job && G.coop.job.st && G.coop.job.st.pts.length > 0, null, 45, A), "birga ish: B jamoaga qo'shildi va manzillarni oldi");
+  const [jA0, jB0] = [await A.evaluate(() => G.state.money), await B.evaluate(() => G.visit.money())];
+  await A.evaluate(() => G.ish.dbg.deliver(G.ish.cur.pts.find((q) => !q.ok)));
+  ok(await until(B, (m0) => G.visit.money() >= m0 + 15 && G.coop.job.got === 15 && G.state.income.some((r) => r[1] === 'Non yetkazish (birga)'), jB0, 45, A) && await A.evaluate((m0) => G.state.money >= m0 + 15 && G.state.income.some((r) => r[1] === 'Non yetkazish' && r[2] === 15), jA0), "birga ish: 30 so'm teng bo'lindi (15 + 15), B bankida yozildi");
+  await until(B, () => G.coop.job.st.done === 1, null, 45, A); // A topshirgan uy B ning ro'yxatidan chiqqanidan keyin
+  const pt = await B.evaluate(() => G.coop.job.st.pts[0]);
+  await B.evaluate((p) => G.player.place(p[0] + 0.8, p[1], 0), pt);
+  await run(1.2, A, B);
+  await B.evaluate((p) => G.coop.jobAct('non', { x: p[0], z: p[1] }), pt);
+  ok(await until(A, () => G.ish.cur && G.ish.cur.done === 2, null, 45, B), "birga ish: B o'zi topshirgan non A ishida hisoblandi", await B.evaluate(() => G.coop.jobMsg || ''));
+  ok(await until(B, () => G.coop.job && G.coop.job.got === 30, null, 45, A), "birga ish: B ning ulushi yana 15 so'm (jami 30)");
+  await B.evaluate(() => G.advance(0.05)); await shot(B, 'birga_job_member');
+  await A.evaluate(() => G.ish.quit());
+  ok(await until(B, () => !G.coop.job, null, 45, A), "birga ish: A tugatdi — B da ham tugadi");
+
+  // (f) choyxona: bir stolda, taomlar ko'rinadi, «Men to'layman»
+  for (const p of [A, B]) await p.evaluate(() => { if (G.ui.screenName) G.ui.close(); if (!G.player.onFoot) G.live.dismount(true); G.player.sit = false; G.hayot2.enter(G.hayot2.bld.find((q) => q.kind === 'cafe')); });
+  const pair = await A.evaluate(() => { const S = G.interior.X.cafe.seats.filter((s) => !s.topchan); for (const a of S) { const b = S.find((s) => s !== a && s.table[0] === a.table[0] && s.table[1] === a.table[1]); if (b) return [S.indexOf(a), S.indexOf(b)]; } return null; });
+  await B.evaluate((i) => { const sp = G.interior.X.cafe.seats.filter((s) => !s.topchan)[i]; G.hayot2.spotAct(sp); }, pair[0]);
+  ok(await B.evaluate(() => G.hayot2.order('osh')), 'choyxona: B osh buyurtma qildi');
+  ok(await until(B, () => G.hayot2.dishes.length > 0, null, 60), 'choyxona: ofitsiant B ga osh olib keldi');
+  await A.evaluate((i) => { const sp = G.interior.X.cafe.seats.filter((s) => !s.topchan)[i]; G.hayot2.spotAct(sp); }, pair[1]);
+  ok(await until(A, () => { const ms = G.coop.tableMates(); return ms.length === 1 && ms[0].tb.sum === 45 && ms[0].tb.ds.includes('osh'); }, null, 45, B), "choyxona: A B bilan bir stolda (hisob 45, osh)");
+  ok(await until(A, () => { const m = [...G.coop.members.values()][0]; return !!(m.dm && m.dm[0] && m.dm[0].m.visible) && m.remote.anim === 'sit'; }, null, 45, B), "choyxona: A B ni o'tirgan holda va uning oshini ko'radi");
+  await A.evaluate(() => { const sp = G.hayot.seat, o = G.interior.X.cafe.o, tx = o[0] + sp.table[0], tz = o[2] + sp.table[1]; G.view(o[0] + 0.5, o[1] + 1.9, o[2] + sp.table[1] * 0.3, tx, o[1] + 0.6, tz); G.gfx.render(); }); await shot(A, 'birga_cafe_table');
+  await A.evaluate(() => { G.ui.open('choyxona'); G.advance(0.02); const c = document.querySelector('.coop-tab'); if (c) c.scrollIntoView({ block: 'end' }); }); await sleep(300); await shot(A, 'birga_cafe_pay'); await A.evaluate(() => G.ui.close());
+  const [cA0, cB0] = [await A.evaluate(() => G.state.money), await B.evaluate(() => G.visit.money())];
+  ok(await A.evaluate(() => G.coop.payTable()), "choyxona: A «Men to'layman» bosdi");
+  ok(await until(B, (m0) => G.visit.money() === m0 + 45 && G.coop.tab.sum === 0, cB0, 45, A) && await until(A, (m0) => G.state.money === m0 - 45 && G.state.income.some((r) => r[1] === 'Choyxona: Malika uchun'), cA0, 45, B), "choyxona: A B ning 45 so'mini to'ladi (B ga qaytdi)");
+  for (const p of [A, B]) await p.evaluate(() => { G.player.sit = false; G.interior.exit(); G.live.mount(true); G.damage.repair(100); });
+  await run(1, A, B);
 
   // ---------- 5. Uchinchi o'yinchi, egasi chiqib ketishi ----------
   const C3 = await player('C');

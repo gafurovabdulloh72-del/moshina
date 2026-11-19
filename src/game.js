@@ -410,7 +410,7 @@ export function initGame(game) {
     // nitro
     if (car.nitroOn) game.nitro = Math.max(0, game.nitro - dt * (0.3 - 0.045 * st.up.nitro)); else game.nitro = Math.min(1, game.nitro + dt * (0.05 + 0.02 * st.up.nitro));
     // statistika
-    st.stats.time += dt; const dd = Math.hypot(p[0] - lastGround[0], p[2] - lastGround[1]); if (dd < 30) { if (foot) st.stats.walk += dd; else st.stats.dist += dd; kmAcc += dd; if (kmAcc >= 1000) { kmAcc -= 1000; game.live.count('km'); } } else air = null; lastGround[0] = p[0]; lastGround[1] = p[2];
+    st.stats.time += dt; const dd = Math.hypot(p[0] - lastGround[0], p[2] - lastGround[1]); if (dd < 30 && !(game.coop && game.coop.ride)) { if (foot) st.stats.walk += dd; else st.stats.dist += dd; kmAcc += dd; if (kmAcc >= 1000) { kmAcc -= 1000; game.live.count('km'); } } else air = null; lastGround[0] = p[0]; lastGround[1] = p[2];
     if (!foot && kmh > st.stats.top) st.stats.top = Math.round(kmh);
     // sakrash: uzun sakrash uchun tanga
     if (foot) air = null;

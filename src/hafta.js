@@ -48,7 +48,7 @@ export function initHafta(game) {
 
   // --- pul: har bir tushum hafta statistikasiga (bank tarixini ish.js yozadi) ---
   const am = game.addMoney;
-  game.addMoney = (n, why) => { const m0 = st.money; am(n, why); const d = st.money - m0; if (d > 0) { roll(); st.hafta.s.money += d; } };
+  game.addMoney = (n, why) => { const m0 = st.money; am(n, why); const d = st.money - m0; if (d > 0 && !game.noWeek) { roll(); st.hafta.s.money += d; } }; // noWeek — do'stdan o'tkazma/qaytarilgan pul daromad emas (coop.js)
 
   // --- chellenj tugashi: g'alaba, buyurtma, haftalik natija ---
   const jobsSum = () => { let n = 0; for (const k in st.jobs) n += (st.jobs[k] && st.jobs[k].n) || 0; return n; };

@@ -38,11 +38,13 @@ export function initUy2(game) {
   U.has = has;
   const W = home.W, yawH = home.yaw, gh = (lx, lz) => { const p = W(lx, lz); return T.gridHeight(p[0], p[1]); };
   const visit = () => game.visit && game.visit.on;
+  // onlayn mehmon: ko'rinadigan kengaytmalar — xona egasiniki (coop.js U.vh ga yozadi), o'z H saqlovi tegilmaydi
+  const NOV = { guest: 0, kitchen: 0, garage: 0, yard: {}, gVeh: null }, HV = () => (visit() ? U.vh || NOV : H);
 
   // ================= ICHKI XONALAR (interior.js ilgaklari) =================
-  IN.homeRooms = (lvl, Lv, rooms, doors) => { if (!H.guest || lvl < 1) return; const { A, B } = Lv; rooms.push({ t: 'guest', x0: -A - 3.4, z0: -B, x1: -A, z1: B, floor: Lv.floor }); doors.push({ ax: 'x', c: -A, a: B - 1.25, b: B - 0.3 }); };
+  IN.homeRooms = (lvl, Lv, rooms, doors) => { if (!HV().guest || lvl < 1) return; const { A, B } = Lv; rooms.push({ t: 'guest', x0: -A - 3.4, z0: -B, x1: -A, z1: B, floor: Lv.floor }); doors.push({ ax: 'x', c: -A, a: B - 1.25, b: B - 0.3 }); };
   IN.homeFurnish = (I, g, gw, gl, lamps, lvl, Lv) => { const o = I.o, { A, B, C, D, E, h } = Lv, wood = lvl >= 3 ? 0x6e4a30 : 0x8a5a36, frame = lvl >= 3 ? 0x5a3a26 : 0x8a5a36;
-    if (H.guest && lvl >= 1) { const x0 = -A - 3.4, x1 = -A, cx = (x0 + x1) / 2;
+    if (HV().guest && lvl >= 1) { const x0 = -A - 3.4, x1 = -A, cx = (x0 + x1) / 2;
       LB.putF(I, g, gl, x0 + 1.1, -0.35, Math.PI / 2, (q) => F.bed(q, [0xb84a34, 0x3f7a4a, 0x8a54c8, 0xd08a2a, 0x3d74a6][lvl], frame), [0.8, 1.05, 0.6], o);
       LB.spot(I, 'bed', x0 + 1.1, -0.35 + 1.2, Math.PI, { bed: [x0 + 1.1, -0.35, Math.PI / 2], r: 1.1 });
       LB.putF(I, g, gl, x0 + 0.3, -0.35 - 1.1, Math.PI / 2, (q) => F.nightstand(q, frame), [0.2, 0.24, 0.6], o); LB.putF(I, g, gl, x0 + 0.3, -0.35 - 1.1, Math.PI / 2, (q, ql) => { q.translate(0, 0.56, 0); F.lantern(q, ql.translate(0, 0.56, 0)); }, null, o);
@@ -54,7 +56,7 @@ export function initUy2(game) {
       LB.putF(I, g, gl, x0 + 0.95, B - 0.45, Math.PI, (q) => F.chair(q, wood), null, o); LB.spot(I, 'sit', x0 + 0.95, B - 0.45, Math.PI, { r: 0.8 });
       LB.putF(I, g, gl, cx, 0, 0, (q, ql) => F.ceilLamp(ql, h), null, o); lamps.push([cx, h - 0.3, 0, 1.0]);
       LB.putF(I, g, gl, x1 - 0.07, B - 1.6, -Math.PI / 2, (q, ql) => F.switchPlate(q, ql), null, o); LB.spot(I, 'switch', x1 - 0.45, B - 1.6, -Math.PI / 2, { r: 0.7 }); }
-    if (H.kitchen && E) { const kx0 = C, kx1 = C + E, Z1 = B + D;
+    if (HV().kitchen && E) { const kx0 = C, kx1 = C + E, Z1 = B + D;
       // duxovka (gaz plita + pech), samovar xontaxtada, osma javon
       LB.putF(I, g, gl, kx1 - 1.15, Z1 - 0.32, Math.PI, (q, ql) => { q.color(0x2a2c33).box(0, 0.45, 0, 0.62, 0.9, 0.6); q.color(0x1d1e22).box(0, 0.4, 0.301, 0.52, 0.5, 0.01); ql.color(0xff9a40).box(0, 0.4, 0.305, 0.38, 0.26, 0.004); q.color(0xb9bec8).box(0, 0.72, 0.31, 0.46, 0.03, 0.03); q.color(0x3a3c42).box(0, 0.915, 0, 0.62, 0.03, 0.6); for (const [x, z] of [[-0.15, -0.14], [0.15, -0.14], [-0.15, 0.14], [0.15, 0.14]]) q.push().translate(x, 0, z).color(0x6a6e78).cyl(10, 0.08, 0.08, 0.93, 0.95, { cap: true }).pop(); q.color(0xd8a040).push().translate(0.15, 0, 0.14).cyl(10, 0.12, 0.13, 0.95, 1.1, { cap: true }).pop(); }, [0.32, 0.31, 1], o);
       LB.spot(I, 'oven', kx1 - 1.15, Z1 - 0.95, 0, { r: 0.9 });
@@ -97,8 +99,8 @@ export function initUy2(game) {
   const grapeM = { m: null };
   const buildGrapes = () => { if (grapeM.m || U.yard.grapeY == null) return; const g = new GB(3523), y = U.yard.grapeY; g.jit = 0; g.translate(home.x, 0, home.z).rotY(yawH); g.color(0x6a3a7a); for (let i = 0; i < 8; i++) g.blob(0.11, 0, { cx: TP[0] + Math.sin(i * 2.1) * 1.3, cy: y - 0.08, cz: TP[1] + Math.cos(i * 1.7) * 1.3, sy: 1.7 }); grapeM.m = new THREE.Mesh(g.build(), MAT.flat); grapeM.m.visible = false; scene.add(grapeM.m); };
   // hovli uyda (2-daraja) tandir o'zi bor — alohida tandir chizilmaydi
-  const show = () => { const lv = st.home.lvl; for (const y of YARD) { const want = lv >= 1 && !!H.yard[y.id] && !visit() && !(y.id === 'tandir' && lv >= 2); let o = U.yard[y.id]; if (want && !o) o = U.yard[y.id] = BUILD[y.id](); if (o) { o.grp.visible = want; for (const c of o.cols) c.dead = !want; } }
-    if (H.yard.ishkom) buildGrapes(); if (H.yard.tandir == null && lv >= 2) H.yard.tandir = 1; garage(); };
+  const show = () => { const lv = st.home.lvl; for (const y of YARD) { const want = lv >= 1 && !!HV().yard[y.id] && !(y.id === 'tandir' && lv >= 2); let o = U.yard[y.id]; if (want && !o) o = U.yard[y.id] = BUILD[y.id](); if (o) { o.grp.visible = want; for (const c of o.cols) c.dead = !want; } }
+    if (HV().yard.ishkom) buildGrapes(); if (!visit() && H.yard.tandir == null && lv >= 2) H.yard.tandir = 1; garage(); };
   U.show = show;
 
   // ================= GARAJ =================
@@ -108,7 +110,7 @@ export function initUy2(game) {
   const GL = (x, z) => { const c = Math.cos(gSite.a), s = Math.sin(gSite.a); return W(gSite.lx + x * c + z * s, gSite.lz - x * s + z * c); }; // garaj ichidagi joy → dunyo
   U.gSite = gSite; U.gDoor = () => GL(0, 4.4); U.gOut = () => { const p = GL(0, 7.5); return [p[0], p[1], yawH + gSite.a]; };
   let gObj = null, gDisp = null; const floorY = gSite.hi + 0.12;
-  const garage = () => { const want = !!H.garage && st.home.lvl >= 1 && !visit(); if (want && !gObj) {
+  const garage = () => { const want = !!HV().garage && st.home.lvl >= 1; if (want && !gObj) {
       const g = new GB(3531), gl = new GB(3532); g.jit = 0.02; gl.jit = 0; const [cx, cz] = GL(0, 0), ya = yawH + gSite.a; g.translate(cx, floorY, cz).rotY(ya); gl.translate(cx, floorY, cz).rotY(ya); const wy = 3.0, dep = floorY - gSite.lo + 0.5;
       g.color(0x8f8a80).box(0, -dep / 2, 0, 7.0, dep, 7.4); g.color(0xa8a49c).box(0, 0.02, 0, 6.6, 0.06, 7.0); g.color(0x8e8a82); for (let i = -3; i <= 3; i++) g.box(i * 0.95, 0.055, 0, 0.02, 0.01, 7.0); // beton pol
       g.color(0xc8b8a0).box(0, wy / 2, -3.45, 6.8, wy, 0.2); for (const sx of [-1, 1]) g.box(sx * 3.3, wy / 2, 0, 0.2, wy, 7.1); for (const sx of [-1, 1]) g.box(sx * 2.85, wy / 2, 3.45, 0.7, wy, 0.2); g.box(0, wy - 0.3, 3.45, 5.0, 0.6, 0.2); // devorlar
@@ -123,17 +125,17 @@ export function initUy2(game) {
       const cols = []; const seg = (a, b) => { const p = GL(a[0], a[1]), q = GL(b[0], b[1]); cols.push(COL.addSeg(p[0], p[1], q[0], q[1], 0.14, floorY - 1, floorY + wy)); };
       seg([-3.4, -3.45], [3.4, -3.45]); seg([-3.3, -3.45], [-3.3, 3.45]); seg([3.3, -3.45], [3.3, 3.45]); seg([-3.3, 3.45], [-2.5, 3.45]); seg([2.5, 3.45], [3.3, 3.45]); seg([-3.15, -2.5], [-3.15, 0.1]); seg([-2.35, -2.5], [-2.35, 0.1]);
       const pt = T.addPatch(cx, cz, ya, 7.0, 6.6, floorY + 0.05, floorY + 0.05, T.SURF.ROAD); gObj = { grp, cols, pt }; dispVeh(); }
-    if (gObj) { gObj.grp.visible = want; for (const c of gObj.cols) c.dead = !want; if (gDisp) gDisp.root.visible = want; } };
+    if (gObj) { dispVeh(); gObj.grp.visible = want; for (const c of gObj.cols) c.dead = !want; if (gDisp) gDisp.root.visible = want; } };
   // garajdagi (saqlangan) transport ko'rinishi — yengil nusxa, chirog'i olib tashlangan (chiroqlar soni o'zgarmasin)
-  const dispVeh = () => { const id = H.gVeh; if (gDisp && gDisp.id === id) return; if (gDisp) { scene.remove(gDisp.root); gDisp = null; } if (!id || !vehById[id] || !gObj) return;
-    const m = buildVehicle(id, { lite: true }); m.root.remove(m.spot); m.root.remove(m.spot.target); const pid = st.veh.paint[id]; if (pid) { const pp = PAINTS.find((q) => q.id === pid); if (pp) m.paintMat.color.setHex(pp.hex); }
+  const dispVeh = () => { const id = HV().gVeh; if (gDisp && gDisp.id === id) return; if (gDisp) { scene.remove(gDisp.root); gDisp = null; } if (!id || !vehById[id] || !gObj) return;
+    const m = buildVehicle(id, { lite: true }); m.root.remove(m.spot); m.root.remove(m.spot.target); const pid = !visit() && st.veh.paint[id]; if (pid) { const pp = PAINTS.find((q) => q.id === pid); if (pp) m.paintMat.color.setHex(pp.hex); }
     const sp = m.spec, fake = { wheels: [0, 1, 2, 3].map((k) => ({ len: sp.free - sp.sag, spin: 0, ly: (k < 2 ? sp.rF : sp.rR) + (sp.free - sp.sag) - sp.com })), steer: 0, fwd: 0 }; syncWheels(m, fake);
     const [x, z] = GL(0.4, -0.4); m.root.position.set(x, floorY + 0.08 + sp.com, z); m.root.rotation.y = yawH + gSite.a; if (m.rider) m.rider.visible = false; scene.add(m.root); gDisp = m; };
   U.garageDisp = () => gDisp;
   // saqlangan transport 4 o'yin soatida o'zi ta'mirlanadi
   K.on(() => { if (H.garage && H.gVeh && H.gT != null && K.since(H.gT) >= 4 && st.veh.dmg[H.gVeh]) { delete st.veh.dmg[H.gVeh]; if (game.ui) toast(`🔧 Garajdagi ${vehById[H.gVeh] ? vehById[H.gVeh].name : 'transport'} to'liq ta'mirlandi`, 'good'); } });
   U.store = (id) => { if (!H.garage || !st.veh.own.includes(id)) return false; const cur = st.veh.cur; if (id === cur) return false; game.pickVehicle(id, U.gOut()); if (vehById[cur]) { H.gVeh = cur; H.gT = K.now(); } dispVeh(); sfx('door'); return true; };
-  U.nearGarage = (x, z, r = 9) => !!gObj && H.garage && Math.hypot(U.gDoor()[0] - x, U.gDoor()[1] - z) < r;
+  U.nearGarage = (x, z, r = 9) => !!gObj && H.garage && !visit() && Math.hypot(U.gDoor()[0] - x, U.gDoor()[1] - z) < r;
   U.repairCost = () => Math.round(game.phone.mechCost() * 0.5);
   U.repair = () => { const d = game.damage; if (d.health >= 99 && !d.tires.some(Boolean)) { toast("Transport soz 👍"); return false; } const c = U.repairCost(); if (st.money < c) { toast('Pul yetarli emas', 'bad'); return false; } game.addMoney(-c, "Garajda ta'mir"); d.repair(100); sfx('repair'); game.save(); return true; };
   U.fuelCost = () => (game.fuel && game.fuel.uses() ? Math.round((100 - game.fuel.get()) * 1.5) : 0);
@@ -152,9 +154,10 @@ export function initUy2(game) {
   L.extra = (offer, px, pz, p) => { ex0(offer, px, pz, p); if (HY.dlg) return; const I = IN.cur();
     if (I && IN.inside === 'home') { for (const sp of I.spots) { if (sp.k !== 'oven' && sp.k !== 'samovar') continue; const d = Math.hypot(sp.x - px, sp.z - pz); if (d > sp.r) continue;
         if (sp.k === 'oven') offer(d, '<kbd>E</kbd> Duxovka — somsa, pirog 🥟', () => game.ui.open('duxovka')); else offer(d, '<kbd>E</kbd> Samovardan choy ichish 🫖', () => { pl.yaw = sp.yaw; sfx('pour'); pl.act('cook', 1.8, () => pl.act('drink', 2.2, () => { st.tetik = Math.min(100, st.tetik + 20); st.thirst = Math.min(100, st.thirst + 35); sfx('sip'); toast(`Samovar choyi 🫖 — tetiklik ${Math.round(st.tetik)}% · 💧 ${Math.round(st.thirst)}%`, 'good'); }, 'cup')); }); } return; }
-    if (I || st.home.lvl < 1 || visit() || Math.hypot(home.x - px, home.z - pz) > 45) { if (!I && U.nearGarage(px, pz, 3)) offer(0.1, '<kbd>E</kbd> Garaj — transport, ta\'mir 🚗', () => game.ui.open('garaj')); return; }
+    if (I || st.home.lvl < 1 || Math.hypot(home.x - px, home.z - pz) > 45) { if (!I && U.nearGarage(px, pz, 3)) offer(0.1, '<kbd>E</kbd> Garaj — transport, ta\'mir 🚗', () => game.ui.open('garaj')); return; }
     const L2 = (lx, lz) => { const q = W(lx, lz); return Math.hypot(q[0] - px, q[1] - pz); };
-    if (H.yard.topchan && !pl.sit) { const d = L2(TP[0], TP[1] + 1.25); if (d < 1.6) offer(d, "<kbd>E</kbd> Topchanga o'tirish 🧺", () => { const q = W(TP[0], TP[1] + 1.18); pl.p[0] = q[0]; pl.p[2] = q[1]; pl.yaw = yawH; pl.v[0] = pl.v[2] = 0; pl.sit = true; pl.emote = null; toast("Topchanda dam olyapsiz — tetiklik asta tiklanadi 🍵"); }); }
+    if (HV().yard.topchan && !pl.sit) { const d = L2(TP[0], TP[1] + 1.25); if (d < 1.6) offer(d, "<kbd>E</kbd> Topchanga o'tirish 🧺", () => { const q = W(TP[0], TP[1] + 1.18); pl.p[0] = q[0]; pl.p[2] = q[1]; pl.yaw = yawH; pl.v[0] = pl.v[2] = 0; pl.sit = true; pl.emote = null; toast("Topchanda dam olyapsiz — tetiklik asta tiklanadi 🍵"); }); }
+    if (visit()) return; // mehmon hovlida faqat topchanga o'tiradi — hosil, mangal va garaj egasiniki
     if (H.yard.ishkom) { const d = L2(TP[0], TP[1]) - 1.2; if (d < 1.4) offer(d + 0.3, ripe('ishkomT', 12) ? "<kbd>E</kbd> Uzum uzish 🍇" : `Uzum hali pishmagan (${Math.ceil(12 - K.since(H.ishkomT))} soat)`, () => { if (!ripe('ishkomT', 12)) return; pl.act('shake', 1.2, () => { H.ishkomT = K.now(); st.inv.berry = (st.inv.berry || 0) + 4; sfx('pick'); toast('🍇 Uzum uzildi: +4 (rezavor)', 'good'); }); }); }
     if (H.yard.mangal) { const d = L2(MG[0], MG[1] - 0.8); if (d < 1.5) offer(d, cooking.on ? 'Shashlik pishmoqda… 🔥' : "<kbd>E</kbd> Shashlik pishirish (go'sht 20 so'm) 🍢", () => { if (cooking.on) return; if (st.money < 20) return toast('Pul yetarli emas', 'bad'); game.addMoney(-20, "Go'sht (shashlik)"); const q = W(MG[0], MG[1] - 0.8); pl.p[0] = q[0]; pl.p[2] = q[1]; pl.yaw = yawH; cooking.on = { t: 0, ...(() => { const c = W(MG[0], MG[1]); return { x: c[0], z: c[1], y: gh(MG[0], MG[1]) + 1.1 }; })() }; sfx('sizzle'); pl.act('cook', 5, () => { cooking.on = null; st.inv.shashlik = (st.inv.shashlik || 0) + 2; sfx('medal'); toast("🍢 Shashlik tayyor! +2 — [Y] bilan yeysiz", 'gold'); }, 'spoon'); }); }
     if (H.yard.tandir) { const d = L2(TD[0], TD[1] + 1.0); if (d < 1.4) offer(d, ripe('tandirT', 16) ? '<kbd>E</kbd> Tandirda non yopish 🫓' : `Tandir soviyapti (${Math.ceil(16 - K.since(H.tandirT))} soat)`, () => { if (!ripe('tandirT', 16)) return; pl.act('bend', 3, () => { H.tandirT = K.now(); st.inv.bread = (st.inv.bread || 0) + 3; sfx('medal'); toast("🫓 Tandirdan 3 ta issiq non uzildi!", 'gold'); }); }); }
@@ -172,8 +175,9 @@ export function initUy2(game) {
     fruitM.visible = !!U.yard.bog && U.yard.bog.grp.visible && ripe('bogT', 12); if (grapeM.m) grapeM.m.visible = !!U.yard.ishkom && U.yard.ishkom.grp.visible && ripe('ishkomT', 12);
     const c = cooking.on; if (c) { c.t += dt; if ((c.f = (c.f || 0) - dt) <= 0) { c.f = 0.25; fx().burst(2, c.x, c.y, c.z, 0.3, 1.2, 0.4, 0xd8d8d0, 0.5, 1.4, -0.5, 2); } if (pl.lockAnim !== 'cook') cooking.on = null; }
     if (!pl.onFoot && car.speed < 3 && U.nearGarage(car.p[0], car.p[2], 7) && !L.prompt) L.prompt = '<kbd>E</kbd> Garaj — transport, ta\'mir 🚗';
-    if (H.garage && gObj) L.dots.push([...U.gDoor(), '#9aa0aa']);
-    if (U._lv !== st.home.lvl || U._vis !== !!visit()) { U._lv = st.home.lvl; U._vis = !!visit(); show(); } };
+    if (HV().garage && gObj) L.dots.push([...U.gDoor(), '#9aa0aa']);
+    const vk = visit() ? JSON.stringify(U.vh || 0) : '', ik = HV().guest + ':' + HV().kitchen;
+    if (U._lv !== st.home.lvl || U._vk !== vk) { U._lv = st.home.lvl; U._vk = vk; show(); if (U._ik != null && U._ik !== ik) IN.rebuildHome(true); U._ik = ik; } };
 
   // ================= OYNALAR =================
   const attach = (ui) => {

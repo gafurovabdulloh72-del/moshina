@@ -11,6 +11,7 @@ const near = (g) => { const c = g.car.p, p = g.player.p; return Math.hypot(c[0] 
 const counting = (g) => g.act && g.act.state === 'count';
 const free = (g) => g.player.lock <= 0;
 const outdoor = (g) => free(g) && !(g.interior && g.interior.inside); // uy/do'kon ichida tashqi harakat tugmalari chiqmaydi
+const riding = (g) => !!(g.coop && g.coop.ride); // onlayn: do'st mashinasida yo'lovchi (coop.js) — piyoda tugmalari ishlamaydi
 export const ACTIONS = [
   // --- umumiy (yuqori o'ngdagi qator) ---
   { key: 'M', codes: ['KeyM'], top: 1, bar: () => 'Xarita', run: (g) => g.ui.open('map') },
@@ -25,16 +26,19 @@ export const ACTIONS = [
   // onlayn xonada ovozli chat: [4] — yoqish, keyin mikrofonni o'chirish/yoqish; "bosib gapirish" rejimida — bosib turilganda gapiradi (barcha harf tugmalari band)
   { key: '5', codes: ['Digit5', 'Numpad5'], ok: (g) => !!(g.coop && g.coop.room && !(g.coop.voice.on && g.coop.voice.ptt)), bar: (g) => (g.coop.voice.on ? (g.coop.voice.mute ? 'Mikrofon 🔇' : 'Mikrofon 🎙') : null), run: (g) => g.coop.voice.key() },
   { key: '5', codes: ['Digit5', 'Numpad5'], ok: (g) => !!(g.coop && g.coop.room && g.coop.voice.on && g.coop.voice.ptt), hold: 1, bar: () => 'Gapirish 🎙' },
+  { key: '8', codes: ['Digit8', 'Numpad8'], ok: (g) => !!(g.coop && g.coop.room), bar: () => 'Shu yerga kel 📍', run: (g) => g.coop.ping() }, // onlayn: do'stlarga xaritada belgi
   { key: 'N', codes: ['KeyN'], run: (g) => { const s = g.state.set; s.music = !s.music; g.audio.setMusic(s.music); g.toast(s.music ? 'Musiqa yoqildi' : "Musiqa o'chirildi"); } },
   // --- vaziyatga qarab ---
   { key: 'X', codes: ['KeyX'], ok: (g) => !!g.act, bar: () => 'Bekor qilish', run: (g) => g.endAct(false, 'cancel') },
   { key: 'X', codes: ['KeyX'], ok: (g) => !g.act && !!(g.ish && g.ish.cur), bar: () => 'Ishni tugatish', run: (g) => g.ish.quit() }, // non/taksi/dala ishi (ish.js)
+  { key: 'X', codes: ['KeyX'], ok: (g) => !g.act && !(g.ish && g.ish.cur) && !!(g.coop && g.coop.job && !g.coop.job.own), bar: () => 'Ishdan chiqish', run: (g) => g.coop.jobLeave() }, // do'stning ishida (coop.js)
   { key: 'T', codes: ['KeyT'], ok: (g) => g.damage.wrecked, bar: (g) => (g.player.onFoot ? null : 'Evakuator'), run: (g) => g.tow() },
-  { key: 'E', codes: ['KeyE', 'Enter'], run: (g) => { // [E] — yaqindagi narsaga mos harakat (yozuvi pastdagi katta tugmada)
+  { key: 'E', codes: ['KeyE', 'Enter'], ok: (g) => !riding(g), run: (g) => { // [E] — yaqindagi narsaga mos harakat (yozuvi pastdagi katta tugmada)
     const pt = g.nearPoint && !(g.nearPoint.kind === 'board' && g.player.onFoot && g.live.ctxD < 1.2) ? g.nearPoint : null, ui = g.ui; // yonidagi aniq harakat taxtadan ustun
     if (pt && g.player.lock <= 0) { if (pt.kind === 'board') { if (!g.act) ui.open('board', pt.place); } else if (pt.kind === 'garage') ui.open('garage', pt); else if (pt.kind === 'home') { if (g.player.onFoot && g.hayot) g.hayot.enterHome(); else ui.open('home'); } }
     else g.live.useE(); } },
-  { key: 'F', codes: ['KeyF'], ok: (g) => !counting(g), bar: (g) => (g.player.onFoot ? (near(g) ? 'Transportga chiqish' : null) : 'Tushish'), run: (g) => { if (g.player.onFoot) g.live.tryMount(); else g.live.dismount(); } },
+  { key: 'F', codes: ['KeyF'], ok: (g) => !counting(g) && !riding(g), bar: (g) => (g.player.onFoot ? (near(g) ? 'Transportga chiqish' : null) : 'Tushish'), run: (g) => { if (g.player.onFoot) g.live.tryMount(); else g.live.dismount(); } },
+  { key: 'F', codes: ['KeyF'], ok: (g) => riding(g), bar: () => 'Tushish', run: (g) => g.coop.rideOff() }, // do'st mashinasidan tushish
   // --- piyoda ---
   { key: 'V', codes: ['KeyV'], on: 'foot', one: 1, ok: outdoor, bar: (g) => (near(g) ? null : 'Chaqirish'), run: (g) => g.live.doAction('whistle') },
   { key: 'Q', codes: ['KeyQ'], on: 'foot', one: 1, ok: outdoor, bar: () => "O't yulish", run: (g) => g.live.doAction('pull') },
@@ -60,7 +64,7 @@ export const ACTIONS = [
   { key: 'Esc', codes: ['Escape'], top: 1, bar: () => 'Menyu' }, // Escape — har qanday rejimda (pastda alohida)
 ];
 
-const fits = (a, g) => (!a.on || (a.on === 'foot') === g.player.onFoot) && (!a.ok || a.ok(g));
+const fits = (a, g) => (!a.on || ((a.on === 'foot') === g.player.onFoot && !(a.on === 'foot' && riding(g)))) && (!a.ok || a.ok(g));
 // Kadrdagi klaviatura (va ekran tugmalari) bosishlarini bajaradi
 export function runKeys(g) {
   const inp = g.input, ui = g.ui;
