@@ -257,7 +257,7 @@ Tramplinlarning orqa devorida va yo'l bo'yidagi 17 ta bilbordda **Kasb Egalari**
 
 Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 
-### 2.11. Kundalik hayot (uy ichi, do'kon, yoqilg'i)
+### 2.11. Kundalik hayot (uy ichi, do'kon, yoqilg'i, choyxona, kiyim, sartarosh, ishlar, telefon)
 
 | Imkoniyat | Qanday |
 |---|---|
@@ -270,6 +270,12 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | **Yoqilg'i** | velosipeddan boshqa transportda benzin bor (spidometr ostida ⛽). Sarf masofa, gaz va massa bo'yicha (to'liq bak ~40 km). 4 ta shoxobcha asosiy yo'llarda (xaritada to'q sariq nuqta): nasos yonida to'xtab **E** — quyiladi, 2 so'm / 1 %. Bak bo'sh — mashina faqat sudraladi (~11 km/soat). Kanistr — transport yonida piyoda **E** (+35 %) |
 | **NPC suhbati** | qishloq aholisi (oddiy suhbatdoshlar) yonida **E** — 2–4 qatorlik suhbat (keksa, bola, fermer, sayyoh, savdogar), har safar boshqa; maslahat va kichik topshiriq ishorasi |
 | **Mayda narsalar** | chiroqni yoqish/o'chirish (kalit), televizor (yangiliklar, multfilm, ob-havo — ekran harakatlanadi), radio (kulbada), qo'l yuvish, dush, ko'zgu (bosh kiyimni almashtirish), ko'k choy damlash, gazeta (o'yin holatidan sarlavhalar), budilnik soatini tanlash, uy daftari (yaxshilash/garaj), signal **H** — yaqindagi aholi qo'l silkiydi |
+| **Choyxona** | Bog'istonda (xaritada to'q sariq nuqta): ichkarida topchan va stollar. O'tirish — **E**, so'ng **E** — menyu: osh 45, somsa 18, lag'mon 38, non 6, ko'k choy 6, kompot 10 so'm. Ofitsiant Sobir aka patnisda stolga olib keladi, **E** — ovqatlanish/ichish (to'qlik, suv, kuch) |
+| **Kiyim do'koni** | Bog'istonda (binafsha nuqta): ko'zgu oldida **E** — ko'ylak rangi (10), uslub (kalta/uzun yeng, jilet, milliy zarbof), shim (6), bosh kiyim (jun qalpoq, panama, shlyapa + bozordagilar). Tanlangan kiyim darhol egningizda (ko'zgu kamerasi), sotib olinmasa qaytadi. Sotib olinganlar saqlanadi, uydagi shkafda (**E**) almashtiriladi |
+| **Sartaroshxona** | Bog'istonda (pushti nuqta): kresloga o'tirib **E** — soch turmagi (oddiy/kalta/taqir/qalin), soch rangi (5), soqol/mo'ylov. Akmal usta qaychi bilan ishlaydi, natija saqlanadi |
+| **Ishlar** | ish beruvchi oldida **E** (sariq nuqta) yoki telefon → Ishlar. **Non yetkazish** (novvoy Karim aka): 5 uyga sariq nur — piyoda yoki mashinada **E**, 30 so'm/uy + tezlik bonusi, ~2,5 daqiqa. **Taksi smenasi** (dispetcher Lola opa): 3 yo'lovchi — ko'k belgi yonida to'xtab **E**, manzilga eltsangiz o'zi tushadi, masofa bo'yicha + o'z vaqtida +20, bonus 80. **Dalada o'rim** (fermer Bobur aka): o'roq bilan 6 bog' o'rib, yelkada aravaga tashish, 18 so'm/bog' + 70 bonus, ~3 daqiqa. **X** — ishni tugatish |
+| **Telefon** | **4** (yoki yuqoridagi «Telefon» tugmasi): Xarita, Bank (balans va so'nggi pul harakatlari), Kontaktlar (taksi — transportingizni yoningizga 60 so'm; mexanik Rustam — joyida ta'mir; onam; dispetcher), Kamera (surat rejimi), Ob-havo va soat, Ishlar (yo'l ko'rsatish), Musiqa, Uyim |
+| **Ko'cha** | muzqaymoqchi (8 so'm, **E**), kaptarlarga don sepish (to'planib keladi; yugursangiz uchib ketadi), futbol maydoni (to'pni yurib surasiz, **E** — tepish, gol — 15 so'm), avtobus bekati (o'tirib kutasiz, avtobus keladi — **E**, 15 so'mga istalgan manzilga), o'tayotgan mashinaga **3** bilan qo'l silkisangiz signal chaladi |
 
 ---
 
@@ -300,6 +306,7 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | Q / G / Y | o't yulish / gul ekish / yeyish |
 | B | harakatlar menyusi |
 | 1 / 2 / 3 | raqs / dutor / salom |
+| 4 | telefon |
 | L / Z | fonar / durbin |
 
 | Umumiy | |
@@ -308,7 +315,7 @@ Matnlar `src/ads.js` da. Logotip va sayt manzili hali qo'yilmagan.
 | I | sumka, topshiriqlar, albom |
 | Tab | sayohat pasporti |
 | C | kamera (sichqoncha bilan aylantirish) |
-| X | chellenjni bekor qilish |
+| X | chellenjni yoki ishni bekor qilish |
 | N | musiqa |
 | O / U | onlayn oynasi / chat (xonada) |
 | P | surat rejimi — interfeysni yashiradi (ekranda eslatma turadi, 20 soniyada o'zi qaytadi) |
@@ -349,6 +356,9 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `home.js` | o'yinchining uyi: 5 daraja, bezaklar, poliz, katak, pochta qutisi |
 | `interior.js` | ichki makonlar: uy (darajaga qarab xonalar) va do'kon — protsedura devor/mebel, pishirilgan yorug'lik (MeshBasic, yangi chiroq yo'q), kirish/chiqish, yopiq joy kamerasi, TV ekrani |
 | `hayot.js` | kundalik hayot: chanqoq, uy ichidagi harakatlar, oshxona/muzlatkich/do'kon oynalari, NPC suhbati, do'kon binolari, HUD ko'rsatkichlari |
+| `hayot2.js` | kundalik hayot 2: choyxona, kiyim do'koni, sartaroshxona (binolar va ichki makonlar `interior.js` qurollari — `IN.lib`, `IN.X` — bilan), ofitsiant, qahramon ko'rinishi (`restyle` — kiyim/soch o'zgarsa modelni qayta quradi) |
+| `ish.js` | ishlar (non, taksi smenasi, dala), pul tarixi (`game.addMoney(n, sabab)`), telefon oynasi va xizmatlari |
+| `kocha.js` | ko'cha: muzqaymoqchi, kaptarlar, futbol, avtobus bekati, mashinaga qo'l silkish |
 | `fuel.js` | yoqilg'i: sarf, shoxobchalar (nasos, xodim), quyish, kanistr, gaz pedalini cheklash (`input.poll` ustida — `physics.js` o'zgarmagan) |
 | `props.js` | daraxtlar, toshlar, butalar (InstancedMesh + LOD), yaqin atrofdagi o't |
 | `blocks.js` | qurilish bloklari: uy, devor, chodir, gulxan, o'rindiq, quduq, do'kon… |
@@ -419,7 +429,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 `localStorage`, kalit `safar_save_v2`. Yuklashda saqlangan holat standart holat (`defState()` — `game.js`) ustiga qo'shiladi, shuning uchun **yangi maydon qo'shilganda eski saqlovlar buzilmaydi** — faqat `defState()` ga standart qiymat yozish kerak. v1 saqlovlari ham ochiladi.
 
-Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
+Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
 
 Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
@@ -460,6 +470,7 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `npm run test:adapt` | moslashuvchan grafikaning 15 ssenariysi (60/120 Gs, oyna almashtirish, kuchsiz videokarta, 30 kadrga cheklov…) | ~40 s |
 | `npm run test:save` | v1 saqlovi ochiladi; yangi holat saqlanib, qayta yuklanadi | ~40 s |
 | `npm run test:life` | kundalik hayot: uyga kirish, uxlash, o'tirish/turish, pishirish va stolda ovqatlanish, suv ichish, do'kon xaridi, yoqilg'i quyish, bo'sh bak, NPC suhbati | ~1 daq |
+| `npm run test:life2` | kundalik hayot 2: choyxona buyurtmasi va ovqatlanish, kiyim sotib olish/qaytishi va saqlanishi, sartarosh, 3 ta ish (non, taksi, dala), telefon (bank, taksi, mexanik), muzqaymoq, kaptarlar, futbol goli, avtobus | ~3 daq |
 | `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life) | ~5–6 daq |
 
 Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuterda Google Chrome o'rnatilgan bo'lishi kerak). Xato bo'lsa yoki `TEST … FAIL` satri chiqsa — chiqish kodi 1.

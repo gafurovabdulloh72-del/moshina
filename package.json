@@ -16,11 +16,12 @@
     "test:hud": "NO_TEST=1 node tools/shot.mjs tools/s_hud.js",
     "test:adapt": "node tools/shot.mjs tools/s_adapt.js",
     "test:save": "node tools/shot.mjs tools/s_save.js",
-    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save && npm run test:life",
+    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save && npm run test:life && npm run test:life2",
     "test:api": "node --test tools/api_test.mjs",
     "test:online": "node tools/coop_test.mjs",
     "dev": "node tools/dev-server.mjs",
-    "test:life": "node tools/shot.mjs tools/s_life.js"
+    "test:life": "node tools/shot.mjs tools/s_life.js",
+    "test:life2": "node tools/shot.mjs tools/s_life2.js"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

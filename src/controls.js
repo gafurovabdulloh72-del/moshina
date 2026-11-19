@@ -19,10 +19,12 @@ export const ACTIONS = [
   { key: 'C', codes: ['KeyC'], top: 1, bar: () => 'Kamera', run: (g) => { g.cam.next(); g.toast('Kamera: ' + g.cam.modeName); } },
   { key: 'P', codes: ['KeyP'], top: 1, bar: () => 'Surat', run: (g) => g.ui.setHud(!g.hudOn) },
   { key: 'O', codes: ['KeyO'], top: 1, bar: () => 'Onlayn', run: (g) => g.ui.open('online') },
+  { key: '4', codes: ['Digit4', 'Numpad4'], top: 1, bar: () => 'Telefon', run: (g) => g.phone && g.phone.open() }, // telefon (ish.js)
   { key: 'U', codes: ['KeyU'], ok: (g) => !!(g.coop && g.coop.room), bar: () => 'Chat', run: (g) => g.coop.openChat() }, // onlayn xonada chat
   { key: 'N', codes: ['KeyN'], run: (g) => { const s = g.state.set; s.music = !s.music; g.audio.setMusic(s.music); g.toast(s.music ? 'Musiqa yoqildi' : "Musiqa o'chirildi"); } },
   // --- vaziyatga qarab ---
   { key: 'X', codes: ['KeyX'], ok: (g) => !!g.act, bar: () => 'Bekor qilish', run: (g) => g.endAct(false, 'cancel') },
+  { key: 'X', codes: ['KeyX'], ok: (g) => !g.act && !!(g.ish && g.ish.cur), bar: () => 'Ishni tugatish', run: (g) => g.ish.quit() }, // non/taksi/dala ishi (ish.js)
   { key: 'T', codes: ['KeyT'], ok: (g) => g.damage.wrecked, bar: (g) => (g.player.onFoot ? null : 'Evakuator'), run: (g) => g.tow() },
   { key: 'E', codes: ['KeyE', 'Enter'], run: (g) => { // [E] — yaqindagi narsaga mos harakat (yozuvi pastdagi katta tugmada)
     const pt = g.nearPoint, ui = g.ui;
