@@ -653,7 +653,7 @@ export function initCoop(game) {
   }
   function onRideAns(m, d) {
     if (!rideReq || rideReq.pid !== m.pid) return; rideReq = null;
-    if (!d.ok) { toast(esc(String(d.why || "O'tirib bo'lmadi").slice(0, 80)), 'bad'); return; }
+    C.rideMsg = String(d.why || '').slice(0, 80); if (!d.ok) { toast(esc(C.rideMsg || "O'tirib bo'lmadi"), 'bad'); return; }
     const s = d.s | 0; if (s < 0 || s > 2 || C.ride || !pl.onFoot || IN.inside || game.act) { sendTo(m, { t: 'rx' }); return; }
     C.ride = { pid: m.pid, seat: s, footT: 0 }; pl.lock = 1e9; pl.lockAnim = 'sit'; pl.lockFn = null; pl.sit = false; pl.emote = null; pl.v[0] = pl.v[1] = pl.v[2] = 0; pl.rig.root.visible = false; pl.lamp.intensity = 0;
     game.cam.snap(); game.audio.sfx('door'); toast(`${N(m)}ning mashinasidasiz — [F] tushish`, 'good'); changed();
