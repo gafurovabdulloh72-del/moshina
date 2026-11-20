@@ -41,7 +41,8 @@ function defState() {
     suv: { row: 0, sail: 0, glide: 0, km: 0, best: 0, fish: 0 }, // suv.js: eshkakli/yelkanli qayiq ijaralari va deltaplan parvozlari soni, qayiqda suzilgan masofa (m), eng uzoq parvoz (m), qayiqdan tutilgan baliq
     qulay: { guide: 0, tips: {}, tipsOff: false, ach: {}, achInit: 0, day: null, streak: 0, last: -1, chests: 0, win: 0 }, // qulay.js/yutuq.js: «Birinchi safar» qadami (0 — aniqlanmagan, 99 — tugagan, <0 — ko'rsatilmaydi), ko'rilgan maslahatlar, yutuqlar, kunlik uchlik (kun, ketma-ketlik, sandiqlar), yulduzli chellenjlar soni
     poyga: { inf: {}, circ: {}, seg: {}, runs: 0 }, // poyga.js: cheksiz poyga rekordlari {transport: [darvoza, masofa m]}, aylanmalar {id: {s, best, lap, n}}, yo'l bo'laklari {bo'lak: [vaqt, transport, egami]}, cheksiz poygalar soni
-    mahorat: { yy: [], veh: {} } }; // mahorat.js: Yulduz yo'lidan olingan sovg'alar (tartib raqamlari), transport mahorati {transport: {km, dr, top, trip, b, tr}}
+    mahorat: { yy: [], veh: {} }, // mahorat.js: Yulduz yo'lidan olingan sovg'alar (tartib raqamlari), transport mahorati {transport: {km, dr, top, trip, b, tr}}
+    daromad: { rep: {}, jobs: {}, days: [], all: {}, cargo: {}, hives: [], rent: {}, bank: { dep: 0, day: -1, earned: 0 }, coop: { n: 0, cost: 0, day: -1, earned: 0, hist: [] }, photo: { n: 0 } } }; // daromad.js: ishlar obro'si {ish: tajriba}, ish hisobi {ish: {n, earn, best}}, kunlik daromad manbalari [[kun, {manba: so'm}, xarajat]], jami manbalar, savdo yuki {tovar: dona}, asalari uyalari [{h}], ijaradagi transportlar {id: {left, h, earn}}, omonat, kooperativ ulushi, suratlar soni
 }
 function loadState() {
   const d = defState(); let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* saqlangan o'yin yo'q */ }
