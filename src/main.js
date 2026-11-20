@@ -34,6 +34,8 @@ import { initObhavo } from './obhavo.js';
 import { initShahar } from './shahar.js';
 import { initTadbir } from './tadbir.js';
 import { initHafta } from './hafta.js';
+import { initQulay } from './qulay.js';
+import { initYutuq } from './yutuq.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -97,6 +99,7 @@ async function boot() {
   game.ui = new UI(game);
   initNet(game); initCoop(game); initOnlineUI(game); // onlayn rejim (faqat saytda; faylda — "mavjud emas")
   initHafta(game); // haftalik chellenj, hafta statistikasi, nishonlar ([6])
+  initQulay(game); initYutuq(game); // qulayliklar (yo'riqnoma, maslahatlar, yulduz chegaralari, qayta boshlash, interfeys o'lchami, saqlov ko'chirish, zaxira), kunlik uchlik va yutuqlar daftari
   game.applyQuality('boot'); resize();
   game.gfx.precompile(); // barcha sheyderlar yuklash paytida tayyorlanadi
   // videokarta konteksti yo'qolsa (drayver qayta ishga tushdi va h.k.) — kutamiz va qaytganda hammasini qayta tiklaymiz
@@ -140,7 +143,7 @@ game.startPlay = () => {
   if (first) {
     game.banner('Xush kelibsiz, sayyoh!', "Bu chodir — sizning uyingiz. Yo'l bo'ylab qishloqqa boring: sariq belgi — e'lonlar taxtasi", 'gold');
     const tips = ["<b>W A S D</b> — haydash · <b>Probel</b> — qo'l tormozi (drift) · <b>Shift</b> — nitro", '<b>F</b> — transportdan tushish/chiqish. Piyoda: <b>Q</b> o\'t yulish · <b>G</b> gul ekish · <b>E</b> daraxt silkitish · <b>Y</b> yeyish', '<b>B</b> — harakatlar menyusi · <b>I</b> — sumka va topshiriqlar · <b>M</b> — xarita', "Ko'k belgi — ustaxona: ta'mir, tyuning va 22 xil transport saloni", "Sakrash, drift va yaxshiliklar uchun tanga beriladi. Pul yig'ib uyingizni yaxshilang!", "Ehtiyot bo'ling: qattiq urilsangiz mashina pachoqlanadi va motor o'chib qoladi"];
-    tips.forEach((t, i) => setTimeout(() => game.mode !== 'menu' && game.toast(t, i === 5 ? 'bad' : 'gold'), 5000 + i * 9000));
+    if (!(game.qulay && game.qulay.guideOn())) tips.forEach((t, i) => setTimeout(() => game.mode !== 'menu' && game.toast(t, i === 5 ? 'bad' : 'gold'), 5000 + i * 9000)); // «Birinchi safar» kartasi bo'lsa — eski eslatmalar chiqmaydi
   }
   game.save();
 };

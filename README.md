@@ -315,6 +315,20 @@ Bugungi tadbir xaritada katta rangli nuqta bo'lib chiqadi, ertalab e'lon qilinad
 | **Qishloq topshiriqlari** | Ustida sariq «!» belgisi bor aholi bilan **E** — iltimos (10 xil): kampirning sumkasini uyiga olib borish, boshqa qishloqqa xat yetkazish, qochgan echkini topib yetaklab kelish (ortingizdan ergashadi), uchta tovuqni ushlash, quduqdan chelakda suv olib kelish, shamol yiqitgan to'siqni tuzatish, mashinada bozorga olib borish, ikkita non, to'rtta o'tin yoki bitta baliq olib kelish. Nishon — yashil nur va GPS (echki va tovuqlar ustida yaqindan yashil ko'rsatkich), tepada topshiriq paneli, **X** — voz kechish; boshlangan topshiriq saqlanadi va o'yin qayta ochilganda davom etadi. Mukofot: pul va 🤝 **hurmat**; har 10 hurmatda sovg'a va unvon (Yaxshi qo'shni → Hurmatli inson → Mahallaning g'ururi → Oqsoqol) |
 | **Haydovchi ko'rinishi** | Velosiped, skuter, mototsikl va boshqa ochiq transportda haydovchi endi qahramonning kiyimi, sochi, soqoli (dubulg'a bo'lmasa — shapkasi) bilan; kiyim almashsa darhol qayta quriladi. Onlayn do'stlar ham sizning kiyim-sochingizni ko'radi (holat paketida ixcham ko'rinish kodi) |
 
+### 2.13. Qulayliklar: birinchi safar, maslahatlar, kunlik uchlik, yutuqlar, saqlov
+
+| Imkoniyat | Qanday |
+|---|---|
+| **Birinchi safar** | Faqat yangi o'yinda (eski, yutug'i bor saqlovda chiqmaydi): chap tepada kichik karta 8 qadamni birma-bir ko'rsatadi — haydash, xarita (**M**), qishloqqa borish (GPS o'zi qo'yiladi), e'lonlar taxtasi (**E**), birinchi buyurtma, tushish (**F**), piyoda ish (**E/Q/G**), transportga qaytish. Qadam o'yinchi uni haqiqatan bajarganda o'tadi; o'yinni to'xtatmaydi. «O'tkazib yuborish» tugmasi bor; oxirida +300 so'm. Sozlamalarda qayta boshlash mumkin |
+| **Bir martalik maslahatlar** | 15 ta vaziyat: chellenj boshlandi, yoqilg'i kam, tun, yomg'ir, shikast, balon yorildi, taxta va ustaxona yonida, do'kon, yo'lovchi, kuch/chanqoq/tetiklik kam, suvda, pul yig'ildi. Har biri bir marta (saqlovda eslab qolinadi), «Tushunarli» bosilguncha yoki 16 soniya turadi. Sozlamalarda yoki kartadagi «Boshqa ko'rsatmang» bilan o'chiriladi |
+| **Yulduz chegaralari** | Chellenj panelida shkala: 1/2/3 yulduz belgilari, joriy holat (masalan «Hozir ★★☆ · 3 yulduz uchun yana 0:42»), o'tib ketilgan chegara o'chiriladi. Poyga, yetkazish, pochta, yig'ish (vaqt), mo'rt yuk va yo'lovchi (yuk/qulaylik foizi), drift va sindirish (ochko). Radar yoki tramplinga 250 m qolganda — oltin chegara va rekordingiz |
+| **Tezkor qayta boshlash** | Chellenj paytida **⌫** (Backspace), ekrandagi «Qayta boshlash» tugmasi yoki pauza menyusi — chellenj darrov boshidan (taxta oldiga yoki start chizig'iga qaytadi). Onlayn birga poygada o'chiq |
+| **Interfeys o'lchami** | Sozlamalar → 80 / 90 / 100 / 115 / 130 / 150 %: HUD, oynalar, telefon birga kattalashadi; saqlanadi |
+| **Kunlik uchlik** | Har haqiqiy kuni (yarim tunda yangilanadi) uchta topshiriq: haydash, piyoda ish, yaxshilik (masalan «5 km yo'l bosing», «2 ta baliq tuting», «3 ta axlatni yig'ishtiring», «Sohil manziliga boring»). Topshiriqlar kun raqamidan hisoblanadi — o'sha kuni hamma uchun bir xil (mavjud asbob/uyga qarab). Har biri 70–150 so'm, uchalasi — kun sandig'i (400–800 so'm + 💎 va ketma-ketlik bonusi). Kuniga bir marta almashtirish mumkin. **0**, telefon → ✅, HUDdagi «✅ 1/3» belgisi, pauza menyusi |
+| **Yutuqlar daftari** | 61 ta yutuq (yo'l, piyoda, yaxshilik, hayot, odatlar), 6 tasi yashirin; har biri mavjud statistikadan ochiladi, 100–1 000 so'm beradi va bitta maqol chiqaradi. **9**, pasportdagi tugma, telefon. Haftalik nishonlar ham shu yerda ko'rinadi |
+| **Saqlovni ko'chirish** | Sozlamalar → «Saqlovni ko'chirish»: `.json` faylni yuklab olish yoki matnli kod (`SAFAR:1:…`, siqilgan, nazorat yig'indili) nusxalash; ochish — fayl tanlash, faylni o'yin oynasiga sudrab tashlash yoki kodni qo'yish. Ochishdan oldin tekshiriladi (buzilgan/begona kod rad etiladi) va «4-daraja · 12 400 so'm · ★ 35 — shu o'yinmi?» deb so'raladi. Internetsiz (faylda ham) ishlaydi; bulutli saqlov o'zgarmagan |
+| **Avtomatik zaxira** | O'yin ochilganda va har 10 daqiqada (eng ko'pi 4 daqiqada bir) oxirgi 5 ta nusxa, saqlov ochish, «Yangi o'yin» va tiklashdan oldin yana 3 ta maxsus nusxa — alohida `safar_zaxira_v1` kalitida, siqilgan, jami ~1,6 MB dan oshmaydi (xotira to'lsa eskisi o'chiriladi). Sozlamalar → «Zaxiradan tiklash»: vaqt, daraja, pul, yulduzlar; tasdiqlab tiklanadi |
+
 ---
 
 ## 3. Boshqaruv
@@ -356,6 +370,8 @@ Bugungi tadbir xaritada katta rangli nuqta bo'lib chiqadi, ertalab e'lon qilinad
 | Tab | sayohat pasporti |
 | C | kamera (sichqoncha bilan aylantirish) |
 | X | chellenjni yoki ishni bekor qilish |
+| ⌫ (Backspace) | chellenjni darrov qayta boshlash |
+| 9 / 0 | yutuqlar daftari / kunlik uchlik |
 | N | musiqa |
 | O / U | onlayn oynasi / chat (xonada) |
 | 5 / 8 | onlayn xonada: ovozli chat / do'stlarga «Shu yerga kel» belgisi |
@@ -399,6 +415,8 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `hayot.js` | kundalik hayot: chanqoq, uy ichidagi harakatlar, oshxona/muzlatkich/do'kon oynalari, NPC suhbati, do'kon binolari, HUD ko'rsatkichlari |
 | `hayot2.js` | kundalik hayot 2: choyxona, kiyim do'koni, sartaroshxona (binolar va ichki makonlar `interior.js` qurollari — `IN.lib`, `IN.X` — bilan), ofitsiant, qahramon ko'rinishi (`restyle` — kiyim/soch o'zgarsa modelni qayta quradi) |
 | `ish.js` | ishlar (non, taksi smenasi, dala), pul tarixi (`game.addMoney(n, sabab)`), telefon oynasi va xizmatlari |
+| `qulay.js` | «Birinchi safar» yo'riqnomasi, bir martalik maslahatlar, yulduz chegaralari shkalasi, tezkor qayta boshlash, interfeys o'lchami, saqlovni fayl/kod qilib ko'chirish, avtomatik zaxira (`safar_zaxira_v1`) |
+| `yutuq.js`, `kunlik.js` | kunlik uchlik va yutuqlar daftari: oyna, telefon ilovasi, HUD belgisi; `kunlik.js` — sof hisob (kun raqami, kunning topshiriqlari, 61 yutuq va maqollar) |
 | `hafta.js`, `haftalik.js` | haftalik chellenj, hafta statistikasi, nishonlar, «Hafta» oynasi; `haftalik.js` — sof hisob (hafta raqami, haftaning chellenji, chegaralar), server ham ishlatadi |
 | `hayot3.js` | kundalik hayot 3 kirish nuqtasi; ikki g'ildirakli transport haydovchisini o'yinchi ko'rinishida qayta qurish |
 | `kun.js` | o'yin soati hisobi (`game.kun.pass/on` — o'tgan vaqt tinglovchilarga), tetiklik va uning ta'siri, ish jadvali bonusi, telefon «Bugungi reja» |
@@ -479,7 +497,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 `localStorage`, kalit `safar_save_v2`. Yuklashda saqlangan holat standart holat (`defState()` — `game.js`) ustiga qo'shiladi, shuning uchun **yangi maydon qo'shilganda eski saqlovlar buzilmaydi** — faqat `defState()` ga standart qiymat yozish kerak. v1 saqlovlari ham ochiladi.
 
-Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `errCur` (bajarilayotgan topshiriq: tur, beruvchi, bosqich — qayta yuklanganda davom etadi; tiklab bo'lmasa xabar chiqadi va beruvchi uni qayta taklif qiladi; null — yo'q), `soat` (o'tgan o'yin soatlari), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
+Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `errCur` (bajarilayotgan topshiriq: tur, beruvchi, bosqich — qayta yuklanganda davom etadi; tiklab bo'lmasa xabar chiqadi va beruvchi uni qayta taklif qiladi; null — yo'q), `soat` (o'tgan o'yin soatlari), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `qulay {guide, tips, tipsOff, ach, achInit, day, streak, last, chests, win}` (yo'riqnoma qadami, ko'rilgan maslahatlar, yutuqlar, kunlik uchlik), `stats`, `set {vol, music, gfx, damage, ui}` (`ui` — interfeys o'lchami, %), `hour, pos, foot`. Zaxira nusxalari saqlovdan alohida — `safar_zaxira_v1` kalitida.
 
 Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
@@ -497,6 +515,8 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `G.view(x, y, z, tx, ty, tz, soat)` | kamerani qo'yadi (skrinshot uchun) |
 | `G._adapt(kadrVaqti, n)` | moslashuvchan grafikaga sun'iy kadr vaqtini beradi |
 | `G.dunyo.set('yomgir' \| 'dovul' \| 'qor' \| 'tuman' \| 'bulut' \| 'ochiq' \| null)` | ob-havoni majburlash (null — tabiiy), darhol qo'llanadi; `G.dunyo.forecast()`, `G.car.wetGrip` |
+| `G.qulay` | `live` (sinov rejimida kartalar/maslahatlar/zaxira o'chiq — `true` yoqadi), `stars(G.act)`, `restart()`, `showTip(id)`, `exportCode()`, `decode(matn)`, `apply(saqlov)`, `backup(sabab, majburiy)`, `backups()`, `restore(t)` |
+| `G.yutuq` | `dayOverride` (kun raqamini almashtirish), `day()`, `checkDaily()`, `swap(i)`, `check()`, `open('kun' \| 'ach')` |
 | `G.tadbir.set('toy' \| 'bozor' \| 'navruz' \| null)` | tadbirni vaqtdan qat'i nazar yoqish; `G.tadbir.upcoming()`, `G.shahar.convoy(true)` |
 
 ### 4.11. Qanday qo'shiladi
@@ -527,7 +547,8 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `npm run test:hafta` | haftalik chellenj: hafta raqami, poyga/zona boshlash, rekord, mukofot (bir marta, farqi), g'alaba/ish/km hisobi, hafta almashishi, nishon xabari, oyna va telefon ilovasi, bankda sabablar, saqlov | ~25 s |
 | `node tools/touch.mjs [papka]` | sensorli ekran: iPhone 13 / Pixel 7 (tik va yotiq) — HUD va oynalar skrinshoti, 44 px dan kichik, bir-birini to'sgan, ekrandan chiqqan tugmalar ro'yxati (`report.json`). Avval build | ~3 daq |
 | `npm run test:life3` | kundalik hayot 3: tetiklik va uyqu, ish jadvali bonusi, «Bugungi reja», biznes (sotib olish, daromad, kassa, tovar, ishchi, daraja, mijozlar, telefon), uy kengaytmalari va hovli, garaj, haydovchi ko'rinishi, 10 tur topshiriq, saqlov va qayta yuklash, bajarilayotgan topshiriqning saqlanishi va tiklanishi (tiklab bo'lmasa — xabar) | ~4 daq |
-| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta, life3) | ~8–10 daq |
+| `npm run test:qulay` | qulayliklar: yo'riqnoma yangi saqlovda bor va qadamlari o'tadi, eskisida yo'q; maslahat bir marta; yulduz chegaralari (poyga, yetkazish, mo'rt yuk, drift); **⌫** va pauzadan qayta boshlash; kunlik uchlik (kun bo'yicha bir xil, bajarilishi, sandiq, ketma-ketlik, almashtirish, telefon); yutuq ochilishi va daftar; interfeys o'lchami saqlanishi; saqlov kodi va fayli aylanmasi, buzilgan kod rad etilishi, import; zaxira va tiklash; 390 px telefonda yangi oynalar sig'ishi. `SHOTS=1` — skrinshotlar | ~1,5 daq |
+| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta, life3, qulay) | ~8–10 daq |
 
 Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuterda Google Chrome o'rnatilgan bo'lishi kerak). Xato bo'lsa yoki `TEST … FAIL` satri chiqsa — chiqish kodi 1.
 

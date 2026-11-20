@@ -32,6 +32,9 @@ export const ACTIONS = [
   { key: 'X', codes: ['KeyX'], ok: (g) => !!g.act, bar: () => 'Bekor qilish', run: (g) => g.endAct(false, 'cancel') },
   { key: 'X', codes: ['KeyX'], ok: (g) => !g.act && !!(g.ish && g.ish.cur), bar: () => 'Ishni tugatish', run: (g) => g.ish.quit() }, // non/taksi/dala ishi (ish.js)
   { key: 'X', codes: ['KeyX'], ok: (g) => !g.act && !(g.ish && g.ish.cur) && !!(g.coop && g.coop.job && !g.coop.job.own), bar: () => 'Ishdan chiqish', run: (g) => g.coop.jobLeave() }, // do'stning ishida (coop.js)
+  { key: '⌫', codes: ['Backspace'], ok: (g) => !!(g.qulay && g.qulay.canRestart()), bar: () => 'Qayta boshlash', run: (g) => g.qulay.restart() }, // chellenjni darrov boshidan (qulay.js)
+  { key: '9', codes: ['Digit9', 'Numpad9'], ok: (g) => !!g.yutuq, run: (g) => g.yutuq.open('ach') }, // yutuqlar daftari (yutuq.js)
+  { key: '0', codes: ['Digit0', 'Numpad0'], ok: (g) => !!g.yutuq, run: (g) => g.yutuq.open('kun') }, // kunlik uchlik
   { key: 'T', codes: ['KeyT'], ok: (g) => g.damage.wrecked, bar: (g) => (g.player.onFoot ? null : 'Evakuator'), run: (g) => g.tow() },
   { key: 'E', codes: ['KeyE', 'Enter'], ok: (g) => !riding(g), run: (g) => { // [E] — yaqindagi narsaga mos harakat (yozuvi pastdagi katta tugmada)
     const pt = g.nearPoint && !(g.nearPoint.kind === 'board' && g.player.onFoot && g.live.ctxD < 1.2) ? g.nearPoint : null, ui = g.ui; // yonidagi aniq harakat taxtadan ustun
