@@ -36,7 +36,7 @@ export default async ({ page, shot }) => {
 
   // ---------- 2. Avtobus ----------
   await T('avtobus: bekatlarda to\'xtash, yo\'lovchilar, reys bonusi', `(()=>{ H.veh('sedan'); const D=G.daromad, w=D.why('avtobus'); H.veh('avtobus'); const g=D.givers.avtobus; H.car(g.x+3,g.z+3); D.start('avtobus',true); const J=D.cur, n=J.stops.length, log=[];
-    for(let k=0;k<n && D.cur;k++){ const s=J.stops[J.k]; H.car(s.x,s.z,s.yaw); G.sim(1.4); log.push([J.k, J.pax]); }
+    for(let k=0;k<n && D.cur;k++){ const s=J.stops[J.k], k0=J.k; for(let t=0;t<6 && D.cur && J.k===k0;t++){ H.car(s.x,s.z,s.yaw); G.sim(1.0); } log.push([J.k, J.pax]); }
     return { ok: !!w && n>=4 && n<=7 && !D.cur && J.done===n && J.earn>=500 && J.earn<=2000 && H.day('Avtobus marshruti')>=J.earn, n, earn:J.earn, log }; })()`);
 
   // ---------- 3. Kuryer ----------
