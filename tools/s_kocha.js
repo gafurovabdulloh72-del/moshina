@@ -35,4 +35,8 @@ export default async ({ page, shot }) => {
   // 8. avtobusda bekatdan ketganda manzilda o'tirib qolmaydi
   r = await ev(`(() => { const K = G.kocha; if (!K.stop) return { none: 1 }; G.live.dismount(true); const s = K.stop.seat; G.player.place(s.x, s.z, 0); G.state.money = 500; G.player.sit = true; K.atStop = 1; K.rideNow('mayoq'); G.sim(0.5); const b = G.site.places.mayoq.board; return { sit: G.player.sit, d: +Math.hypot(G.player.p[0] - b.x, G.player.p[2] - b.z).toFixed(1) }; })()`);
   T_('bus-ride-stand', r.none || (!r.sit && r.d < 6), r);
+  // 9. tadbir: tugagan bozor kuni e'lon qilinmaydi (soat 16), boshlanganda e'lon qilinadi (soat 9)
+  r = await ev(`(() => { const st = G.state, E = G.tadbir; let d = st.dunyo.day; while (E.today(d).join() !== 'bozor') d++; st.dunyo.day = d; const msgs = []; const t0 = G.toast; G.toast = (m) => msgs.push(m); const md = G.mode; G.mode = 'play';
+    G.dunyo.onDay(); G.hour = 16; G.sim(0.2); const late = msgs.filter((m) => /Bozor kuni/.test(m)).length; G.dunyo.onDay(); G.hour = 9; G.sim(0.2); const early = msgs.filter((m) => /Bozor kuni/.test(m)).length; G.toast = t0; G.mode = md; G.hour = 12; return { late, early }; })()`);
+  T_('event-announce', r.late === 0 && r.early === 1, r);
 };
