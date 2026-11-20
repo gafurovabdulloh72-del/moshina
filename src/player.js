@@ -5,6 +5,20 @@ import * as COL from './colliders.js';
 import { clamp, angDiff } from './util.js';
 import { makeRig, poseRig, setHat, setTool, warmSkin, rigEnv } from './rig.js';
 
+// Yo'l harakatidagi boshqa mashinalar (life.js, shahar.js): [x, z, y, yaw, yarim uzunlik, yarim kenglik] — piyoda ularning ichidan o'tmasin, tushish joyi ham ularga tushmasin
+const _ob = [];
+export function trafficBoxes(g, x, z, r) {
+  _ob.length = 0; const L = g.life && g.life.cars, S = g.shahar && g.shahar.cars;
+  if (L) for (const c of L) if (c.placed && Math.abs(c.x - x) < r + c.half && Math.abs(c.z - z) < r + c.half) _ob.push([c.x, c.z, c.y, c.yaw, c.half, c.halfW]);
+  if (S) for (const c of S) if (c.on && Math.abs(c.x - x) < r + 2.2 && Math.abs(c.z - z) < r + 2.2) _ob.push([c.x, c.z, c.y, c.yaw, c.half, 0.92]);
+  return _ob;
+}
+// nuqta mashina qutisi ichidami (m — zaxira): ichida bo'lsa [chiqish x, chiqish z], aks holda null
+function outOfBox(nx, nz, b, m) {
+  const fx = Math.sin(b[3]), fz = Math.cos(b[3]), dx = nx - b[0], dz = nz - b[1], lz = dx * fx + dz * fz, lx = dx * fz - dz * fx, hx = b[5] + m, hz = b[4] + m;
+  if (Math.abs(lx) >= hx || Math.abs(lz) >= hz) return null; const ox = hx - Math.abs(lx), oz = hz - Math.abs(lz);
+  if (ox < oz) { const k = Math.sign(lx || 1) * ox; return [nx + fz * k, nz - fx * k]; } const k = Math.sign(lz || 1) * oz; return [nx + fx * k, nz + fz * k];
+}
 export class Player {
   constructor(game) {
     this.game = game; this.p = [0, 0, 0]; this.v = [0, 0, 0]; this.yaw = 0; this.speed = 0; this.onFoot = false; this.grounded = true; this.swim = false; this.sit = false;
@@ -19,18 +33,24 @@ export class Player {
   // Harakatni vaqtincha band qilish (egilish, silkitish...) — tugagach fn chaqiriladi
   act(anim, secs, fn, tool) { if (this.lock > 0) return false; this.lock = secs; this.lockAnim = anim; this.rig.actDur = secs; this.lockFn = fn || null; this.sit = false; this.emote = null; if (tool !== undefined) setTool(this.rig, tool); this._tool = tool; return true; }
   setEmote(anim, tool) { this.emote = this.emote === anim ? null : anim; this.sit = false; setTool(this.rig, this.emote ? tool || null : null); }
-  place(x, z, yaw) { this.p[0] = x; this.p[2] = z; this.p[1] = T.ground(x, z, 1e9).y; this.yaw = yaw; this.v[0] = this.v[1] = this.v[2] = 0; this.grounded = true; }
-  // Transport yonidan bo'sh joy topish
-  exitSpot(car) {
-    const s = car.spec, R = car.R, p = car.p, d = s.wid / 2 + 0.85;
-    const cand = [[d, 0], [-d, 0], [d, -s.len * 0.3], [-d, s.len * 0.3], [0, -s.len / 2 - 1.0], [0, s.len / 2 + 1.0], [d + 1.2, 0], [-d - 1.2, 0]];
+  place(x, z, yaw, yRef = 1e9) { this.p[0] = x; this.p[2] = z; this.p[1] = T.ground(x, z, yRef).y; this.yaw = yaw; this.v[0] = this.v[1] = this.v[2] = 0; this.grounded = true; }
+  // Transport yonidan bo'sh joy topish: avval o'z eshigi yonidan (sz — o'rindiq qatori, side — eshik tomoni), keyin narigi tomon, oldi/orqasi.
+  // Devor, daraxt, boshqa mashina va tik jarlik bo'lmagan joy; topilmasa this.exitOk = false (zaxira joy qaytadi). Natija: [x, z, y]
+  exitSpot(car, sz = 0, side = 1) {
+    const s = car.spec, R = car.R, p = car.p, d = s.wid / 2 + 0.85, sd = side < 0 ? -1 : 1, base = p[1] - s.com, g = this.game;
+    const cand = [[sd * d, sz], [sd * d, 0], [-sd * d, sz], [-sd * d, 0], [sd * d, -s.len * 0.3], [-sd * d, s.len * 0.3], [0, -s.len / 2 - 1.0], [0, s.len / 2 + 1.0], [sd * (d + 1.2), sz], [-sd * (d + 1.2), sz]];
+    let wet = null; this.exitOk = true;
     for (const [lx, lz] of cand) {
-      const x = p[0] + R[0] * lx + R[2] * lz, z = p[2] + R[6] * lx + R[8] * lz; const gy = T.ground(x, z, p[1] + 1).y;
-      if (Math.abs(gy - (p[1] - s.com)) > 2.2) continue;
-      let ok = true; for (const o of COL.query(x, z, 1.2)) { if (o.y1 < gy + 0.3 || o.y0 > gy + 1.7) continue; let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = clamp(((x - o.x) * sx + (z - o.z) * sz) / (sx * sx + sz * sz || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz * t; } if (Math.hypot(x - qx, z - qz) < o.r + 0.4) { ok = false; break; } }
-      if (ok) return [x, z];
+      const x = p[0] + R[0] * lx + R[2] * lz, z = p[2] + R[6] * lx + R[8] * lz; const gy = T.ground(x, z, base + 1.6).y;
+      if (Math.abs(gy - base) > 2.2) continue;
+      let ok = true; for (const o of COL.query(x, z, 1.2)) { if (o.dead || o.y1 < gy + 0.3 || o.y0 > gy + 1.7) continue; let qx = o.x, qz = o.z; if (o.t === 1) { const sx = o.x2 - o.x, sz2 = o.z2 - o.z, t = clamp(((x - o.x) * sx + (z - o.z) * sz2) / (sx * sx + sz2 * sz2 || 1), 0, 1); qx = o.x + sx * t; qz = o.z + sz2 * t; } if (Math.hypot(x - qx, z - qz) < o.r + 0.4) { ok = false; break; } }
+      if (ok) for (const b of trafficBoxes(g, x, z, 1.5)) if (Math.abs(gy - b[2]) < 2.6 && outOfBox(x, z, b, 0.4)) { ok = false; break; }
+      if (!ok) continue;
+      if (T.waterY(x, z) > gy + 0.9) { if (!wet) wet = [x, z, gy]; continue; } // chuqur suvga emas — quruq joy bo'lsa o'sha afzal
+      return [x, z, gy];
     }
-    return [p[0] + R[0] * d, p[2] + R[6] * d];
+    if (wet) return wet;
+    this.exitOk = false; const x = p[0] + R[0] * sd * d + R[2] * sz, z = p[2] + R[6] * sd * d + R[8] * sz; return [x, z, T.ground(x, z, base + 1.6).y];
   }
   update(dt, inp, camYaw, st) {
     const g = this.game, p = this.p, v = this.v, rig = this.rig;
@@ -67,6 +87,7 @@ export class Player {
     // transportlar (o'zimizniki va boshqalar) — oddiy doira
     { const c = g.car, R = c.R, s = c.spec; const lx = (nx - c.p[0]) * R[0] + (nz - c.p[2]) * R[6], lz = (nx - c.p[0]) * R[2] + (nz - c.p[2]) * R[8]; const hx = s.wid / 2 + 0.3, hz = s.len / 2 + 0.3;
       if (Math.abs(lx) < hx && Math.abs(lz) < hz && Math.abs(p[1] - (c.p[1] - s.com)) < s.hgt) { const ox = hx - Math.abs(lx), oz = hz - Math.abs(lz); if (ox < oz) { const k = Math.sign(lx || 1) * ox; nx += R[0] * k; nz += R[6] * k; } else { const k = Math.sign(lz || 1) * oz; nx += R[2] * k; nz += R[8] * k; } } }
+    for (const b of trafficBoxes(g, nx, nz, 2)) { if (Math.abs(p[1] - b[2]) > 2.2) continue; const o = outOfBox(nx, nz, b, 0.3); if (o) { nx = o[0]; nz = o[1]; } }
     nx = clamp(nx, -3150, 3150); nz = clamp(nz, -3150, 3150);
     const avx = dt > 1e-4 ? (nx - p[0]) / dt : 0, avz = dt > 1e-4 ? (nz - p[2]) / dt : 0; // haqiqiy siljish (devorga tiralganda ~0) — animatsiya uchun
     p[0] = nx; p[2] = nz; p[1] += v[1] * dt;
@@ -81,7 +102,8 @@ export class Player {
     let anim = 'idle';
     if (this.lockAnim) anim = this.lockAnim; else if (this.swim) anim = 'swim'; else if (!this.grounded) anim = 'jump'; else if (this.speed > 4.6) anim = 'run'; else if (this.speed > 0.4) anim = 'walk'; else if (this.sit) anim = 'sit'; else if (this.emote) anim = this.emote;
     rig.root.position.set(p[0], p[1], p[2]); rig.root.rotation.y = this.yaw;
-    const C = this.ctl, real = avx * avx + avz * avz < 150; C.vx = real ? avx : v[0]; C.vz = real ? avz : v[2]; // devorga tiralsa oyoq joyida yurmaydi, gavda yiqilayotgandek engashmaydi C.vy = v[1]; C.grounded = this.grounded; C.swim = this.swim; C.energy = st.energy; C.moveYaw = moving ? Math.atan2(mx, mz) : null; C.camYaw = camYaw;
+    const C = this.ctl, real = avx * avx + avz * avz < 150; C.vx = real ? avx : v[0]; C.vz = real ? avz : v[2]; // devorga tiralsa oyoq joyida yurmaydi, gavda yiqilayotgandek engashmaydi
+    C.vy = v[1]; C.grounded = this.grounded; C.swim = this.swim; C.energy = st.energy; C.moveYaw = moving ? Math.atan2(mx, mz) : null; C.camYaw = camYaw;
     poseRig(rig, anim, dt, this.speed, C); this.anim = anim;
     const c = Math.cos(this.yaw), s2 = Math.sin(this.yaw); this.R[0] = c; this.R[2] = s2; this.R[6] = -s2; this.R[8] = c;
     // qadam tovushi

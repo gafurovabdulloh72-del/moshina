@@ -182,12 +182,18 @@ function syncCar(alpha) {
   m.tailMat.color.setHex(on ? 0xa81810 : 0x6a1410); if (braking) m.brakeMat.color.setRGB(2.6, 0.24, 0.12); else m.brakeMat.color.setHex(on ? 0x8a1410 : 0x6a1410);
   if (!foot && car.fwd < -0.4) m.revMat.color.setRGB(2.2, 2.2, 2.0); else m.revMat.color.setHex(0x8a8a86); // orqaga yurish — oq chiroq
   // burilish chiroqlari: past tezlikda rul keskin burilganda (musbat rul — chapga), avariyada — ikkalasi (avariya signali)
-  const st = foot ? 0 : game.input.state.steer, slow = Math.abs(car.fwd) < 14, blink = Math.sin(game.time * 9.4) > 0, haz = dm.wrecked;
+  // [Z] — avariya chirog'i (game.hazard); qulflash/ochishda ikkalasi qisqa miltillaydi (game.lockBlink — living.js); yonganda rele «tik-tak» chertadi
+  const st = foot ? 0 : game.input.state.steer, slow = Math.abs(car.fwd) < 14, blink = Math.sin(game.time * 9.4) > 0, lk = game.time < (game.lockBlink || 0), haz = dm.wrecked || game.hazard || lk;
   const sL = blink && (haz || (slow && st > 0.4)), sR = blink && (haz || (slow && st < -0.4));
+  if (sL || sR) { if (!game._blk && !foot && !lk) game.audio.sfx('blink', 1); game._blk = 1; } else if (game._blk) { if (!foot && !lk) game.audio.sfx('blink', -1); game._blk = 0; }
+  // og'ir transport (yuk, avtobus, o't o'chirish) orqaga yurganda «pip… pip»
+  if (!foot && car.fwd < -0.4 && (m.v.cls === 'truck' || m.v.cls === 'bus')) { const b = Math.sin(game.time * 6.3) > 0.3; if (b && !game._rvb) game.audio.sfx('revBeep'); game._rvb = b; } else game._rvb = false;
   if (sL) m.sigLMat.color.setRGB(2.6, 1.3, 0.2); else m.sigLMat.color.setHex(0x8a5212);
   if (sR) m.sigRMat.color.setRGB(2.6, 1.3, 0.2); else m.sigRMat.color.setHex(0x8a5212);
 }
 
+const SALON = { car: 1, jeep: 1, van: 1, open: 1, tractor: 1 }, _eye = new THREE.Vector3(); // haydovchi ko'zi; avtobusda haydovchi modeli yo'q — old chap o'rindiq
+const eyeOf = (m) => { const o = m._rd && m._rd.hip ? m._rd : null, ln = o ? o.lean || 0 : 0; if (!o) { const s = m.spec; _eye.set(0.55, s.clr - s.com + 2.0, s.len / 2 - 1.15); } else _eye.set((o.x || 0) + (o.hip[0] || 0), Math.max(o.hip[1] + Math.cos(ln) * 0.7, o.hand ? o.hand[1] + 0.26 : -9), o.hip[2] + Math.sin(ln) * 0.7 + 0.08); m.root.updateMatrixWorld(true); return m.tilt.localToWorld(_eye); }; // matritsa shu kadrniki bo'lsin (tezlikda kamera orqada qolmasin)
 const ZERO = { throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false }, PARK = { throttle: 0, brake: 0, steer: 0, handbrake: true, nitro: false };
 const _wh = new THREE.Color(1, 1, 1); // mahalliy chiroq rangini oqqa yaqinlashtirish uchun
 let ftAvg = 16, ftSum = 0, ftN = 0, ftT = 0, qT = 0, longN = 0, settle = 0, goodN = 0, calmN = 0, upAge = 99, prCeil = Infinity, ceilT = 0, ceilN = 0;
@@ -216,11 +222,15 @@ function update(dt) {
   // eng yaqin chiroq/gulxan yorug'ligi
   { const L = g.localLight; let best = null, bd = 80 * 80; if (night > 0.25) for (const l of g.site.lights) { if (l.on === false) continue; const d = (l.x - focus.x) ** 2 + (l.z - focus.z) ** 2; if (d < bd) { bd = d; best = l; } }
     if (best) { L.position.set(best.x, best.y, best.z); L.color.setHex(best.hex).lerp(_wh, 0.45); L.intensity += (best.power * 34 * night * (0.9 + 0.1 * Math.sin(g.time * 9)) - L.intensity) * Math.min(1, dt * 4); } else L.intensity *= 0.9; }
-  g.camera.near = g.cam.mode === 2 && !foot ? 0.3 : g.zoomView ? 0.6 : 1.2;
+  g.camera.near = g.cam.mode === 4 && !foot ? 0.08 : g.cam.mode === 2 && !foot ? 0.3 : g.zoomView ? 0.6 : 1.2;
+  // salon kamerasi: haydovchi ko'zi (rider ma'lumotidan, egilish guruhi bilan birga — mototsikl og'ganda ham), haydovchining o'zi ko'rinmaydi
+  g.cam.salonOk = !!SALON[g.carModel.v.cls] && !!g.carModel._rd; if (g.cam.mode === 4 && (foot || !g.cam.salonOk)) g.cam.mode = 0; // salon faqat kabinasi chizilgan transportda
+  const eye = g.cam.mode === 4 && !foot ? eyeOf(g.carModel) : null, eyeDrop = { bike: 2.6, open: 1.7 }[g.carModel.v.cls] || 0.9;
+  if (g.carModel.rider && !foot) g.carModel.rider.visible = !eye;
   const sp = car.spec;
   const rv = g.coop && g.coop.ride ? g.coop.rideCam() : g.suv.cur ? g.suv.cam() : null; // onlayn: do'st mashinasida yo'lovchi — kamera o'sha mashinaga ergashadi (coop.js); qayiq/deltaplan (suv.js)
   if (rv) g.cam.update(dt, rv.tgt, rv.cp, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), foot: false, len: rv.len, hgt: rv.hgt });
-  else g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt });
+  else g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt, eye, eyeDrop });
   g.sky.update(dt, g.camera, focus);
   g.terrain.update(g.camera); g.props.update(g.camera); g.detail.update(g.camera);
   { let dh = Math.abs(g.hour - (g._envH == null ? -99 : g._envH)); if (dh > 12) dh = 24 - dh; const envF = g.state.set.gfx > 0 && dh > 0.1; if (envF) g._envH = g.hour; g.gfx.update(dt, envF); } // osmon yoritishi (PMREM) ~5 s da bir yangilanadi (0-darajada — gfx.js'ning o'z siyrak jadvali)

@@ -191,7 +191,7 @@ export function initObhavo(game) {
     if (audio() && rainS) { const A = game.audio, c = A.ctx.currentTime, mute = game.mode === 'ui' || inside, inCar = !foot && game.cam.mode !== 3, r = mute ? 0 : P.rain;
       rainS.hi.g.gain.setTargetAtTime(r * (inCar ? 0.05 : 0.11), c, 0.4); rainS.hi.f.frequency.setTargetAtTime(inCar ? 900 : 1500, c, 0.4); rainS.lo.g.gain.setTargetAtTime(r * r * 0.12 + (mute ? 0 : P.snow * 0.015), c, 0.5); }
     // tozalagich: kabinadan (kamera 2) qaraganda yomg'irda
-    const wOn = !foot && game.cam.mode === 2 && game.mode === 'play' && !inside && (P.rain > 0.15 || P.snow > 0.3);
+    const wOn = !foot && (game.cam.mode === 2 || game.cam.mode === 4) && !{ bike: 1, open: 1 }[game.carModel.v.cls] && game.mode === 'play' && !inside && (P.rain > 0.15 || P.snow > 0.3);
     if (wOn) { wipT += dt * (0.8 + 1.4 * Math.max(P.rain, P.snow * 0.6)); const ph = wipT % 1.6, u = ph < 1.0 ? Math.sin(Math.min(ph, 1) * Math.PI) : 0, ang = -8 - 150 * u; blades[0].style.transform = `rotate(${ang}deg)`; blades[1].style.transform = `rotate(${ang}deg)`; }
     if (wOn !== W._wOn) { W._wOn = wOn; wip.style.display = wOn ? 'block' : 'none'; }
     if ((tipT -= dt) < 0) tipT = 0;

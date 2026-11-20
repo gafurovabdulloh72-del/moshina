@@ -106,6 +106,17 @@ export class Sound {
       case 'bite': this.tone(1500, t, 0.07, 'square', 0.1); this.tone(1900, t + 0.09, 0.07, 'square', 0.1); this.burst(t, 0.2, 'bandpass', 1500, 1, 0.25); break;
       case 'whistle': this.tone(1900, t, 0.16, 'sine', 0.16, null, 0.01, 1.35); this.tone(2500, t + 0.2, 0.3, 'sine', 0.16, null, 0.01, 0.8); break;
       case 'door': this.burst(t, 0.09, 'lowpass', 700, 0.8, 0.5); this.tone(110, t, 0.09, 'sine', 0.3, null, 0.002, 0.6); break;
+      // eshik: ochilganda qulf «chiq», yopilganda zarb — ichkariga o'tirish (doorIn) va tushish (doorOut) ketma-ketligi
+      case 'doorIn': this.burst(t, 0.04, 'bandpass', 2400, 2.5, 0.22); this.burst(t + 0.5, 0.09, 'lowpass', 700, 0.8, 0.5); this.tone(110, t + 0.5, 0.09, 'sine', 0.3, null, 0.002, 0.6); break;
+      case 'doorOut': this.burst(t, 0.04, 'bandpass', 2400, 2.5, 0.22); this.burst(t + 0.05, 0.25, 'bandpass', 900, 0.7, 0.06, 0.7); this.burst(t + 0.62, 0.09, 'lowpass', 700, 0.8, 0.45); this.tone(110, t + 0.62, 0.09, 'sine', 0.26, null, 0.002, 0.6); break;
+      case 'saddle': this.burst(t, 0.12, 'lowpass', 420, 0.8, 0.35); this.tone(240, t + 0.05, 0.16, 'triangle', 0.05, null, 0.01, 0.75); break; // egarga o'tirish: prujina g'ichirlashi
+      case 'starter': for (let i = 0; i < 5; i++) { this.tone(46 + i * 2, t + 0.55 + i * 0.09, 0.08, 'sawtooth', 0.08, null, 0.004, 1.2); this.burst(t + 0.55 + i * 0.09, 0.06, 'bandpass', 520, 1.2, 0.1); } break; // o't oldirish (starter)
+      case 'beep': this.tone(880, t, 0.28, 'square', 0.07); this.tone(1046, t, 0.28, 'square', 0.05); break; // mototsikl/skuter signali — ingichka
+      case 'airhorn': this.tone(196, t, 0.7, 'sawtooth', 0.09, null, 0.03); this.tone(247, t, 0.7, 'sawtooth', 0.08, null, 0.03); this.tone(294, t, 0.7, 'sawtooth', 0.05, null, 0.03); break; // yuk mashinasi/avtobus — yo'g'on karnay
+      case 'lock': this.tone(1760, t, 0.06, 'square', 0.05); this.tone(1760, t + 0.12, 0.06, 'square', 0.05); break; // qulf: ikki qisqa «pip»
+      case 'unlock': this.tone(1760, t, 0.08, 'square', 0.05); break;
+      case 'blink': this.burst(t, 0.025, 'bandpass', k > 0 ? 3200 : 2500, 4, 0.12); break; // burilish chirog'i relesi: «tik-tak»
+      case 'revBeep': this.tone(1250, t, 0.22, 'square', 0.045); break; // og'ir transport orqaga yurganda
       case 'fire': this.burst(t, 0.6, 'bandpass', 900, 0.6, 0.4, 2.5); break;
       case 'drum': { const n = Math.max(1, Math.round(k)); for (let i = 0; i < n; i++) { const t1 = t + i * 0.21; this.tone(96, t1, 0.24, 'sine', 0.32, null, 0.002, 0.55); this.burst(t1, 0.08, 'bandpass', 420, 1.1, 0.3); if (i % 2) this.burst(t1 + 0.105, 0.05, 'bandpass', 1500, 1.4, 0.16); } break; } // doira/nog'ora (kurash.js): k — zarblar soni
       case 'crowd': for (let i = 0; i < 3; i++) this.burst(t + i * 0.12, 1.5 - i * 0.3, 'bandpass', 900 + i * 520, 0.55, 0.16 * k, 1.12); for (let i = 0; i < 6; i++) this.tone(520 + Math.random() * 380, t + Math.random() * 0.5, 0.35, 'sawtooth', 0.012 * k, null, 0.06, 1.18); break; // olomon qiyqirig'i

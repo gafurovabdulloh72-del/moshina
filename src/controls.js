@@ -13,12 +13,14 @@ const free = (g) => g.player.lock <= 0;
 const outdoor = (g) => free(g) && !(g.interior && g.interior.inside); // uy/do'kon ichida tashqi harakat tugmalari chiqmaydi
 const riding = (g) => !!(g.coop && g.coop.ride) || !!(g.suv && g.suv.cur);
 const wrestling = (g) => !!(g.kurash && g.kurash.on); // kurash davrasida (kurash.js): A/D/W/S/Probel — kurash harakatlari, piyoda tugmalari ishlamaydi // onlayn: do'st mashinasida yo'lovchi (coop.js) yoki qayiq/deltaplanda (suv.js) — piyoda tugmalari ishlamaydi
+// signal ovozi transport turiga qarab: o't o'chirish — sirena, velosiped — qo'ng'iroq, mototsikl/skuter — ingichka, yuk/avtobus — yo'g'on karnay
+export const hornOf = (m) => (m.id === 'otochar' ? 'siren' : m.id === 'velo' ? 'bell' : m.v.cls === 'bike' ? 'beep' : m.v.cls === 'truck' || m.v.cls === 'bus' ? 'airhorn' : 'horn');
 export const ACTIONS = [
   // --- umumiy (yuqori o'ngdagi qator) ---
   { key: 'M', codes: ['KeyM'], top: 1, bar: () => 'Xarita', run: (g) => g.ui.open('map') },
   { key: 'I', codes: ['KeyI'], top: 1, bar: () => 'Sumka', run: (g) => g.ui.open('bag') },
   { key: 'Tab', codes: ['Tab', 'KeyJ'], top: 1, bar: () => 'Pasport', run: (g) => g.ui.open('progress') },
-  { key: 'C', codes: ['KeyC'], top: 1, bar: () => 'Kamera', run: (g) => { g.cam.next(); g.toast('Kamera: ' + g.cam.modeName); } },
+  { key: 'C', codes: ['KeyC'], top: 1, bar: () => 'Kamera', run: (g) => { g.cam.next(); if (g.cam.mode === 4 && (g.player.onFoot || !g.cam.salonOk)) g.cam.next(); g.toast('Kamera: ' + g.cam.modeName); } }, // salon — faqat kabinali transportda
   { key: 'P', codes: ['KeyP'], top: 1, bar: () => 'Surat', run: (g) => g.ui.setHud(!g.hudOn) },
   { key: 'O', codes: ['KeyO'], top: 1, bar: () => 'Onlayn', run: (g) => g.ui.open('online') },
   { key: '4', codes: ['Digit4', 'Numpad4'], top: 1, bar: () => 'Telefon', run: (g) => g.phone && g.phone.open() }, // telefon (ish.js)
@@ -71,7 +73,8 @@ export const ACTIONS = [
   { key: 'Shift', codes: ['ShiftLeft', 'ShiftRight'], on: 'car', hold: 1, bar: () => 'Nitro' },
   { key: 'Probel', codes: ['Space'], on: 'car', hold: 1, bar: () => "Qo'l tormozi" },
   { key: 'R', codes: ['KeyR'], on: 'car', ok: (g) => !counting(g), bar: () => "Yo'lga qaytish", run: (g) => g.respawn() },
-  { key: 'H', codes: ['KeyH'], on: 'car', bar: () => 'Signal', run: (g) => g.audio.sfx(g.carModel.id === 'otochar' ? 'siren' : g.carModel.id === 'velo' ? 'bell' : 'horn') },
+  { key: 'H', codes: ['KeyH'], on: 'car', bar: () => 'Signal', run: (g) => g.audio.sfx(hornOf(g.carModel)) },
+  { key: 'Z', codes: ['KeyZ'], on: 'car', bar: (g) => (g.hazard ? "Avariya chirog'i ✕" : g.car.speed < 0.5 && !g.act ? "Avariya chirog'i" : null), run: (g) => { g.hazard = !g.hazard; g.toast(g.hazard ? "Avariya chirog'i yoqildi" : "Avariya chirog'i o'chirildi"); g.audio.sfx('click'); } }, // ikkala burilish chirog'i miltillaydi
   { key: 'L', codes: ['KeyL'], on: 'car', bar: (g) => (g.sky.night > 0.25 || g.lightsForced ? (g.lightsForced ? 'Faralar: avto' : 'Faralar') : null), run: (g) => { g.lightsForced = !g.lightsForced; g.toast(g.lightsForced ? 'Faralar yoqildi' : 'Faralar avtomatik'); } },
   { key: 'Esc', codes: ['Escape'], top: 1, bar: () => 'Menyu' }, // Escape — har qanday rejimda (pastda alohida)
 ];

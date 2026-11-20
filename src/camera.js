@@ -9,6 +9,7 @@ const MODES = [
   { name: 'Uzoq', dist: 13.5, h: 5.2, look: 1.0 },
   { name: 'Kapot', dist: 0, h: 0, look: 0 },
   { name: 'Kino', dist: 11, h: 2.2, look: 1.0 },
+  { name: 'Salon', dist: 0, h: 0, look: 0 }, // haydovchi ko'zidan: rul, torpeda, oynalar (opts.eye — main.js)
 ];
 const FOOT = { dist: 4.4, h: 1.75, look: 1.58, side: 0.72 };
 // sirt bo'yicha yo'l titrashi (SURF tartibida): yo'l, o't, qum, qor, tosh/shag'al, taxta, suv, muz, asfalt
@@ -129,7 +130,19 @@ export class ChaseCam {
       const a = this.heading + this.yawOff; cam.position.set(cp.x, cp.y + 1.62, cp.z);
       this.look.set(cp.x + Math.sin(a) * 50, cp.y + 1.62 - this.pitchOff * 30 + wob(tt * 0.9, 3) * 0.25 * mo, cp.z + Math.cos(a) * 50); cam.lookAt(this.look); this.first = false; return;
     }
-    if (this.mode === 2 && !foot) {
+    if (this.mode === 4 && !foot && opts.eye) {
+      // salon: haydovchi boshi tezlanishda biroz og'adi, yo'l titrashi; sichqoncha bilan atrofga (yon oynalarga) qarash mumkin
+      const R = tgt.R, E = opts.eye;
+      spring(this.sp, 2, 7, 0.7, -clamp(aF, -40, 40) * 0.5, dt); spring(this.sp, 0, 8, 0.7, -clamp(aL, -40, 40) * 0.35, dt); spring(this.sp, 1, 10, 0.5, -clamp(aU, -60, 60) * 0.4, dt);
+      const S = this.sp.x, bz = clamp(S[2], -0.08, 0.08), bx = clamp(S[0], -0.06, 0.06), by = clamp(S[1], -0.07, 0.04) + vibY * 0.6;
+      cam.position.set(E.x + R[1] * by + R[2] * bz + R[0] * bx, E.y + R[4] * by + R[5] * bz + R[3] * bx, E.z + R[7] * by + R[8] * bz + R[6] * bx);
+      const ya = clamp(this.yawOff, -2.4, 2.4), cy = Math.cos(ya), sy = Math.sin(ya), fx = R[2] * cy + R[0] * sy, fy = R[5] * cy + R[3] * sy, fz = R[8] * cy + R[6] * sy;
+      this.look.set(cam.position.x + fx * 10, cam.position.y + fy * 10 - (opts.eyeDrop || 0.9) - this.pitchOff * 6, cam.position.z + fz * 10);
+      cam.up.set(R[1], R[4], R[7]); cam.lookAt(this.look); cam.up.set(0, 1, 0);
+      const A = this.ang.x; cam.rotateX(A[0] * 0.5 + vibP * 1.2); cam.rotateY(A[1] * 0.5); cam.rotateZ(A[2] * 0.5);
+      this.first = false; this.pos.copy(cam.position); return;
+    }
+    if ((this.mode === 2 || this.mode === 4) && !foot) {
       // kapot kamerasi: haydovchi boshi tezlanishda biroz ortga/oldinga og'adi; dvigatel va yo'l titrashi
       const R = tgt.R, hy = (opts.hgt || 1.85) * 0.52, fz = (opts.len || 4) * 0.09;
       spring(this.sp, 2, 7, 0.7, -clamp(aF, -40, 40) * 0.6, dt); spring(this.sp, 0, 8, 0.7, -clamp(aL, -40, 40) * 0.4, dt); spring(this.sp, 1, 10, 0.5, -clamp(aU, -60, 60) * 0.5, dt);

@@ -9,7 +9,7 @@ export const SAY = {
   thanks: ['Rahmat, yaxshi odam! 🙏', "Yo'l berganingiz uchun rahmat!", 'Ehtiyotkor haydovchi ekansiz!', 'Sog\' bo\'ling!'],
   slow: ['Sekin haydaganingiz uchun rahmat!', 'Qishloqda shunday haydash kerak 👍', 'Yaxshi yo\'l!'],
 };
-const HORN = { horn: 1, bell: 1, siren: 1 };
+const HORN = { horn: 1, bell: 1, siren: 1, beep: 1, airhorn: 1 };
 
 export function initMunosabat(game) {
   const st = game.state, S = st.sir, car = game.car, pl = game.player, L = game.live;
