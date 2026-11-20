@@ -128,7 +128,7 @@ export function initKurash(game) {
   function autoPlay() { const M = K.m, q = M.cue; if (K.auto !== 'win') return; if (M.op.ob >= 0.95) return throwTry(); if (q && !q.done && (!q.feint || q.sw) && q.t > Math.min(0.35, q.dur * 0.3)) press(KEY[q.dir]); }
 
   // ---------- pozalar va joylashuv ----------
-  const camP = new THREE.Vector3(), camT = new THREE.Vector3();
+  const camP = new THREE.Vector3(), camT = new THREE.Vector3(), camW = new THREE.Vector3();
   function pose(dt) {
     const M = K.m; place(0); const kp = pl.rig.kp, ok = opp.kp, q = M.cue, ph = M.ph, t = M.t;
     // raqib og'ishi: o'q yo'nalishi bo'yicha (raqib o'yinchiga qaragan: ekranning o'ng tomoni — uning chap tomoni)
@@ -208,7 +208,7 @@ export function initKurash(game) {
       if (opp && !K.on && opp.root.visible) opp.root.visible = false; }
     if (K.on && K.m) { // kamera: o'yinchining orqasida, biroz yon tomondan — ikkala polvon ko'rinadi
       const u = pos.u, cam = game.camera, wx = -u[1], wz = u[0], k = Math.min(1, dt * 4);
-      camP.set(pos.me[0] - u[0] * 3.1 + wx * 0.9, C.y + 2.05, pos.me[1] - u[1] * 3.1 + wz * 0.9); cam.position.lerp(camP, k);
+      camW.set(pos.me[0] - u[0] * 3.1 + wx * 0.9, C.y + 2.05, pos.me[1] - u[1] * 3.1 + wz * 0.9); camP.lerp(camW, k); cam.position.copy(camP); // o'z silliq nuqtamiz (main.js kamerasi har kadr qayta qo'yadi)
       camT.set(C.x + u[0] * 0.35, C.y + 1.05, C.z + u[1] * 0.35); cam.lookAt(camT); }
   });
 

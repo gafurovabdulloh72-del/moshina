@@ -111,9 +111,9 @@ export function initBoyoq(game) {
   game.hooks.push((dt) => {
     const open = game.ui && game.ui.screenName === 'boyoq';
     if (!open) { if (B.draft) revert(); orb = 0; return; }
-    const m = game.carModel, s = m.spec, p = m.root.position, R = Math.max(5.2, s.len * 1.25), cam = game.camera;
+    const m = game.carModel, s = m.spec, p = m.root.position, R = Math.max(6.4, s.len * 1.55), cam = game.camera;
     if (B._snap || B._a0 == null) B._a0 = clearAngle(p, R); orb += dt * 0.3; const a = B._a0 + 0.55 * Math.sin(orb);
-    cp.set(p.x + Math.sin(a) * R, p.y + 1.1 + s.hgt * 0.35, p.z + Math.cos(a) * R); cam.position.lerp(cp, Math.min(1, dt * 6 + (B._snap ? 1 : 0))); B._snap = false;
+    tg.set(p.x + Math.sin(a) * R, p.y + 1.3 + s.hgt * 0.45, p.z + Math.cos(a) * R); if (B._snap) cp.copy(tg); else cp.lerp(tg, Math.min(1, dt * 6)); B._snap = false; cam.position.copy(cp); // o'z silliq nuqtamiz (main.js kamerasi har kadr qayta qo'yadi)
     const rx = Math.cos(a), rz = -Math.sin(a), off = R * 0.36; tg.set(p.x + rx * off, p.y + 0.35, p.z + rz * off); cam.lookAt(tg);
   });
   // devor/bino orqasiga tushmaydigan eng ochiq tomon (to'qnashuv jismlari bo'yicha) — kamera shu atrofida tebranadi
