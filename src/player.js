@@ -54,7 +54,7 @@ export class Player {
     const gy0 = T.ground(p[0], p[2], p[1] + 0.7).y, wy = T.waterY(p[0], p[2]);
     this.swim = wy > gy0 + 1.2 && p[1] < wy - 0.9;
     const wade = !this.swim && wy > gy0 + 0.12; // sayoz suvda (ariq, qirg'oq) — sekinroq, chayqalib yuradi
-    const runReq = run && (mx !== 0 || mz !== 0), tired = st.energy <= 0.5; if (tired) this.tiredT = 2.5; if (this.tiredT > 0) { this.tiredT -= dt; run = false; }
+    const runReq = run && (mx !== 0 || mz !== 0), tired = st.energy <= 0.5; if (tired) this.tiredT = 2.5; else if (this.tiredT > 0 && st.energy < 22) this.tiredT = Math.max(this.tiredT, 0.2); if (this.tiredT > 0) { this.tiredT -= dt; run = false; } // kuch tugagach ~22 gacha tiklanmaguncha yugurmaydi (avval 2,5 s da qayta yugurib, darrov yana to'xtab — uzilib-uzilib yugurardi)
     const moving = mx !== 0 || mz !== 0; run = run && moving && !this.swim;
     const vmax = (this.swim ? 2.3 : run ? 7.4 : 3.7) * (this.speedMul || 1) * mag * (wade && !this.swim ? 0.72 : 1); // speedMul — charchoqda biroz sekinroq (kun.js)
     const tvx = mx * vmax, tvz = mz * vmax, acc = this.grounded || this.swim ? 16 : 5;

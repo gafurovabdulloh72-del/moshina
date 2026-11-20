@@ -67,7 +67,7 @@ export const ACTIONS = [
     run: (g) => { const pl = g.player; pl.lampOn = !pl.lampOn; g.toast(pl.lampOn ? 'Fonar yoqildi 🔦' : "Fonar o'chirildi"); g.audio.sfx('click'); } },
   { key: 'Z', codes: ['KeyZ'], on: 'foot', hold: 1, bar: (g) => (g.ui && g.ui.hud && g.ui.hud.classList.contains('touch') && !g.player.swim && !(g.interior && g.interior.inside) ? 'Durbin' : null) }, // durbin — bosib turiladi; telefonda klaviatura yo'q — ekranda tugma bo'lib chiqadi
   // uy/do'kon ichida ishlamaydi (ichki makondan ko'chaga "teleport" bo'lib qolmasin); yo'l uzoq bo'lsa — jimgina hech narsa qilmaslik o'rniga sababini aytadi
-  { key: 'R', codes: ['KeyR'], on: 'foot', ok: outdoor, run: (g) => { const pl = g.player, nr = T.nearestRoad(pl.p[0], pl.p[2], 12); if (nr.edge >= 0) { pl.place(T.roads.x[nr.i], T.roads.z[nr.i], pl.yaw); g.cam.snap(); g.toast("Yo'lga qaytdingiz"); } else g.toast("Yaqin atrofda (12 m) yo'l yo'q — xaritani oching [M]"); } },
+  { key: 'R', codes: ['KeyR'], on: 'foot', ok: outdoor, run: (g) => { const pl = g.player, nr = T.nearestRoad(pl.p[0], pl.p[2], 12); if (nr.edge >= 0) { pl.place(T.roads.x[nr.i], T.roads.z[nr.i], pl.yaw); g.cam.snap(); g.toast("Yo'lga qaytdingiz"); } else g.toast("Yaqin atrofda yo'l topilmadi — xaritani oching [M]"); } },
   // --- transportda ---
   { key: 'Shift', codes: ['ShiftLeft', 'ShiftRight'], on: 'car', hold: 1, bar: () => 'Nitro' },
   { key: 'Probel', codes: ['Space'], on: 'car', hold: 1, bar: () => "Qo'l tormozi" },
