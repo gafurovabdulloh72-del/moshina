@@ -116,17 +116,7 @@ export default async ({ page, shot }) => {
   await T("gilamdo'zlik: naqsh o'yini va a'lo gilam mukofoti", `(()=>{ const D=G.daromad, S=G.state.daromad; const a=D.craft('gilam',1), b=D.craft('gilam',0.34); G.ui.open('hunar',{k:'gilam'}); const ok1=/Gilamdo/.test(document.querySelector('.win h1').textContent); document.querySelector('.win button[data-a="go"]').click(); const pal=document.querySelectorAll('.dr-mg .pal button').length; G.ui.close();
     return { ok: a===1 && b===0 && S.cargo.gilam===1 && ok1 && pal===4 && H.day("Gilamdo'zlik")===60, a, b, bonus:H.day("Gilamdo'zlik") }; })()`);
 
-  // ---------- 17–19. Sarmoya ----------
-  await T('ijara: transport ijarada — minib bo\'lmaydi, muddat tugasa haq', `(()=>{ const D=G.daromad, S=G.state.daromad; H.veh('sedan'); G.state.veh.own.push('super'); const w1=D.canRent('sedan'), ok=D.rentOut('super',6), rate=D.rentRate('super'); G.setVehicle('super'); const blocked=G.state.veh.cur==='sedan';
-    G.kun.pass(3); const mid=!!S.rent.super; G.kun.pass(3.5); const got=H.day('Transport ijarasi'), full=rate*6;
-    return { ok: !!w1 && ok && blocked && mid && !S.rent.super && (Math.abs(got-full)<=2 || Math.abs(got-Math.round(full*0.9))<=2) && rate<=110, rate, got, full }; })()`);
-  await T('omonat: qo\'yish (daromad emas), kunlik foiz, yechish', `(()=>{ const D=G.daromad, S=G.state.daromad, m0=G.state.money, t0=H.day('Bank omonati'); D.deposit(10000); const m1=G.state.money; G.state.dunyo.day++; D.bankTick(); const fz=H.day('Bank omonati'); D.withdraw(99999); const m2=G.state.money;
-    return { ok: m0-m1===10000 && fz===120 && t0===0 && S.bank.dep===0 && m2===m1+10000+120 && !D.today()['Omonatga qo\\'yildi'], fz, dep:S.bank.dep }; })()`);
-  await T('kooperativ: ulush, kunlik dividend, narx o\'zgarishi, sotish', `(()=>{ const D=G.daromad, C=G.state.daromad.coop, p0=D.coopPrice(), n=D.coopBuy(50); G.state.dunyo.day++; D.coopTick(); const div=H.day('Kooperativ ulushi'), p1=D.coopPrice(); const prices=[]; for(let k=0;k<10;k++){ G.state.dunyo.day++; D.coopTick(); prices.push(D.coopPrice()); }
-    const m0=G.state.money; D.coopSell(50); return { ok: n===50 && div>0 && div<=Math.round(50*p1*0.008)+1 && new Set(prices).size>4 && prices.every(p=>p>=35&&p<=400) && C.n===0 && G.state.money>m0, p0, p1, div, prices }; })()`);
-
-  // ---------- Umumiy: e'lonlar, taxta, telefon, obro', to'qnashuv ----------
-  await page.evaluate(() => { G.state.dunyo.day = window._d0; });
+  // ---------- Umumiy: e'lonlar, taxta, telefon (omonat/kooperativ kunni surishidan oldin — hisob 8 kunni saqlaydi) ----------
   await T("ish e'lonlari oynasi: hamma ish, filtr, yo'l ko'rsatish", `(()=>{ H.fresh(); G.ui.open('elonlar',{tab:'all'}); const n=document.querySelectorAll('.win .cards .card').length; document.querySelector('.win [data-a="tab:veh"]').click(); const nv=document.querySelectorAll('.win .cards .card').length; document.querySelector('.win [data-a="go:yuk"]').click(); const way=!!G.way; G.setWaypoint(null);
     return { ok: n===G.daromad.order.length && nv===8 && way && G.ui.screenName!=='elonlar', n, nv }; })()`);
   await page.evaluate(() => { G.ui.open('elonlar', { tab: 'all' }); G.advance(0.05); }); await snap('elonlar');
@@ -135,6 +125,16 @@ export default async ({ page, shot }) => {
   await T("telefon: «Daromad» (bugun/hafta, manbalar) va «E'lonlar»", `(()=>{ G.phone.open('daromad'); G.advance(0.02); const t=document.querySelector('.phone').textContent; const rows=document.querySelectorAll('.phone .dr-src > div').length; G.phone.open('elon'); const t2=document.querySelector('.phone').textContent; G.ui.close();
     const td=G.daromad.today(), wk=G.daromad.week(); return { ok: /Bugun/.test(t) && /Yuk tashish/.test(t) && rows>=10 && /Avtobus/.test(t2) && Object.keys(wk).length>=15 && Object.values(wk).reduce((a,b)=>a+b,0)>=Object.values(td).reduce((a,b)=>a+b,0), rows, src:Object.keys(td).length }; })()`);
   await page.evaluate(() => { G.phone.open('daromad'); G.advance(0.05); }); await snap('telefon');
+  // ---------- 17–19. Sarmoya ----------
+  await T('ijara: transport ijarada — minib bo\'lmaydi, muddat tugasa haq', `(()=>{ G.ui.close(); const D=G.daromad, S=G.state.daromad; H.veh('sedan'); G.state.veh.own.push('super'); const w1=D.canRent('sedan'), ok=D.rentOut('super',6), rate=D.rentRate('super'); G.setVehicle('super'); const blocked=G.state.veh.cur==='sedan';
+    G.kun.pass(3); const mid=!!S.rent.super; G.kun.pass(3.5); const got=H.day('Transport ijarasi'), full=rate*6;
+    return { ok: !!w1 && ok && blocked && mid && !S.rent.super && (Math.abs(got-full)<=2 || Math.abs(got-Math.round(full*0.9))<=2) && rate<=110, rate, got, full }; })()`);
+  await T('omonat: qo\'yish (daromad emas), kunlik foiz, yechish', `(()=>{ const D=G.daromad, S=G.state.daromad, m0=G.state.money, t0=H.day('Bank omonati'); D.deposit(10000); const m1=G.state.money; G.state.dunyo.day++; D.bankTick(); const fz=H.day('Bank omonati'); D.withdraw(99999); const m2=G.state.money;
+    return { ok: m0-m1===10000 && fz===120 && t0===0 && S.bank.dep===0 && m2===m1+10000+120 && !D.today()['Omonatga qo\\'yildi'], fz, dep:S.bank.dep }; })()`);
+  await T('kooperativ: ulush, kunlik dividend, narx o\'zgarishi, sotish', `(()=>{ const D=G.daromad, C=G.state.daromad.coop, p0=D.coopPrice(), n=D.coopBuy(50); G.state.dunyo.day++; D.coopTick(); const div=H.day('Kooperativ ulushi'), p1=D.coopPrice(); const prices=[]; for(let k=0;k<10;k++){ G.state.dunyo.day++; D.coopTick(); prices.push(D.coopPrice()); }
+    const m0=G.state.money; D.coopSell(50); return { ok: n===50 && div>0 && div<=Math.round(50*p1*0.008)+1 && new Set(prices).size>4 && prices.every(p=>p>=35&&p<=400) && C.n===0 && G.state.money>m0, p0, p1, div, prices }; })()`);
+
+  // ---------- Obro', iqtisod ----------
   await T("obro': daraja oshadi, haq +8 %, eski ishlar bilan to'qnashmaydi", `(()=>{ G.ui.close(); const D=G.daromad, l0=D.lvl('quruvchi'); G.state.daromad.rep.quruvchi=85; const l1=D.lvl('quruvchi'), m=D.mul('quruvchi'); G.ish.startNon(); const iscur=!!G.ish.cur; const b=D.start('quruvchi',true); G.ish.quit(); const ok2=D.start('quruvchi',true); const nonBlocked=(G.ish.startNon(), !G.ish.cur);
     const ax=G.T? true:true; D.quit(); return { ok: l0===0 && l1===2 && Math.abs(m-1.16)<1e-9 && iscur && !b && ok2 && nonBlocked && !D.cur, l0, l1 }; })()`);
   await T("iqtisod: bitta ishning haqi va daqiqasiga daromad me'yorda", `(()=>{ const D=G.daromad, rows=[]; let bad=[]; for(const id of D.order){ const d=D.defs[id], s=D.stat(id); if(d.cat==='pul' || !s.best || !d.mins) continue; const pm=s.best/d.mins; rows.push([id, s.best, Math.round(pm)]); if(s.best>3500 || pm>900) bad.push(id); }
