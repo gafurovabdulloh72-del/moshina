@@ -62,7 +62,7 @@ export function initSir(game) {
     setTimeout(() => { if (swarm) spawnFly(f, swarm.x, swarm.z); }, 9000); return true; };
   const updFlies = (dt, px, pz, foot) => { const m = R.mods(), wet = Wd && Wd.cur && Wd.cur.rain > 0.2;
     if (!m.fireflies || wet || (IN && IN.inside)) { if (fIM.count) { fIM.count = 0; swarm = null; } return; }
-    if (!swarm || Math.hypot(swarm.x - px, swarm.z - pz) > 70) { if (GLOW[T.biomeAt(px, pz)] && T.siteInfo(px, pz).roadD > 4) R.swarmAt(px + (Math.random() - 0.5) * 14, pz + (Math.random() - 0.5) * 14); else { fIM.count = 0; swarm = null; return; } }
+    if (!swarm || Math.hypot(swarm.x - px, swarm.z - pz) > 70) { if (GLOW[T.biomeAt(px, pz)] && T.siteInfo(px, pz).roadD > 4 && !boards.some((id) => Math.hypot(places[id].x - px, places[id].z - pz) < 90)) R.swarmAt(px + (Math.random() - 0.5) * 14, pz + (Math.random() - 0.5) * 14); else { fIM.count = 0; swarm = null; return; } }
     const t = game.time; flies.forEach((f, i) => { const k = f.on ? (0.5 + 0.5 * Math.sin(t * 2.3 + f.ph * 3)) ** 2 : 0; f.x += Math.sin(t * 0.7 + f.ph) * dt * 0.6; f.z += Math.cos(t * 0.6 + f.ph * 1.3) * dt * 0.6; fd.position.set(f.x, f.y + Math.sin(t * 1.4 + f.ph) * 0.3, f.z); fd.scale.setScalar(0.25 + 0.95 * k); fd.updateMatrix(); fIM.setMatrixAt(i, fd.matrix); });
     fIM.instanceMatrix.needsUpdate = true; };
   // tungi tovushlar: chigirtka va boyo'g'li (sintez)
@@ -163,7 +163,7 @@ export function initSir(game) {
   // ================= [E] (yaltiroq qo'ng'iz tutish) =================
   const ex0 = L.extra;
   L.extra = (offer, px, pz, p) => { if (ex0) ex0(offer, px, pz, p); if (!fIM.count) return; let b = null, bd = 1.5; for (const f of flies) { if (!f.on || Math.abs(f.y - p[1]) > 2.6) continue; const d = Math.hypot(f.x - px, f.z - pz); if (d < bd) { bd = d; b = f; } }
-    if (b) offer(bd + 0.1, "<kbd>E</kbd> Yaltiroq qo'ng'izni tutish ✨", () => pl.act('wave', 0.6, () => R.catchFly(b))); };
+    if (b) offer(bd + 1.2, "<kbd>E</kbd> Yaltiroq qo'ng'izni tutish ✨", () => pl.act('wave', 0.6, () => R.catchFly(b))); };
 
   // ================= KADR =================
   let acc = 0, lastFish = null, lastP = R.period()[0];
