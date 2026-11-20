@@ -374,7 +374,7 @@ export function buildHome(scene, site, P) {
     for (let i = 0; i <= n; i++) { const lz = FZ + 0.3 + (d - FZ + 1.5) * i / n, a = W(-2.2, lz), b = W(2.2, lz); const row = [[a[0], T.gridHeight(a[0], a[1]) + 0.07, a[1]], [b[0], T.gridHeight(b[0], b[1]) + 0.07, b[1]]]; if (prev) g.quad(prev[0], row[0], row[1], prev[1]); prev = row; }
     const m = new THREE.Mesh(g.build(), MAT.flat); m.receiveShadow = true; scene.add(m); }
   const api = {
-    x: P.x, z: P.z, y: P.y, yaw, W, lvl: -1, levels, decor, waterFx,
+    x: P.x, z: P.z, y: P.y, yaw, W, lvl: -1, levels, alt, decor, waterFx,
     door: W(0, 2.6), beds: BEDS.map(([x, z]) => W(x, z)), bedY, coop: W(13, -10.4), mail: W(3.5, FZ + 2.4), park: W(9.5, 21.5), parkYaw: yaw + Math.PI / 2, dog: W(8.8, 2.2), gate: W(0, FZ + 3),
     style: 0, // 0 — zamonaviy, 1 — an'anaviy hovli (2..4-darajada ko'rinadi; uslub.js)
     trad: () => api.style === 1 && api.lvl >= 2,

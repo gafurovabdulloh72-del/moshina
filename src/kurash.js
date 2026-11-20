@@ -176,7 +176,7 @@ export function initKurash(game) {
     hud.innerHTML = `<div class="kr-top"><div class="kr-side"><span class="kr-nm">Siz · muvozanat / kuch</span><div class="kr-bar"><i id="kr-bal" style="background:#ff6a55"></i></div><div class="kr-bar"><i id="kr-sta" style="background:#5fd38a"></i></div></div>
       <span class="kr-pts" id="kr-p1">0</span><span class="kr-t" id="kr-t">60</span><span class="kr-pts" id="kr-p2">0</span>
       <div class="kr-side r"><span class="kr-nm" id="kr-on">Raqib</span><div class="kr-bar" style="position:relative"><i id="kr-ob" style="background:linear-gradient(90deg,#f0b83a,#5fd38a)"></i><b style="position:absolute;left:32%;top:0;bottom:0;width:2px;background:#fff8"></b><b style="position:absolute;left:62%;top:0;bottom:0;width:2px;background:#fff8"></b><b style="position:absolute;left:95%;top:0;bottom:0;width:2px;background:#fff"></b></div><span class="kr-nm" style="font-size:11px;opacity:.7">raqib muvozanati: chala · yonbosh · halol</span></div></div>
-      <svg class="kr-cue" viewBox="-50 -50 100 100"><circle r="40" fill="rgba(10,14,24,.45)" stroke="rgba(255,255,255,.25)" stroke-width="6"/><circle id="kr-ring" r="40" fill="none" stroke="#ffd23a" stroke-width="6" stroke-dasharray="251.3" stroke-dashoffset="0" transform="rotate(-90)"/><g id="kr-arr"><path d="M0,-28 L14,-6 L5,-6 L5,22 L-5,22 L-5,-6 L-14,-6 Z" fill="#ffd23a"/></g><text id="kr-key" y="44" text-anchor="middle" font-size="16" font-weight="900" fill="#fff"></text></svg><div class="kr-msg" id="kr-msg"></div>`;
+      <svg class="kr-cue" viewBox="-50 -50 100 100"><circle r="40" fill="rgba(10,14,24,.45)" stroke="rgba(255,255,255,.25)" stroke-width="6"/><circle id="kr-ring" r="40" fill="none" stroke="#ffd23a" stroke-width="6" stroke-dasharray="251.3" stroke-dashoffset="0" transform="rotate(-90)"/><g id="kr-arr"><path d="M0,-28 L14,-6 L5,-6 L5,22 L-5,22 L-5,-6 L-14,-6 Z" fill="#ffd23a"/></g></svg><div class="kr-key" id="kr-key"></div><div class="kr-msg" id="kr-msg"></div>`;
     box.appendChild(hud); };
   const drawHud = () => {
     if (!hud) mkHud(); if (!hud) return; const on = K.on && K.m && game.mode === 'play'; hud.style.display = on ? 'flex' : 'none'; if (!on) return;
@@ -195,7 +195,7 @@ export function initKurash(game) {
   L.extra = (offer, px, pz, p) => { if (ex0) ex0(offer, px, pz, p); if (K.on || (game.interior && game.interior.inside)) return; const dd = Math.hypot(C.x - px, C.z - pz); if (dd < R + 2.5 && Math.abs(p[1] - C.y) < 4) offer(dd * 0.5 + 0.5, `<kbd>E</kbd> Kurash davrasi — polvonlar bilan bellashish 🤼`, () => game.ui.open('kurash')); };
   const up0 = L.update; let hinted = false;
   L.update = (dt) => { up0(dt); L.dots.push([C.x, C.z, '#e8b23a']);
-    if (K.on) { L.prompt = '<kbd>A</kbd>/<kbd>D</kbd> yonga tortish · <kbd>W</kbd> itarish · <kbd>S</kbd> tortish (hujumni qaytarish) · <kbd>Probel</kbd> otish · <kbd>X</kbd> taslim'; return; }
+    if (K.on) { L.prompt = '🤼 <kbd>A</kbd>/<kbd>D</kbd> tortish · <kbd>W</kbd> itarish · <kbd>S</kbd> qaytarish · <kbd>Probel</kbd> otish'; return; }
     if (!hinted && pl.onFoot && Math.hypot(C.x - pl.p[0], C.z - pl.p[2]) < 40) { hinted = true; toast('🤼 Karvonsaroy hovlisida kurash davrasi: polvonlar bilan bellashing — belbog\' va unvon yutib oling!', 'gold'); } };
   let cheer = 0;
   game.hooks.push((dt) => {
