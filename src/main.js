@@ -35,6 +35,7 @@ import { initShahar } from './shahar.js';
 import { initTadbir } from './tadbir.js';
 import { initHafta } from './hafta.js';
 import { initSuv } from './suv.js';
+import { initTryuk } from './tryuk.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -99,6 +100,7 @@ async function boot() {
   game.ui = new UI(game);
   initNet(game); initCoop(game); initOnlineUI(game); // onlayn rejim (faqat saytda; faylda — "mavjud emas")
   initHafta(game); // haftalik chellenj, hafta statistikasi, nishonlar ([6])
+  initTryuk(game); // havodagi tryuklar va kombo, transport rekordlari va medallar, kuboklar, «Sovrinlar» oynasi va javoni, poyga doirasi
   game.applyQuality('boot'); resize();
   game.gfx.precompile(); // barcha sheyderlar yuklash paytida tayyorlanadi
   // videokarta konteksti yo'qolsa (drayver qayta ishga tushdi va h.k.) — kutamiz va qaytganda hammasini qayta tiklaymiz
@@ -211,7 +213,7 @@ function update(dt) {
   g.fx.update(dt, g.camera);
   const surf = car.wheels[2].surf, bio = T.biomeAt(focus.x, focus.z);
   let fire = 0; if (g.site.fires) for (const f of g.site.fires) { const d = Math.hypot(f.x - focus.x, f.z - focus.z); if (d < 30) fire = Math.max(fire, 1 - d / 30); }
-  g.audio.update(dt, car, { night, surf, mute: g.mode === 'ui', dead: g.damage.wrecked || car.cut, sea: bio === T.BIOME.BEACH ? 1 : 0, snow: bio === T.BIOME.SNOW ? 1 : 0, green: bio === 0 || bio === 1 || bio === 2 || bio === 7 || bio === 8, fire, calm: !g.act, foot, eng: g.carModel.v.eng });
+  g.audio.update(dt, car, { night, surf, mute: g.mode === 'ui', dead: g.damage.wrecked || car.cut, sea: bio === T.BIOME.BEACH ? 1 : 0, snow: bio === T.BIOME.SNOW ? 1 : 0, green: bio === 0 || bio === 1 || bio === 2 || bio === 7 || bio === 8, fire, calm: !g.act, foot, eng: g.carModel.v.eng, veh: g.carModel.id });
   if (g.mode !== 'menu') g.ui.update(dt);
   for (const h of g.hooks) h(dt);
   g.input.endFrame();

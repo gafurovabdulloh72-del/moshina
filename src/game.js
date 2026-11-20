@@ -37,6 +37,7 @@ function defState() {
     hafta: { w: -1, best: null, stars: 0, paid: 0, tries: 0, s: { money: 0, km: 0, jobs: 0, wins: 0 }, hist: [], badges: {}, done: 0, weeks: 0 }, // hafta.js: joriy hafta raqami, haftalik chellenj rekordi/yulduzi/to'langan mukofot, hafta ko'rsatkichlari (km — metrda), o'tgan haftalar, nishonlar
     biz: {}, home2: {}, tetik: 100, hurmat: 0, errands: {}, soat: 0, // hayot3: biznes (biznes.js), uy kengaytmalari (uy2.js), tetiklik — charchoq va o'tgan o'yin soatlari (kun.js), hurmat va topshiriqlar (topshiriq.js)
     errCur: null, // topshiriq.js: bajarilayotgan topshiriq (tur, beruvchi, bosqich) — qayta yuklanganda davom etadi; null — yo'q
+    sovrin: { rec: {}, cups: {}, best: { n: 0, pts: 0 }, tricks: 0, tlog: {}, paid: {} }, // tryuk.js: transport rekordlari {chellenj: {transport: [natija, medal]}}, kuboklar {poyga: soni}, eng yaxshi kombo, tryuklar soni, tryuklar daftari, to'langan medal mukofotlari
     suv: { row: 0, sail: 0, glide: 0, km: 0, best: 0, fish: 0 } }; // suv.js: eshkakli/yelkanli qayiq ijaralari va deltaplan parvozlari soni, qayiqda suzilgan masofa (m), eng uzoq parvoz (m), qayiqdan tutilgan baliq
 }
 function loadState() {
@@ -419,13 +420,13 @@ export function initGame(game) {
     else if (car.onGround === 0) { if (!air) { air = { x: p[0], z: p[2], t: 0, ramp: null }; for (const j of jumps) if (Math.hypot(j.x - p[0], j.z - p[2]) < 13) air.ramp = j; } air.t += dt; }
     else if (air && car.onGround >= 2) { const d = Math.hypot(p[0] - air.x, p[2] - air.z); if (air.t > 0.45) { if (d > st.stats.jump) st.stats.jump = Math.round(d); st.stats.air += air.t;
         const coins = d > 10 ? Math.min(220, Math.round(d * 1.6 + air.t * 12)) : 0; if (coins) { addMoney(coins, 'Sakrash'); st.xp += 4; game.audio.sfx('coin'); } if (d >= 15) game.live.count('jump');
-        if (air.ramp) { if (!st.best[air.ramp.id] || d > st.best[air.ramp.id]) st.best[air.ramp.id] = Math.round(d); award(air.ramp, starsByScore(d, air.ramp.thr), `Sakrash: ${d.toFixed(0)} m · +${coins} so'm`); } else if (coins) game.toast(`Sakrash: ${d.toFixed(0)} m · havoda ${air.t.toFixed(1)} s · +${coins} so'm`, 'gold'); } air = null; }
+        if (air.ramp) { if (!st.best[air.ramp.id] || d > st.best[air.ramp.id]) st.best[air.ramp.id] = Math.round(d); if (game.onFeat) game.onFeat(air.ramp, d); award(air.ramp, starsByScore(d, air.ramp.thr), `Sakrash: ${d.toFixed(0)} m · +${coins} so'm`); } else if (coins) game.toast(`Sakrash: ${d.toFixed(0)} m · havoda ${air.t.toFixed(1)} s · +${coins} so'm`, 'gold'); } air = null; }
     // erkin drift: sirpanish burchagi va tezlik uchun ochko, tugaganda tanga
     if (!foot && !(act && act.def.type === 'drift')) { const sa = Math.abs(car.slipAng || 0) * 57.3;
       if (sa > 16 && sp > 8 && car.onGround >= 2 && car.fwd > 2) { drift.s += sa * sp * dt; drift.t = 0.8; game.driftScore = drift.s; }
       else if (drift.t > 0) { drift.t -= dt; if (drift.t <= 0) { if (drift.s > 300) { const rw = Math.min(320, Math.round(drift.s / 24)); addMoney(rw, 'Drift'); st.stats.drift += Math.round(drift.s); st.xp += 3; game.audio.sfx('coin'); game.live.count('driftc', rw); game.toast(`Drift! ${Math.round(drift.s)} ochko · +${rw} so'm`, 'gold'); } drift.s = 0; game.driftScore = 0; } } }
     // radarlar
-    if (!foot) for (const r of radars) { const dx = p[0] - r.x, dz = p[2] - r.z; if (dx * dx + dz * dz > 900) { r._s = 0; continue; } const along = dx * r.tx + dz * r.tz, lat = Math.abs(dx * r.tz - dz * r.tx); const s = along > 0 ? 1 : -1; if (r._s && s !== r._s && lat < r.hw + 2.5) { const v = Math.round(kmh); const nb = !st.best[r.id] || v > st.best[r.id]; if (nb) st.best[r.id] = v; const rs = starsByScore(v, r.thr); if (rs > 0 || (nb && v >= r.thr[0] * 0.75)) award(r, rs, `📸 ${r.name}: ${v} km/soat`); } r._s = s; }
+    if (!foot) for (const r of radars) { const dx = p[0] - r.x, dz = p[2] - r.z; if (dx * dx + dz * dz > 900) { r._s = 0; continue; } const along = dx * r.tx + dz * r.tz, lat = Math.abs(dx * r.tz - dz * r.tx); const s = along > 0 ? 1 : -1; if (r._s && s !== r._s && lat < r.hw + 2.5) { const v = Math.round(kmh); const nb = !st.best[r.id] || v > st.best[r.id]; if (nb) st.best[r.id] = v; if (game.onFeat) game.onFeat(r, v); const rs = starsByScore(v, r.thr); if (rs > 0 || (nb && v >= r.thr[0] * 0.75)) award(r, rs, `📸 ${r.name}: ${v} km/soat`); } r._s = s; }
     // tangalar va sandiqlar
     { const im = pick.coinIM, cs = pick.coins, t = game.time; let ch = false;
       for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (coinSet.has(i)) { if (!c.h) { c.h = true; placeInst(im, i, c, 0, 0.001); ch = true; } continue; } const dx = c.x - p[0], dz = c.z - p[2]; if (dx > 260 || dx < -260 || dz > 260 || dz < -260) continue;

@@ -229,7 +229,7 @@ Bezaklar (kulbadan boshlab): Gulzor 500, Bayroq ustuni 400, Arg'imchoq 600, Yo'l
 - Qattiq narsaga urilganda korpus **o'sha joyidan ezilib pachoqlanadi**, qismlar (bamper, kapot, eshik, oyna…) uzilib tushadi, balon yorilishi mumkin.
 - Old tomondan urilish dvigatelga zarar beradi: quvvat kamayadi, dvigatel holati 46 % dan pastga tushsa motor vaqti-vaqti bilan o'chib qoladi, 0 % da transport yurmaydi — **T** bilan evakuator chaqiriladi.
 - Shikast har bir transportda alohida saqlanadi. Velosiped buzilmaydi, lekin ikki g'ildirakli transportda qattiq urilsa haydovchi yiqiladi.
-- **Ustaxona** (5 ta manzilda): ta'mir, bo'yoq (8 rang + sovrinli oltin), tyuning va transport saloni.
+- **Ustaxona** (5 ta manzilda): ta'mir, bo'yoq (8 rang + sovrinli oltin va «Chempion»), tyuning va transport saloni.
 - **Tyuning** (barcha transportga ta'sir qiladi): Dvigatel (4 bosqich), Nitro (3), Shinalar (3), Osma (3), Zirh (3), Tormoz (2).
 
 ### 2.8. Mukofotlar
@@ -238,6 +238,10 @@ Bezaklar (kulbadan boshlab): Gulzor 500, Bayroq ustuni 400, Arg'imchoq 600, Yo'l
 - **Drift:** qo'l tormozi (Probel) bilan sirpanish ochko yig'adi, 320 so'mgacha.
 - **Yaxshi ishlar:** pul va savob.
 - Yo'llarda tangalar va sandiqlar, har bir yangi manzil uchun mukofot.
+- **Havoda tryuklar va kombo** (`tryuk.js`): sakrash paytida havoda **W/S** — salto (oldinga/orqaga), **A/D** — dumalash, **Probel + A/D** — gir (180°/360°/540°…). Uchishdan oldin bosib turilgan tugma hisoblanmaydi — havoda qo'yib yuborib qayta bosing (gaz bosib sakraganda mashina o'zi ag'darilib ketmaydi). To'rt g'ildirakda tik qo'nsangiz ekranda tryuk nomi va ochko chiqadi; 4 soniya ichida keyingi tryuk — kombo ×2, ×3 … ×8. Kombo tugaganda ochko pulga aylanadi (ko'pi bilan 600 so'm), urilsangiz yoki ag'darilsangiz — kuyadi. Havodagi boshqaruv faqat o'yin qatlamida, `physics.js` o'zgarmagan.
+- **Har transportning rekordi va toifa medali:** har chellenjda (poyga, drift, sindirish, radar, tramplin, buyurtmalar) har transport uchun alohida rekord. Me'yor transportga moslanadi (eng yuqori tezlik va og'irlikka qarab, toifalar: ikki g'ildirakli, yengil, og'ir, sport): avtobusda oltin olish osonroq, superkarda qiyinroq. 🥉/🥈/🥇 birinchi marta olinganda 40/70/120 so'm.
+- **G'olib kubogi:** poygada 1-o'rin — kubok (har poygada birinchisi +300 so'm). 15 ta kubok yig'sangiz, ustaxonada «Chempion» bo'yog'i ochiladi.
+- **Sovrinlar** oynasi (pauza menyusi va telefon ilovasi): kuboklar, har transportning medal va rekordlari, tryuklar daftari, eng uzun kombo. Uy hovlisida (old to'siq yonida, o'ng tomonda) **sovrinlar javoni**: 5 kubok, 6 medal, 4 lavha — erishilmaganlari kulrang.
 
 ### 2.9. Grafika va ovoz
 
@@ -246,6 +250,8 @@ Bezaklar (kulbadan boshlab): Gulzor 500, Bayroq ustuni 400, Arg'imchoq 600, Yo'l
 - Yer teksturasi shovqini, suzuvchi bulut soyalari, shamolda tebranadigan o't va daraxtlar, tungi faralar va chiroqlar, tunda yaltiroq qo'ng'izlar.
 - 3 ta sifat pog'onasi (Sozlamalar): Past (tez), O'rta, Yuqori (eng chiroyli). O'yin kompyuter kuchiga qarab aniqlikni o'zi moslaydi ([4.8](#48-moslashuvchan-grafika)).
 - Ovoz va musiqa to'liq WebAudio'da sintez qilinadi — tayyor (birovning) yozuvi yo'q.
+- Har transportning o'z dvigatel ovozi (12 xil xarakter, `audio.js` → `ENGINES`): skuter «pat-pat», traktor va yuk mashinasi dizel «duk-duk», avtobus past g'uvillash va to'xtaganda havo tormozi «pshsh», muskul-kar yo'g'on gurillash, superkar va bolid chinqiriq, karting arra kabi g'uvillaydi. Transport almashganda faqat generator turlari va sozlamalari almashadi — yangi ovoz tuguni yaratilmaydi.
+- Poyga va vaqtli chellenjlarda doira jo'r bo'ladi (6/8 usul): poyga oxiriga va 1-o'ringa yaqinlashgan sari tezlashadi, zil va qo'shimcha bum qo'shiladi, oxirgi darvozada yurak urishidek zarb. Musiqa balandligi va **N** (musiqa o'chirish) ga bo'ysunadi, chellenj tugashi bilan to'xtaydi.
 
 ### 2.10. "Kasb Egalari" reklamasi
 
@@ -439,7 +445,8 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `net.js`, `coop.js`, `onlineui.js` | onlayn rejim: kirish, bulutli saqlov, reyting; birga o'ynash xonasi; onlayn oynalar ([13](#13-onlayn-rejim)) |
 | `camera.js` | kuzatuvchi kamera: transport, piyoda, durbin |
 | `fx.js` | zarrachalar (chang, tutun, uchqun), parchalar, shina izlari |
-| `audio.js` | sintez qilingan ovoz, dvigatel, generativ musiqa |
+| `audio.js` | sintez qilingan ovoz, dvigatel (transportga qarab xarakter — `ENGINES`, `engineOf`), generativ musiqa, poyga doirasi (`raceK`) |
+| `tryuk.js` | havodagi tryuklar va kombo (havoda boshqaruv shu yerda), har transportning rekordi va medali, g'olib kuboklari, «Sovrinlar» oynasi, uydagi sovrinlar javoni, doira jadalligi |
 | `controls.js` | boshqaruv jadvali (`ACTIONS`): har bir klavisha nima qiladi, qachon ishlaydi va ekranda qanday tugma bo'lib chiqadi — klaviatura va ekran tugmalari uchun yagona manba |
 | `input.js` | klaviatura, geympad, sensorli ekran | (+ virtual joystik qiymatlari `touch.jx/jy`)
 | `ui.js` | HUD, mini-xarita, menyu va barcha oynalar (o'zbekcha) |
@@ -491,7 +498,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 `localStorage`, kalit `safar_save_v2`. Yuklashda saqlangan holat standart holat (`defState()` — `game.js`) ustiga qo'shiladi, shuning uchun **yangi maydon qo'shilganda eski saqlovlar buzilmaydi** — faqat `defState()` ga standart qiymat yozish kerak. v1 saqlovlari ham ochiladi.
 
-Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `errCur` (bajarilayotgan topshiriq: tur, beruvchi, bosqich — qayta yuklanganda davom etadi; tiklab bo'lmasa xabar chiqadi va beruvchi uni qayta taklif qiladi; null — yo'q), `soat` (o'tgan o'yin soatlari), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `suv {row, sail, glide, km, best, fish}` (qayiq ijaralari, parvozlar, suzilgan m, eng uzoq parvoz m, qayiqdan baliq), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
+Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `errCur` (bajarilayotgan topshiriq: tur, beruvchi, bosqich — qayta yuklanganda davom etadi; tiklab bo'lmasa xabar chiqadi va beruvchi uni qayta taklif qiladi; null — yo'q), `soat` (o'tgan o'yin soatlari), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `suv {row, sail, glide, km, best, fish}` (qayiq ijaralari, parvozlar, suzilgan m, eng uzoq parvoz m, qayiqdan baliq), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `sovrin {rec, cups, best {n, pts}, tricks, tlog, paid}` (transport rekordlari `{chellenj: {transport: [natija, medal]}}`, kuboklar `{poyga: soni}`, eng uzun kombo, tryuklar soni va daftari, to'langan medal mukofotlari), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
 
 Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
@@ -511,6 +518,7 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `G.dunyo.set('yomgir' \| 'dovul' \| 'qor' \| 'tuman' \| 'bulut' \| 'ochiq' \| null)` | ob-havoni majburlash (null — tabiiy), darhol qo'llanadi; `G.dunyo.forecast()`, `G.car.wetGrip` |
 | `G.suv` (`enter(o, bepul)`, `off()`, `auto = [W/S, A/D]`, `windSet(burchak, m/s)`, `land()`), `G.boat`, `G.sailboat`, `G.glider` | qayiq/deltaplan: o'tirish, qo'lda boshqarish, shamolni qotirish |
 | `G.tadbir.set('toy' \| 'bozor' \| 'navruz' \| null)` | tadbirni vaqtdan qat'i nazar yoqish; `G.tadbir.upcoming()`, `G.shahar.convoy(true)` |
+| `G.tryuk._air(p, r, y, t, toza)` | havodagi aylanishlar (radian) bilan qo'nishni o'tkazadi; `G.tryuk.combo`, `.air`, `.record(chellenj, natija, transport)`, `.cup(chellenj)`, `.counts()`, `.refreshShelf()`, `.shelfAt()`; `G.audio.engName`, `G.audio.raceK`, `G.audio.doira` |
 
 ### 4.11. Qanday qo'shiladi
 
@@ -541,7 +549,8 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `node tools/touch.mjs [papka]` | sensorli ekran: iPhone 13 / Pixel 7 (tik va yotiq) — HUD va oynalar skrinshoti, 44 px dan kichik, bir-birini to'sgan, ekrandan chiqqan tugmalar ro'yxati (`report.json`). Avval build | ~3 daq |
 | `npm run test:life3` | kundalik hayot 3: tetiklik va uyqu, ish jadvali bonusi, «Bugungi reja», biznes (sotib olish, daromad, kassa, tovar, ishchi, daraja, mijozlar, telefon), uy kengaytmalari va hovli, garaj, haydovchi ko'rinishi, 10 tur topshiriq, saqlov va qayta yuklash, bajarilayotgan topshiriqning saqlanishi va tiklanishi (tiklab bo'lmasa — xabar) | ~4 daq |
 | `npm run test:suv` | suv va havo: qayiq ijarasi va suzishi, qirg'oqqa tiralib quruqlikka chiqmasligi, tushish, qayta o'tirish va iskalaga qaytish, qayiqdan baliq ovi, yelkanli qayiq tezligi shamol burchagiga bog'liqligi va burilib o'tish (tack), HUD shamol o'qi, Cho'qqidan deltaplan (asta pastlash, W/S, havoda tushib bo'lmasligi, NaN'siz qo'nish va mukofot, qattiq/yumshoq qo'nish), saqlov. `SHOTS=0` — skrinshotsiz | ~3 daq |
-| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta, life3, suv) | ~8–10 daq |
+| `npm run test:tryuk` | tryuklar (salto, gir, qo'sh orqaga salto), kombo ko'paytuvchisi, kuyishi va pulga aylanishi; haqiqiy fizikada gir va havodagi W/S bilan salto, bosib turilgan gaz ag'darmasligi; 12 xil dvigatel ovozi; doira poygada boshlanishi, oxirgi darvozada eng jadal, tugaganda va musiqa o'chiq bo'lsa jim; transport medali (avtobus > jip > bolid bir xil vaqtda), kubok, «Chempion» bo'yog'i, «Sovrinlar» oynasi va telefon ilovasi, javon, saqlov va eski saqlov. `SHOTS=1` — skrinshotlar | ~2 daq |
+| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta, life3, suv, tryuk) | ~8–10 daq |
 
 Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuterda Google Chrome o'rnatilgan bo'lishi kerak). Xato bo'lsa yoki `TEST … FAIL` satri chiqsa — chiqish kodi 1.
 
