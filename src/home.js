@@ -74,13 +74,13 @@ export function buildHome(scene, site, P) {
     }
   };
   // shu daraja/bezak qurilayotganda qo'shilgan mo'ri va chiroqlarni belgilash (faqat ko'rinayotgan daraja tutaydi)
-  const tagLv = (c0, l0, lv) => { for (let i = c0; i < BK.CHIMNEYS.length; i++) BK.CHIMNEYS[i].lv = lv; for (let i = l0; i < BK.LAMPS.length; i++) BK.LAMPS[i].lv = lv; };
+  const tagLv = (c0, l0, lv, sty) => { for (let i = c0; i < BK.CHIMNEYS.length; i++) { BK.CHIMNEYS[i].lv = lv; if (sty != null) BK.CHIMNEYS[i].sty = sty; } for (let i = l0; i < BK.LAMPS.length; i++) BK.LAMPS[i].lv = lv; };
   // to'qnashuvlar: balandligi joydagi yerga qarab
   const seg = (list, a, b, c2, d, h = 2.2, r = 0.25) => { const p1 = W(a, b), p2 = W(c2, d), y1 = hy(a, b), y2 = hy(c2, d); const o = COL.addSeg(p1[0], p1[1], p2[0], p2[1], r, P.y + Math.min(y1, y2) - 2, P.y + Math.max(y1, y2) + h); o.dead = true; list.push(o); };
   const box = (list, lx, lz, hx, hz, h = 8) => { seg(list, lx - hx, lz - hz, lx + hx, lz - hz, h); seg(list, lx + hx, lz - hz, lx + hx, lz + hz, h); seg(list, lx + hx, lz + hz, lx - hx, lz + hz, h); seg(list, lx - hx, lz + hz, lx - hx, lz - hz, h); };
   const circ = (list, lx, lz, r, h = 4) => { const p = W(lx, lz), y = hy(lx, lz); const o = COL.addCircle(p[0], p[1], r, P.y + y - 2, P.y + y + h); o.dead = true; list.push(o); };
   // chiroq: bitta umumiy PointLight eng yaqinini oladi (main.js: kuch = power*60) — past chiroqlar kuchsiz, aks holda o't neon bo'lib yonadi
-  const light = (lv, lx, ly, lz, hex = 0xffb070, power = 0.3, decor) => { const p = W(lx, lz); const l = { x: p[0], y: P.y + hy(lx, lz) + ly, z: p[1], hex, power, on: false, lv, decor }; lights.push(l); site.lights.push(l); };
+  const light = (lv, lx, ly, lz, hex = 0xffb070, power = 0.3, decor, sty) => { const p = W(lx, lz); const l = { x: p[0], y: P.y + hy(lx, lz) + ly, z: p[1], hex, power, on: false, lv, decor, sty }; lights.push(l); site.lights.push(l); };
   const finish = (g, gl) => { const grp = new THREE.Group(); const m = new THREE.Mesh(g.build(), MAT.flat); m.castShadow = true; m.receiveShadow = true; grp.add(m); if (gl.count) grp.add(new THREE.Mesh(withMask(gl.build()), glowMat())); grp.visible = false; scene.add(grp); return grp; };
   const glow = (g, gl, fn) => { gl.push(); gl.m = g.m.slice(); gl.flip = g.flip; fn(gl); gl.pop(); };
 
@@ -128,6 +128,10 @@ export function buildHome(scene, site, P) {
       const gy = gnd(x, z); posts.push([x, z]);
       g.color(o.sill).box(x, gy - 0.05, z, 0.46, 0.6, 0.46); g.box(x, gy + 0.3, z, 0.36, 0.1, 0.36);
       if (white) { g.color(o.band).push().translate(x, 0, z).cyl(10, 0.16, 0.13, gy + 0.35, y1 - 0.14, { shade: 0.08 }).pop(); g.box(x, y1 - 0.08, z, 0.44, 0.14, 0.44); }
+      else if (o.carved) { // o'ymakor ustun: ko'zasimon asos, sakkiz qirrali tana, halqalar, keng bosh (sarlavha)
+        g.color(o.post).push().translate(x, 0, z); g.cyl(8, 0.15, 0.19, gy + 0.35, gy + 0.62, { shade: 0.1 }); g.cyl(8, 0.19, 0.1, gy + 0.62, gy + 0.95, { shade: 0.1 }); g.cyl(8, 0.1, 0.12, gy + 0.95, y1 - 0.42, { shade: 0.12 });
+        g.color(o.postD); for (const k of [0.3, 0.55, 0.78]) { const yy = gy + 0.95 + (y1 - 0.42 - gy - 0.95) * k; g.cyl(8, 0.135, 0.135, yy - 0.03, yy + 0.03); } g.cyl(8, 0.12, 0.2, y1 - 0.42, y1 - 0.2, { shade: 0.1 }); g.pop();
+        g.color(o.postD).box(x, y1 - 0.12, z, 0.62, 0.16, 0.34); g.color(o.post).box(x, y1 - 0.24, z, 0.46, 0.08, 0.28); }
       else { g.color(o.post).box(x, (gy + 0.35 + y1) / 2, z, 0.22, y1 - gy - 0.35, 0.22); g.color(o.postD).box(x, y1 - 0.1, z, 0.34, 0.12, 0.34); g.box(x, y1 - 0.28, z, 0.28, 0.1, 0.28); g.box(x, gy + 0.62, z, 0.28, 0.12, 0.28); g.box(x, y1 - 0.06, z, 0.24, 0.14, 0.9); }
     };
     // ayvon (1 qavatli): old tomonda yengil qiya tom, ustunlar
@@ -166,9 +170,14 @@ export function buildHome(scene, site, P) {
       for (const sz of [-1, 1]) g.box(0, y0 - 0.1, sz * (d / 2 + ov + 0.06), w + ov * 2 + 0.1, 0.12, 0.13);
       for (const sx of [-1, 1]) g.box(sx * (w / 2 + ov + 0.06), y0 - 0.1, 0, 0.13, 0.12, d + ov * 2 + 0.1);
       g.color(o.roofC).hip(w, d, rise, y0 + 0.1, ov - 0.04, 0.22); roofY = (z) => y0 + 0.1 + rise * (1 - Math.abs(z) / (d / 2 + ov)) * 0.95;
+    } else if (o.roof === 'flat') { // an'anaviy tekis tom: loy suvoq, chiqib turgan to'sin uchlari (vassa), past parapet
+      g.color(o.band).box(0, y0 - 0.02, 0, w + 0.7, 0.24, d + 0.7); g.color(o.roofC).box(0, y0 + 0.17, 0, w + 0.56, 0.14, d + 0.56);
+      g.color(o.post); for (let x = -w / 2 + 0.3; x <= w / 2 - 0.25; x += 0.55) for (const sz of [-1, 1]) g.box(x, y0 - 0.2, sz * (d / 2 + 0.28), 0.13, 0.13, 0.42);
+      g.color(o.band); for (const sz of [-1, 1]) g.box(0, y0 + 0.38, sz * (d / 2 + 0.22), w + 0.56, 0.3, 0.12); for (const sx of [-1, 1]) g.box(sx * (w / 2 + 0.22), y0 + 0.38, 0, 0.12, 0.3, d + 0.56);
+      roofY = () => y0 + 0.25;
     } else roofY = gableRoof(g, w, d, d * 0.34, y0, { wall: o.wall, roof: o.roofC, rib: o.rib, fascia: o.fascia, gutter: gut, ovF: o.ayvon || o.balRoof ? 0.25 : 0.65 });
     // tarnov quvurlari (old burchaklarda, yergacha)
-    g.color(gut); for (const sx of [-1, 1]) { const x = sx * (w / 2 + 0.16), z = zf + 0.16, b = gnd(x, z) + 0.05; g.box(x, (y0 + b) / 2, z, 0.1, y0 - b, 0.1); g.box(x, b + 0.04, z + 0.14, 0.1, 0.08, 0.3); }
+    if (!o.carved) { g.color(gut); for (const sx of [-1, 1]) { const x = sx * (w / 2 + 0.16), z = zf + 0.16, b = gnd(x, z) + 0.05; g.box(x, (y0 + b) / 2, z, 0.1, y0 - b, 0.1); g.box(x, b + 0.04, z + 0.14, 0.1, 0.08, 0.3); } }
     if (o.chimney) { const cx = w * 0.28, cz = -d * 0.16, yr = roofY(cz); g.color(PAL.stoneD).box(cx, yr + 0.5, cz, 0.7, 1.9, 0.7); g.color(0x5a5650).box(cx, yr + 1.5, cz, 0.86, 0.12, 0.86); const p = BK.wpt(g, cx, yr + 1.6, cz); BK.CHIMNEYS.push({ x: p[0], y: p[1], z: p[2], ph: BK.hashP(p[0], p[2], 4) * 100 }); }
     return { hx: w / 2 + 0.3, hz: d / 2 + 0.3, top: y0 + 3, posts, front: zf + (o.ayvon || o.balcony || 0) };
   };
@@ -310,21 +319,30 @@ export function buildHome(scene, site, P) {
     light(lv, 0, base - hy(0, front - 0.6) + 2.5, front - 0.6, 0xffb070, 0.22);
     return { g, gl, cols, c0, l0, base };
   };
-  { const h = mkHouse(2, 721, { w: 9, d: 7, fl: 1, fh: 3.1, roof: 'gable', chimney: true, ayvon: 2.4, wall: 0xeedfc4, roofC: PAL.roof[0], rib: 0x8e3a28, trim: 0x3d74a6, shutter: 0x3d74a6, door: 0x8a5a36, doorD: 0x6a4228, sill: 0xb9b2a4, band: 0xe2d2b4, fascia: 0x6e4a30, post: 0x8a5a36, postD: 0x6e4a30 }, -5.2, ST.wood); tagLv(h.c0, h.l0, 2); levels.push({ grp: finish(h.g, h.gl), cols: h.cols }); }
-  { const h = mkHouse(3, 731, { w: 10.5, d: 8, fl: 2, fh: 3.0, roof: 'gable', balcony: 2.0, balRoof: true, chimney: true, wall: 0xf3e7d0, roofC: 0x8e3b2e, rib: 0x6e2a22, trim: 0x7a4e2e, door: 0x7a4a2a, doorD: 0x5a3420, sill: 0xb9b2a4, band: 0xe6d6ba, fascia: 0x5a3a24, post: 0x7a4e2e, postD: 0x5a3a24, slabC: 0xd8cfc0, rail: 0x6e4a30 }, -6.4, ST.stone);
-    for (const [x, z] of [[-3.4, 13.4], [3.4, 13.4]]) { on(h.g, x, z, 0, (q) => BK.lampPost(q, h.gl, 0, 0)); circ(h.cols, x, z, 0.15, 4); light(3, x + 0.7, 3.8, z, 0xffb070, 0.28); }
-    tagLv(h.c0, h.l0, 3); levels.push({ grp: finish(h.g, h.gl), cols: h.cols }); }
-  { const h = mkHouse(4, 741, { w: 14, d: 9, fl: 2, fh: 3.2, roof: 'hip', balcony: 2.2, villa: true, chimney: true, wall: 0xfaf6ee, roofC: 0x3a6ea8, trim: 0xe4ded2, door: 0x8a5a36, doorD: 0x6a4228, sill: 0xd8d2c6, band: 0xece6da, fascia: 0xece6da, post: 0xf4f0e8, postD: 0xdcd6ca, slabC: 0xe8e2d6, rail: 0xf2eee6 }, -7, ST.villa), g = h.g, gl = h.gl;
-    pad(g, gl, -12, -9.6, Math.PI / 2, 3.2, 3.5, 0.5, (q, ql, gnd) => house(q, ql, { w: 6, d: 6.6, fl: 1, fh: 3.2, roof: 'hip', villa: true, wall: 0xfaf6ee, roofC: 0x3a6ea8, trim: 0xe4ded2, door: 0x8a5a36, doorD: 0x6a4228, sill: 0xd8d2c6, band: 0xece6da, fascia: 0xece6da }, gnd)); box(h.cols, -12, -9.6, 3.6, 3.3, 7);
+  // An'anaviy uslub (uslub.js, sty=1): paxsa devor, firuza eshik-deraza, o'ymakor ustunli ayvon, tekis loy tom, paxsa hovli devori — xuddi shu joylashuv
+  const TRAD = { roof: 'flat', chimney: false, carved: true, wall: 0xdcc39a, band: 0xc9ab80, roofC: 0xb89468, rib: 0x8a6a44, trim: 0x1f9a96, shutter: 0x1f9a96, door: 0x1c8c8a, doorD: 0x14706e, sill: 0xc4a77c, fascia: 0x6e4a30, post: 0x8a5a36, postD: 0x5e3a22, slabC: 0xc9ab80, rail: 0x7a4e2e };
+  ST.trad = { h: 2.3, plinth: 0xb8996c, wall: 0xd7b98c, cap: 0xc2a072, roof: 0xb08a5e, rib: 0x8a6a44, leaf: 0x1f9a96, leafD: 0x14706e, tile: [0xc9a878, 0xbf9e6e, 0xd2b282], grout: 0x9a8058 };
+  const mkLevels = (sty) => { const out = [], sd = sty ? 100 : 0, S = (o) => (sty ? Object.assign({}, o, TRAD, { villa: false, balRoof: o.balRoof }) : o), lt0 = lights.length;
+  { const h = mkHouse(2, 721 + sd, S({ w: 9, d: 7, fl: 1, fh: 3.1, roof: 'gable', chimney: true, ayvon: 2.4, wall: 0xeedfc4, roofC: PAL.roof[0], rib: 0x8e3a28, trim: 0x3d74a6, shutter: 0x3d74a6, door: 0x8a5a36, doorD: 0x6a4228, sill: 0xb9b2a4, band: 0xe2d2b4, fascia: 0x6e4a30, post: 0x8a5a36, postD: 0x6e4a30 }), -5.2, sty ? ST.trad : ST.wood); tagLv(h.c0, h.l0, 2, sty); out.push({ grp: finish(h.g, h.gl), cols: h.cols }); }
+  { const h = mkHouse(3, 731 + sd, S({ w: 10.5, d: 8, fl: 2, fh: 3.0, roof: 'gable', balcony: 2.0, balRoof: true, chimney: true, wall: 0xf3e7d0, roofC: 0x8e3b2e, rib: 0x6e2a22, trim: 0x7a4e2e, door: 0x7a4a2a, doorD: 0x5a3420, sill: 0xb9b2a4, band: 0xe6d6ba, fascia: 0x5a3a24, post: 0x7a4e2e, postD: 0x5a3a24, slabC: 0xd8cfc0, rail: 0x6e4a30 }), -6.4, sty ? ST.trad : ST.stone);
+    for (const [x, z] of [[-3.4, 13.4], [3.4, 13.4]]) { on(h.g, x, z, 0, (q) => BK.lampPost(q, h.gl, 0, 0)); circ(h.cols, x, z, 0.15, 4); light(3, x + 0.7, 3.8, z, 0xffb070, 0.28, null, sty); }
+    tagLv(h.c0, h.l0, 3, sty); out.push({ grp: finish(h.g, h.gl), cols: h.cols }); }
+  { const h = mkHouse(4, 741 + sd, S({ w: 14, d: 9, fl: 2, fh: 3.2, roof: 'hip', balcony: 2.2, villa: true, chimney: true, wall: 0xfaf6ee, roofC: 0x3a6ea8, trim: 0xe4ded2, door: 0x8a5a36, doorD: 0x6a4228, sill: 0xd8d2c6, band: 0xece6da, fascia: 0xece6da, post: 0xf4f0e8, postD: 0xdcd6ca, slabC: 0xe8e2d6, rail: 0xf2eee6 }), -7, sty ? ST.trad : ST.villa), g = h.g, gl = h.gl;
+    pad(g, gl, -12, -9.6, Math.PI / 2, 3.2, 3.5, 0.5, (q, ql, gnd) => house(q, ql, S({ w: 6, d: 6.6, fl: 1, fh: 3.2, roof: 'hip', villa: true, wall: 0xfaf6ee, roofC: 0x3a6ea8, trim: 0xe4ded2, door: 0x8a5a36, doorD: 0x6a4228, sill: 0xd8d2c6, band: 0xece6da, fascia: 0xece6da }), gnd)); box(h.cols, -12, -9.6, 3.6, 3.3, 7);
     // hovuz: tosh supa (yer ostiga kiradi), suv, narvon, shezlong
     let pb; { const [lo, hi] = span(12.3, -4.4, 3.4, 3.9); pb = hi + 0.6; g.push().translate(12.3, pb, -4.4); const dy = (lo - 0.5 - pb) / 2, dh = pb - lo + 0.5; g.color(PAL.stone); for (const sz of [-1, 1]) g.box(0, dy, sz * 3.65, 7.2, dh, 0.9); for (const sx of [-1, 1]) g.box(sx * 3.15, dy, 0, 0.9, dh, 6.4); g.color(0x5fb8d8).box(0, hi - pb + 0.03, 0, 5.4, 0.04, 6.4); /* hovuz tubi: yer ustida (yer qazilmaydi) */ g.color(0xe6e0d4); for (const sz of [-1, 1]) g.box(0, 0.06, sz * 3.45, 6.6, 0.12, 0.5); for (const sx of [-1, 1]) g.box(sx * 2.95, 0.06, 0, 0.5, 0.12, 7.4); g.color(0xdfe3ea); for (const sx of [-0.3, 0.3]) g.push().translate(-2.9 + sx * 0, 0, 3.0 + sx).cyl(6, 0.04, 0.04, -0.2, 0.9).pop(); g.pop(); }
     box(h.cols, 12.3, -4.4, 3.4, 3.9, 0.9);
     on(g, 8.2, -6, 0, (q) => { q.color(0xf2ead8).box(0, 0.32, 0, 0.7, 0.1, 1.9); q.box(0, 0.6, -0.8, 0.7, 0.5, 0.1, { oz: 0.25 }); q.color(PAL.metalD); for (const sx of [-1, 1]) for (const sz of [-1, 1]) q.box(sx * 0.3, 0.14, sz * 0.8, 0.05, 0.28, 0.05); q.color(0xe2572f).box(0, 0.4, 0.2, 0.62, 0.06, 1.1); });
-    for (const [x, z] of [[-3.4, 13.4], [3.4, 13.4], [-3.4, 6], [3.4, 6]]) { on(g, x, z, 0, (q) => BK.lampPost(q, gl, 0, 0)); circ(h.cols, x, z, 0.15, 4); light(4, x + 0.7, 3.8, z, 0xffb070, 0.28); }
+    for (const [x, z] of [[-3.4, 13.4], [3.4, 13.4], [-3.4, 6], [3.4, 6]]) { on(g, x, z, 0, (q) => BK.lampPost(q, gl, 0, 0)); circ(h.cols, x, z, 0.15, 4); light(4, x + 0.7, 3.8, z, 0xffb070, 0.28, null, sty); }
     for (const [x, z] of [[15.2, -12.6], [-15.5, 12.8], [15.6, 2.5]]) on(g, x, z, 0, (q) => BK.tree(q, 0, 0, 0.9, 0x2f7a52, 1));
-    tagLv(h.c0, h.l0, 4); const grp4 = finish(g, gl); levels.push({ grp: grp4, cols: h.cols });
+    tagLv(h.c0, h.l0, 4, sty); const grp4 = finish(g, gl); out.push({ grp: grp4, cols: h.cols });
     // hovuz suvi: to'lqinlanadigan yuza (osmon aksi bilan)
     { const ws = waterSurface(5.4, 6.4), q = W(12.3, -4.4); ws.position.set(q[0], P.y + pb - 0.08, q[1]); ws.rotation.y = yaw; grp4.add(ws); } }
+    for (let i = lt0; i < lights.length; i++) if (lights[i].sty == null) lights[i].sty = sty; // uslub bo'yicha yoqiladi
+    return out; };
+  for (const L of mkLevels(0)) levels.push(L);
+  const alt = []; // an'anaviy uslubdagi 2..4-darajalar — birinchi tanlanganda quriladi (yuklash vaqtiga ta'sir qilmaydi)
+  const altLevels = () => { if (!alt.length) { const L = mkLevels(1); alt[2] = L[0]; alt[3] = L[1]; alt[4] = L[2]; } return alt; };
   // --- bezaklar ---
   const decor = {};
   const mkDecor = (id, seed, fn) => { const [g, gl] = mkGB(seed), cols = [], l0 = BK.LAMPS.length; fn(g, gl, cols); tagLv(BK.CHIMNEYS.length, l0, 'd'); decor[id] = { grp: finish(g, gl), cols }; };
@@ -358,7 +376,13 @@ export function buildHome(scene, site, P) {
   const api = {
     x: P.x, z: P.z, y: P.y, yaw, W, lvl: -1, levels, decor, waterFx,
     door: W(0, 2.6), beds: BEDS.map(([x, z]) => W(x, z)), bedY, coop: W(13, -10.4), mail: W(3.5, FZ + 2.4), park: W(9.5, 21.5), parkYaw: yaw + Math.PI / 2, dog: W(8.8, 2.2), gate: W(0, FZ + 3),
-    setLevel(n) { api.lvl = n; levels.forEach((L, i) => { L.grp.visible = i === n; for (const o of L.cols) o.dead = i !== n; }); for (const l of lights) if (!l.decor) l.on = l.lv === n; for (const f of fires) { const on = f.lv === n, k = site.fires.indexOf(f); if (on && k < 0) site.fires.push(f); else if (!on && k >= 0) site.fires.splice(k, 1); } },
+    style: 0, // 0 — zamonaviy, 1 — an'anaviy hovli (2..4-darajada ko'rinadi; uslub.js)
+    trad: () => api.style === 1 && api.lvl >= 2,
+    setStyle(v) { api.style = v === 1 ? 1 : 0; if (api.lvl >= 0) api.setLevel(api.lvl); },
+    setLevel(n) { api.lvl = n; const tr = api.style === 1 && n >= 2; if (tr) altLevels();
+      levels.forEach((L, i) => { const on = i === n && !tr; L.grp.visible = on; for (const o of L.cols) o.dead = !on; });
+      alt.forEach((L, i) => { if (!L) return; const on = tr && i === n; L.grp.visible = on; for (const o of L.cols) o.dead = !on; });
+      for (const l of lights) if (!l.decor) l.on = l.lv === n && (l.sty == null || (l.sty === 1) === tr); for (const f of fires) { const on = f.lv === n, k = site.fires.indexOf(f); if (on && k < 0) site.fires.push(f); else if (!on && k >= 0) site.fires.splice(k, 1); } },
     setDecor(id, on) { const d = decor[id]; if (!d) return; d.grp.visible = on; for (const o of d.cols) o.dead = !on; for (const l of lights) if (l.decor === id) l.on = on; },
   };
   return api;

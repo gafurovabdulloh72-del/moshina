@@ -8,13 +8,17 @@ import * as THREE from 'three';
 import { Peer } from 'peerjs';
 import * as T from './terrain.js';
 import { buildVehicle, syncWheels, vehById } from './vehicles.js';
-import { makeRig, makeRider, poseRig, setHat, HAT_LIST, HAT_SHOP } from './rig.js';
+import { makeRig, makeRider, poseRig, poseRider, setHat, HAT_LIST, HAT_SHOP } from './rig.js';
 import { lookRigOpts, STYLES, BEARDS, MENU } from './hayot2.js';
 import { GB, MAT } from './geo.js';
 import { JOBS } from './ish.js';
 import { YARD } from './uy2.js';
 import { fmtTime } from './game.js';
 import { HOME_LEVELS, DECOR } from './home.js';
+import { buildRowBoat, buildSailBoat } from './qayiq.js';
+import { buildGlider } from './deltaplan.js';
+import { RIDE_POSE } from './suv.js';
+import { paintModel, finishId, finishIndex } from './boyoq.js';
 
 export const MAX_PLAYERS = 4;
 const RATE_MOVE = 1 / 20, RATE_IDLE = 1 / 5, FAST_ID = 1001, HOME_R = 48, ALPH = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', PFX = 'safarxona-';
@@ -72,7 +76,7 @@ class Remote {
       if (this.model) { this.g.scene.remove(this.model.root); }
       const m = buildVehicle(id, { lite: true }); m.root.remove(m.spot); m.root.remove(m.spot.target); // chiroqlar soni o'zgarmasin (sheyderlar qayta kompilyatsiya bo'lmasin)
       m.root.traverse((o) => { if (o.isMesh) o.userData.sh0 = o.castShadow; }); this.lod = -1;
-      m.root.visible = false; this.g.scene.add(m.root); this.model = m; this.veh = id; this.paint = null; const sp = m.spec;
+      m.root.visible = false; this.g.scene.add(m.root); this.model = m; this.veh = id; this.paint = null; this.pfK = null; const sp = m.spec;
       this.fake.wheels.forEach((w, k) => { w.len = sp.free - sp.sag; w.ly = (k < 2 ? sp.rF : sp.rR) + (sp.free - sp.sag) - sp.com; });
     }
     if (paint !== this.paint && typeof paint === 'number') { this.paint = paint; this.model.paintMat.color.setHex(paint); }
@@ -89,6 +93,8 @@ class Remote {
       this.jit += (Math.min(0.3, o - this.off) - this.jit) * 0.08; t = sm + this.off;
       if (this.lastMs != null && !d.i && !this.lastIdle) { const gp = sm - this.lastMs; if (gp > 0 && gp < 0.5) this.gap += (gp - this.gap) * 0.1; } this.lastMs = sm; this.lastIdle = !!d.i; }
     if (d.v != null || !this.veh) this.setVeh(String(d.v || 'jip'), d.k);
+    if (d.v != null && this.model) { const pf = num(d.pf, 2) ? d.pf : null, key = pf ? pf[0] + '|' + pf[1] : ''; if (key !== this.pfK || d.k !== this.pfC) { this.pfK = key; this.pfC = d.k; paintModel(this.model, typeof d.k === 'number' ? d.k : this.model.paintMat.color.getHex(), finishId(pf ? pf[0] : 0), pf && pf[1] >= 0 ? pf[1] & 0xffffff : null); } } // qoplama va ikkinchi rang
+    this.wv = num(d.wv, 5) ? d.wv : null; // qayiq/deltaplan holati (suv.js)
     if (typeof d.hat === 'string' || d.hat === null) { const h = HATS.has(d.hat) ? d.hat : null; if (h !== this.hat) { this.hat = h; setHat(this.rig, h); } }
     if (d.lk) this.setLook(lookFrom(d.lk));
     this.anim = typeof d.a === 'string' && /^[a-z]{2,12}$/.test(d.a) ? d.a : 'idle';
@@ -126,7 +132,7 @@ class Remote {
     if (m.headMat) { if (lit) m.headMat.color.setRGB(2.6, 2.4, 1.9); else m.headMat.color.setHex(0xb8b8b0); }
     if (m.tailMat) { if (brk) m.tailMat.color.setRGB(2.4, 0.22, 0.12); else m.tailMat.color.setHex(lit ? 0xa81810 : 0x6a1410); }
     // piyoda qahramon
-    const rig = this.rig; rig.root.visible = foot && !!B.h && cam.distanceTo(this.fpos) < 300 && !this.riding(); // yo'lovchi — haydovchi mashinasidagi o'rindiqda chiziladi
+    const rig = this.rig; rig.root.visible = foot && !!B.h && cam.distanceTo(this.fpos) < 300 && !this.riding() && !this.wv; // yo'lovchi — haydovchi mashinasidagi o'rindiqda, qayiqchi — qayiqda chiziladi
     if (foot && B.h) {
       const ha = A.h || B.h, hb = B.h, hx = ha[0] + (hb[0] - ha[0]) * k + hb[4] * ex, hy = ha[1] + (hb[1] - ha[1]) * k, hz = ha[2] + (hb[2] - ha[2]) * k + hb[5] * ex;
       const fj = !this.fshown || this.fpos.distanceToSquared(_v.set(hx, hy, hz)) > 400, fk = fj ? 1 : 1 - Math.exp(-dt * 16);
@@ -136,15 +142,27 @@ class Remote {
       const C = this.ctl; C.vx = hb[4]; C.vz = hb[5]; C.vy = hb[6]; C.grounded = !!hb[7]; C.swim = !!hb[8];
       if (rig.root.visible) poseRig(rig, this.anim, dt, Math.hypot(hb[4], hb[5]), C);
     } else this.fshown = false;
+    this.boatFrame(foot && B.h && this.wv && lod < 2 ? this.wv : null);
     // ism yorlig'i
     const tp = foot && B.h ? this.fpos : this.pos, hh = foot ? 2.25 : (m.spec.hgt || 1.6) + 1.1, d = cam.distanceTo(tp);
     this.tag.visible = d < 900; this.tag.position.set(tp.x, tp.y + hh - (foot ? 0 : m.spec.com || 0), tp.z);
+  }
+  // qayiq/deltaplandagi do'st: o'sha model (chirog'siz — qayiq/deltaplanda chiroq yo'q) va o'rindiqda do'stning kiyimidagi chavandoz; joyi — do'stning piyoda holatidan (suv.js o'tirgan joyni yuboradi)
+  boatFrame(wv) {
+    const k = wv ? wv[0] | 0 : -1; for (const b of Object.values(this.boats || {})) if (b && b.kind !== k) b.m.root.visible = false;
+    if (k < 0 || k > 2) return; this.boats = this.boats || {};
+    const hex = k === 0 ? (wv[4] & 0xffffff) || 0x2f7fd0 : 0, key = k + ':' + hex; let b = this.boats[k];
+    if (!b || b.key !== key) { if (b) { this.g.scene.remove(b.m.root); } const m = k === 1 ? buildSailBoat() : k === 2 ? buildGlider() : buildRowBoat(hex); this.g.scene.add(m.root); b = this.boats[k] = { m, kind: k, key, rider: null, rk: '' }; }
+    const lk = JSON.stringify(this.look || null) + '|' + (this.hat || '');
+    if (!b.rider || b.rk !== lk) { if (b.rider) { b.m.seat.remove(b.rider.root); b.rider.mesh.geometry.dispose(); if (b.rider.mesh.skeleton) b.rider.mesh.skeleton.dispose(); } const r = makeRider(RIDE_POSE[['row', 'sail', 'glide'][k]](), lookRigOpts(this.look || null)); if (this.hat) setHat(r, this.hat); b.m.seat.add(r.root); poseRider(r, null, 0, 0); b.rider = r; b.rk = lk; }
+    const m = b.m; m.root.visible = true; m.root.position.set(this.fpos.x, this.fpos.y + (k === 2 ? 0.9 : -0.3), this.fpos.z); m.root.rotation.y = this.fyaw; m.tilt.rotation.x = wv[1]; m.tilt.rotation.z = wv[2];
+    if (k === 1) m.boom.rotation.y = wv[3]; else if (k === 0) for (const o of m.oars) { const th = -o.sd * 0.6 * Math.cos(wv[3]); o.piv.rotation.y = th; o.dip.rotation.z = -o.sd * (0.29 + 0.09 * Math.max(-1, Math.min(1, Math.sin(wv[3]) * 3))); }
   }
   riding() { const C = this.g.coop; return !!this.ri && !!C && (this.ri === C.myId() || C.members.has(this.ri)); }
   // xaritada ko'rsatish uchun joriy joy
   where() { return this.foot && this.fshown ? [this.fpos.x, this.fpos.z] : [this.pos.x, this.pos.z]; }
   yaw() { _e.setFromQuaternion(this.q, 'YXZ'); return this.foot ? this.fyaw : _e.y; }
-  dispose() { const sc = this.g.scene; if (this.model) sc.remove(this.model.root); sc.remove(this.rig.root); sc.remove(this.tag); this.tag.material.map.dispose(); this.tag.material.dispose(); clearTimeout(this._et); }
+  dispose() { const sc = this.g.scene; if (this.model) sc.remove(this.model.root); for (const b of Object.values(this.boats || {})) if (b) sc.remove(b.m.root); sc.remove(this.rig.root); sc.remove(this.tag); this.tag.material.map.dispose(); this.tag.material.dispose(); clearTimeout(this._et); }
 }
 const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _v = new THREE.Vector3(), _e = new THREE.Euler();
 
@@ -405,7 +423,7 @@ export function initCoop(game) {
   V.contribute = (n) => { n = Math.floor(n); const nx = HOME_LEVELS[game.state.home.lvl + 1]; if (!nx || n < 1) return false; return V.act('fund', { n }, (r) => { const u = Math.max(0, Math.min(n, r.n | 0)); game.addMoney(-u, 'Do\'st uyiga hissa'); game.audio.sfx('coin'); game.toast(r.up ? `Uy yaxshilandi! ${V.owner}ning uyiga ${som(u)} so'm qo'shdingiz 🏠` : `${V.owner}ning uyiga ${som(u)} so'm qo'shdingiz`, r.up ? 'gold' : 'good'); }, n); };
   V.decor = (id) => { const q = DECOR.find((x) => x.id === id), h = game.state.home; if (!q || h.decor[id] || h.lvl < 1) return false; return V.act('dec', { q: id }, () => { game.addMoney(-q.cost, 'Do\'st uyi bezagi'); game.audio.sfx('buy'); game.toast(`«${q.name}» ${V.owner}ning hovlisiga o'rnatildi`, 'good'); }, q.cost); };
   // xona egasi: uy holati (vaqtlar egasining o'yin vaqtida; mehmon o'zinikiga o'tkazadi)
-  const homeSnap = () => { const st = game.state, h = st.home; return { t: 'hm', o: peer.id, n: C.myName(), ht: Math.round(st.stats.time), h: { lvl: h.lvl | 0, decor: Object.assign({}, h.decor), beds: h.beds.slice(0, 6), wat: h.wat.slice(0, 6), fund: h.fund | 0 }, fl: st.flowers.filter((f) => nearHome(f[0], f[1])).slice(-120).map((f) => [f[0], f[1], f[2] | 0, f[3] | 0, f[4] ? 1 : 0]), h2: h2Snap() }; };
+  const homeSnap = () => { const st = game.state, h = st.home; return { t: 'hm', o: peer.id, n: C.myName(), ht: Math.round(st.stats.time), h: { lvl: h.lvl | 0, decor: Object.assign({}, h.decor), beds: h.beds.slice(0, 6), wat: h.wat.slice(0, 6), fund: h.fund | 0, st: h.style === 1 ? 1 : 0 }, fl: st.flowers.filter((f) => nearHome(f[0], f[1])).slice(-120).map((f) => [f[0], f[1], f[2] | 0, f[3] | 0, f[4] ? 1 : 0]), h2: h2Snap() }; };
   // uy kengaytmalari (uy2.js): mehmon xonasi, oshxona, garaj (va undagi transport), hovli jihozlari — ixcham: [bayroqlar, hovli id ro'yxati]
   const h2Snap = () => { const H = game.state.home2 || {}, y = H.yard || {}; return { g: H.guest ? 1 : 0, k: H.kitchen ? 1 : 0, gr: H.garage ? 1 : 0, y: YARD.filter((q) => y[q.id]).map((q) => q.id), gv: H.garage && H.gVeh && vehById[H.gVeh] ? H.gVeh : null }; };
   let homeSig = '';
@@ -447,7 +465,7 @@ export function initCoop(game) {
     V.oid = String(d.o); V.owner = cleanName(d.n);
     const off = st.stats.time - (Number.isFinite(+d.ht) ? +d.ht : st.stats.time), tm = (t) => (+t > 0 ? Math.max(1, +t + off) : 0), arr = (a) => [0, 1, 2, 3, 4, 5].map((i) => (Array.isArray(a) && typeof a[i] === 'number' ? a[i] : 0));
     const lvl = Math.max(0, Math.min(HOME_LEVELS.length - 1, H.lvl | 0)), decor = {}; if (H.decor && typeof H.decor === 'object') for (const q of DECOR) if (H.decor[q.id]) decor[q.id] = 1;
-    st.home = { lvl, decor, beds: arr(H.beds).map(tm), wat: arr(H.wat).map((v) => (v ? 1 : 0)), eggT: st.stats.time, mailT: st.stats.time, incT: st.stats.time, fund: Math.max(0, H.fund | 0) };
+    st.home = { lvl, decor, beds: arr(H.beds).map(tm), wat: arr(H.wat).map((v) => (v ? 1 : 0)), eggT: st.stats.time, mailT: st.stats.time, incT: st.stats.time, fund: Math.max(0, H.fund | 0), style: H.st === 1 ? 1 : 0 }; // style — egasining uy uslubi (uslub.js)
     const fl = (Array.isArray(d.fl) ? d.fl.slice(0, 120) : []).filter((f) => num(f, 4) && nearHome(f[0], f[1])).map((f) => [f[0], f[1], Math.abs(f[2] | 0) % 6, tm(f[3]), f[4] ? 1 : 0]);
     st.flowers = st.flowers.filter((f) => !nearHome(f[0], f[1])).concat(fl);
     if (game.uy2) { const h2 = d.h2 && typeof d.h2 === 'object' ? d.h2 : {}, yard = {}; if (Array.isArray(h2.y)) for (const id of h2.y.slice(0, 12)) if (YARD.some((q) => q.id === id)) yard[id] = 1; // egasining kengaytmalari (uy2.js U.vh — faqat ko'rinish)
@@ -949,15 +967,18 @@ export function initCoop(game) {
 
   // ---- har kadr ----
   const flags = () => { const g = game, foot = g.player.onFoot, s = g.input.state, m = g.carModel; let f = 0; if (m.spot && m.spot.intensity > 0) f |= 1; if (!foot && ((s.brake > 0.1 && g.car.fwd > 1) || s.handbrake)) f |= 2; if (foot) f |= 4; if (g.car.nitroOn) f |= 8; return f; };
+  // bo'yoq qoplamasi va ikkinchi rang (boyoq.js): [qoplama №, ikkinchi rang yoki -1]; oddiy yaltiroq bir rangli bo'yoqda yuborilmaydi
+  const paintCode = (g) => { const V = g.state.veh, f = finishIndex(V.fin[V.cur] || 'yal'), t = V.tone[V.cur]; return f || t != null ? [f, t != null ? t | 0 : -1] : null; };
   // n — tartib raqami, ms — yuboruvchi vaqti, i — turibdi (siyrak paketlar); transport/rang/shapka — o'zgarganda va har 10-paketda
   function packet(idle) {
     const g = game, c = g.car, pl = g.player, foot = pl.onFoot, a = g.act;
     const d = { t: 's', n: ++seq, ms: Math.round(performance.now()), c: [r2(c.p[0]), r2(c.p[1]), r2(c.p[2]), r3(c.q[0]), r3(c.q[1]), r3(c.q[2]), r3(c.q[3]), r2(c.v[0]), r2(c.v[1]), r2(c.v[2]), r3(c.steer || 0), r2(c.fwd || 0)], f: flags() };
     if (idle) d.i = 1;
-    const v = g.carModel.id, k = g.carModel.paintMat.color.getHex(), hat = g.state.hat || null, lk = lookCode(g.state.look), mk = v + k + hat + lk; if (mk !== metaK || ++metaN >= 10) { metaK = mk; metaN = 0; d.v = v; d.k = k; d.hat = hat; if (lk) d.lk = lk; }
+    const v = g.carModel.id, k = g.carModel.paintMat.color.getHex(), hat = g.state.hat || null, lk = lookCode(g.state.look), pf = paintCode(g), mk = v + k + hat + lk + pf; if (mk !== metaK || ++metaN >= 10) { metaK = mk; metaN = 0; d.v = v; d.k = k; d.hat = hat; if (lk) d.lk = lk; if (pf) d.pf = pf; }
     if (foot) { d.h = [r2(pl.p[0]), r2(pl.p[1]), r2(pl.p[2]), r3(pl.yaw), r2(pl.v[0]), r2(pl.v[2]), r2(pl.v[1]), pl.grounded ? 1 : 0, pl.swim ? 1 : 0]; d.a = pl.anim || 'idle'; }
     if (g.coopRace && a && a.def.type === 'race') d.rp = (a.my || 0) + a.cpi * 0.001;
     if (C.ride) { d.ri = C.ride.pid; d.se = C.ride.seat; } // do'st mashinasida yo'lovchi
+    const S = g.suv && g.suv.cur; if (S && foot) { const m = S.m; d.wv = [S.kind === 'sail' ? 1 : S.kind === 'glide' ? 2 : 0, r3(m.tilt.rotation.x), r3(m.tilt.rotation.z), r3(S.kind === 'sail' ? m.boom.rotation.y : S.kind === 'row' ? m.oars[0].ph % 6.2832 : 0), S.kind === 'row' ? S.hex | 0 : 0]; } // qayiq/deltaplanda: tur, chayqalish, gik/eshkak, rang (suv.js)
     return d;
   }
   // boshqa o'yinchilar transporti bilan yumshoq to'qnashuv (faqat o'z transportimiz suriladi)

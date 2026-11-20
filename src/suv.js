@@ -12,6 +12,12 @@ import { buildGlider, glideStep, rampGeo } from './deltaplan.js';
 import { clamp, angDiff } from './util.js';
 
 export const PRICE = { row: 60, sail: 200, glide: 150 };
+// chavandoz pozasi — makeRider ma'lumoti: hip, qo'llar, oyoqlar (ota guruh — model ichidagi seat); onlayn do'st modeli ham shundan (coop.js)
+export const RIDE_POSE = {
+  row: () => ({ hip: [0, 0.1, 0], lean: 0.1, hand: [0.46, 0.3, 0.5], foot: [0.2, -0.25, 0.62], knee: 0.2 }),
+  sail: () => ({ hip: [0, 0.1, 0], lean: -0.12, hand: [0.24, 0.26, 0.38], foot: [0.18, -0.28, 0.55], knee: 0.2 }),
+  glide: () => ({ hip: [0, 0, 0], lean: -0.32, hand: [0.5, 0.38, 0.4], foot: [0.16, -0.55, 0.42], knee: 0.28 }),
+};
 const NAME = { row: 'Eshkakli qayiq', sail: 'Yelkanli qayiq', glide: 'Deltaplan' }, DAT = { row: 'Eshkakli qayiqqa', sail: 'Yelkanli qayiqqa' };
 const DOT = { row: '#35d6c8', sail: '#35d6c8', glide: '#c58bff' };
 
@@ -28,7 +34,7 @@ export function initSuv(game) {
   const deco = [[bp, by, [[-7, 104], [7.5, 120], [-8, 138], [8, 92]]], [kp, ky, [[5, 123], [-5.5, 141]]]].flatMap(([p, y, l]) => l.map(([a, b]) => W(p, y, a, b).concat(2.1)));
   const mkBoat = (kind, place, p, yaw0, lx, lz, hex, turn) => {
     const [x, z] = W(p, yaw0, lx, lz), yaw = yaw0 + turn, m = kind === 'sail' ? buildSailBoat() : buildRowBoat(hex); scene.add(m.root);
-    const b = { kind, place, name: NAME[kind], m, home: [x, z, yaw], x, z, yaw, v: 0, w: 0, sail: 0.6, th: 0, eff: 0, beach: false, paid: false, wy: T.waterY(x, z), ph: (x * 0.37 + z * 0.11) % 6.28, rider: null, rd: null, boom: 0, belly: 1, extra: deco };
+    const b = { kind, hex, place, name: NAME[kind], m, home: [x, z, yaw], x, z, yaw, v: 0, w: 0, sail: 0.6, th: 0, eff: 0, beach: false, paid: false, wy: T.waterY(x, z), ph: (x * 0.37 + z * 0.11) % 6.28, rider: null, rd: null, boom: 0, belly: 1, extra: deco };
     S.boats.push(b); return b;
   };
   mkBoat('row', 'bandargoh', bp, by, -7.5, 118, 0x2f9a8a, -0.6); mkBoat('sail', 'bandargoh', bp, by, 8, 142, 0, 0.5); mkBoat('row', 'kol', kp, ky, -5.5, 112, 0xd8392b, -0.6); // tumshug'i iskaladan chetga qaragan
@@ -54,11 +60,7 @@ export function initSuv(game) {
   parkGlider();
 
   // ---------- chavandoz (o'yinchi ko'rinishida) ----------
-  const RD = { // makeRider ma'lumoti: hip, qo'llar, oyoqlar (ota guruh — model ichidagi seat)
-    row: () => ({ hip: [0, 0.1, 0], lean: 0.1, hand: [0.46, 0.3, 0.5], foot: [0.2, -0.25, 0.62], knee: 0.2 }),
-    sail: () => ({ hip: [0, 0.1, 0], lean: -0.12, hand: [0.24, 0.26, 0.38], foot: [0.18, -0.28, 0.55], knee: 0.2 }),
-    glide: () => ({ hip: [0, 0, 0], lean: -0.32, hand: [0.5, 0.38, 0.4], foot: [0.16, -0.55, 0.42], knee: 0.28 }),
-  };
+  const RD = RIDE_POSE;
   const riderFor = (o) => {
     const key = JSON.stringify(st.look || null) + '|' + (st.hat || ''); if (o.rider && o.rKey === key) { o.rider.root.visible = true; return; }
     if (o.rider) { o.m.seat.remove(o.rider.root); o.rider.mesh.geometry.dispose(); if (o.rider.mesh.skeleton) o.rider.mesh.skeleton.dispose(); }

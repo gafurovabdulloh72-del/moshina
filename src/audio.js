@@ -107,6 +107,9 @@ export class Sound {
       case 'whistle': this.tone(1900, t, 0.16, 'sine', 0.16, null, 0.01, 1.35); this.tone(2500, t + 0.2, 0.3, 'sine', 0.16, null, 0.01, 0.8); break;
       case 'door': this.burst(t, 0.09, 'lowpass', 700, 0.8, 0.5); this.tone(110, t, 0.09, 'sine', 0.3, null, 0.002, 0.6); break;
       case 'fire': this.burst(t, 0.6, 'bandpass', 900, 0.6, 0.4, 2.5); break;
+      case 'drum': { const n = Math.max(1, Math.round(k)); for (let i = 0; i < n; i++) { const t1 = t + i * 0.21; this.tone(96, t1, 0.24, 'sine', 0.32, null, 0.002, 0.55); this.burst(t1, 0.08, 'bandpass', 420, 1.1, 0.3); if (i % 2) this.burst(t1 + 0.105, 0.05, 'bandpass', 1500, 1.4, 0.16); } break; } // doira/nog'ora (kurash.js): k — zarblar soni
+      case 'crowd': for (let i = 0; i < 3; i++) this.burst(t + i * 0.12, 1.5 - i * 0.3, 'bandpass', 900 + i * 520, 0.55, 0.16 * k, 1.12); for (let i = 0; i < 6; i++) this.tone(520 + Math.random() * 380, t + Math.random() * 0.5, 0.35, 'sawtooth', 0.012 * k, null, 0.06, 1.18); break; // olomon qiyqirig'i
+      case 'grip': this.burst(t, 0.1, 'lowpass', 700, 0.9, 0.38 * k); this.burst(t + 0.02, 0.07, 'bandpass', 2100, 1.6, 0.1 * k); break; // yaktakdan ushlash
       case 'bell': this.tone(2100, t, 0.5, 'sine', 0.14); this.tone(2640, t, 0.4, 'sine', 0.08); this.tone(2100, t + 0.2, 0.5, 'sine', 0.14); break;
       case 'siren': for (let i = 0; i < 4; i++) { this.tone(660, t + i * 0.5, 0.26, 'sawtooth', 0.07, null, 0.02, 1.4); this.tone(920, t + i * 0.5 + 0.25, 0.26, 'sawtooth', 0.07, null, 0.02, 0.72); } break;
     }

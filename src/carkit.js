@@ -165,12 +165,13 @@ export function vmats() {
 export function paintMaterial(hex, seam = {}) {
   const m = new THREE.MeshPhysicalMaterial({ vertexColors: true, color: hex, metalness: 0.12, roughness: 0.38, clearcoat: 1, clearcoatRoughness: 0.04 });
   const v4 = (a) => new THREE.Vector4(...(a || [-99, -99, -99, -99]).concat([-99, -99, -99, -99]).slice(0, 4));
-  const U = { uSeamA: { value: v4(seam.a) }, uSeamB: { value: v4(seam.b) }, uSeamC: { value: v4(seam.c) } };
+  const U = { uSeamA: { value: v4(seam.a) }, uSeamB: { value: v4(seam.b) }, uSeamC: { value: v4(seam.c) }, uPearl: { value: 0 }, uPearlC: { value: new THREE.Color(1, 1, 1) } }; // uPearl — sadaf qoplamasi (boyoq.js): chetlarda tus o'zgaradi
   m.userData.seam = U;
-  return hook(m, 'vpaint1', (sh) => {
+  return hook(m, 'vpaint2', (sh) => {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP;\n').replace('#include <begin_vertex>', '#include <begin_vertex>\nvObjP = transformed;\n');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP;\nuniform vec4 uSeamA, uSeamB, uSeamC;\nfloat seamL(float d, float w){ return 1.0 - smoothstep(0.0012, 0.0012 + w, abs(d)); }\n')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP;\nuniform vec4 uSeamA, uSeamB, uSeamC;\nuniform float uPearl;\nuniform vec3 uPearlC;\nfloat seamL(float d, float w){ return 1.0 - smoothstep(0.0012, 0.0012 + w, abs(d)); }\n')
+      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n{ float pfr = 1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0); diffuseColor.rgb = mix(diffuseColor.rgb, uPearlC * max(0.25, max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b))), uPearl * pfr * (0.35 + 0.65 * pfr)); }\n')
       .replace('#include <color_fragment>', `#include <color_fragment>
       {
         vec3 sp = vObjP; float wz = fwidth(sp.z) + 0.0016, wx = fwidth(sp.x) + 0.0016, sm = 0.0;

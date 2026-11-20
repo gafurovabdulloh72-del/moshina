@@ -38,6 +38,9 @@ import { initSuv } from './suv.js';
 import { initTryuk } from './tryuk.js';
 import { initQulay } from './qulay.js';
 import { initYutuq } from './yutuq.js';
+import { initKurash } from './kurash.js';
+import { initBoyoq } from './boyoq.js';
+import { initUslub } from './uslub.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -104,6 +107,7 @@ async function boot() {
   initHafta(game); // haftalik chellenj, hafta statistikasi, nishonlar ([6])
   initTryuk(game); // havodagi tryuklar va kombo, transport rekordlari va medallar, kuboklar, «Sovrinlar» oynasi va javoni, poyga doirasi
   initQulay(game); initYutuq(game); // qulayliklar (yo'riqnoma, maslahatlar, yulduz chegaralari, qayta boshlash, interfeys o'lchami, saqlov ko'chirish, zaxira), kunlik uchlik va yutuqlar daftari
+  initBoyoq(game); initUslub(game); initKurash(game); // bo'yoq ustaxonasi va shina to'plamlari, uy uslubi (zamonaviy / an'anaviy hovli), Karvonsaroydagi kurash davrasi
   game.applyQuality('boot'); resize();
   game.gfx.precompile(); // barcha sheyderlar yuklash paytida tayyorlanadi
   // videokarta konteksti yo'qolsa (drayver qayta ishga tushdi va h.k.) — kutamiz va qaytganda hammasini qayta tiklaymiz

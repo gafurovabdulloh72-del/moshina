@@ -316,7 +316,8 @@ export function buildPlaces(scene, game) {
     if (!gp) gp = st.spot(22, 60, 9, 7) || [-40, -30]; const gar = garageAt(st, gp[0], gp[1], st.faceRoad(gp[0], gp[1]));
     addBoard(st, 15);
     for (let i = 0; i < 10; i++) { const z = st.spot(12, 84, 1.6, 3); if (z) smashL(st, st.rng() < 0.5 ? 'crate' : 'barrel', z[0], z[1], st.rng() * 3); }
-    done(st, { garage: gar });
+    const kurashAt = (() => { const [x, z] = st.w(q[0] + 15 * Math.sin(yw), q[1] + 15 * Math.cos(yw)); return { x, z, y: T.gridHeight(x, z), yaw: st.yaw + yw }; })(); // kurash davrasi hovlida, darvoza va quduq orasida (kurash.js)
+    done(st, { garage: gar, kurash: kurashAt });
   }
 
   // ===== 9. Qizil dara =====
