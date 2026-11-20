@@ -173,7 +173,7 @@ export function initHayot(game) {
   const dlgEl = document.createElement('div'); dlgEl.id = 'dlg'; dlgEl.className = 'panel'; dlgEl.style.display = 'none';
   const openDlg = (o) => {
     const k = L._dbg.npcs.indexOf(o), P = PERS[(k < 0 ? 0 : k) % PERS.length], set = P[2][(o.tip = (o.tip || 0) + 1) % P[2].length];
-    HY.dlg = { o, P, lines: set.slice(), i: 0 }; o.waveT = 999; pl.yaw = Math.atan2(o.x - pl.p[0], o.z - pl.p[2]); pl.emote = 'talk'; pl.sit = false; sfx('click'); drawDlg();
+    HY.dlg = { o, P, lines: set.slice(), i: 0 }; o.waveT = 999; pl.faceTo(Math.atan2(o.x - pl.p[0], o.z - pl.p[2])); pl.emote = 'talk'; pl.sit = false; sfx('click'); drawDlg();
   };
   const drawDlg = () => { const D = HY.dlg; if (!D) { dlgEl.style.display = 'none'; return; } if (!dlgEl.parentNode && game.ui) game.ui.hud.appendChild(dlgEl);
     dlgEl.innerHTML = `<div class="dp">${D.P[0]}</div><div class="dt"><b>${D.o.name}</b> <small>${D.P[1]}</small><p>${D.lines[D.i]}</p><i>${D.i + 1}/${D.lines.length} · <kbd>E</kbd> ${D.i + 1 < D.lines.length ? 'davom etish' : 'xayr'}</i></div>`; dlgEl.style.display = ''; };

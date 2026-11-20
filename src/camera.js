@@ -97,7 +97,7 @@ export class ChaseCam {
     if (this.first) { this.heading = target; this.hv = 0; }
     const err = angDiff(target, this.heading);
     if (foot) { // piyoda: sekin ergashadi (yon tomonga yurganda aylanib ketmasligi uchun)
-      const rate = sp > 0.5 && Math.abs(err) < 2.2 ? 1.5 : 0; this.hv = err * (1 - Math.exp(-dt * rate)) / dt; this.heading += this.hv * dt;
+      const ae = Math.abs(err), rate = 1.5 * clamp((sp - 0.3) / 0.9, 0, 1) * clamp((2.6 - ae) / 0.8, 0, 1); // ergashish asta yoqiladi/o'chadi (avval 0 ↔ 1,5 keskin almashib, kamera turtkilanardi) this.hv = err * (1 - Math.exp(-dt * rate)) / dt; this.heading += this.hv * dt;
     } else { // transport: kritik so'nuvchi ikkinchi tartib — burilishda kamera biroz kechikadi, keyin yumshoq yetib oladi
       const w = 5.2 + sp * 0.06, o = { x: [0], v: [this.hv] }; o.x[0] = -err; spring(o, 0, w, 1, 0, dt); this.hv = o.v[0]; this.heading = target + o.x[0];
     }

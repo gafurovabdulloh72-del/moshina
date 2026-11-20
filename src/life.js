@@ -574,6 +574,7 @@ export function buildLife(scene, game) {
 
   // =================== HAR KADR ===================
   const init = () => { inited = true; placeParked(); const fp = focus(); for (const c of cars) place(c, 60, 950, false); };
+  out.cars = cars; // piyoda qahramon to'qnashuvi uchun (player.js)
   out.update = (dt, t, active) => {
     dt = Math.min(dt, 0.1); if (!inited) init();
     const night = game.sky.night, fp = focus(), pc = game.car, pl = game.player, cp = camPos();

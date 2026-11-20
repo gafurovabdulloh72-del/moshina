@@ -61,12 +61,13 @@ export const ACTIONS = [
   { key: '2', codes: ['Digit2'], on: 'foot', one: 1, ok: free, run: (g) => g.live.doAction('dutor') },
   { key: '3', codes: ['Digit3'], on: 'foot', one: 1, ok: free, run: (g) => g.live.doAction('wave') },
   { key: 'B', codes: ['KeyB'], on: 'foot', bar: () => 'Harakatlar', run: (g) => g.ui.open('wheel') },
-  { key: 'Shift', codes: ['ShiftLeft', 'ShiftRight'], on: 'foot', hold: 1, bar: () => 'Yugurish' },
-  { key: 'Probel', codes: ['Space'], on: 'foot', hold: 1, bar: () => 'Sakrash' },
+  { key: 'Shift', codes: ['ShiftLeft', 'ShiftRight'], on: 'foot', hold: 1, bar: (g) => (g.player.swim || g.player.sit ? null : 'Yugurish') }, // suzayotganda yugurish/sakrash ishlamaydi — tugmasi ham chiqmaydi
+  { key: 'Probel', codes: ['Space'], on: 'foot', hold: 1, bar: (g) => (g.player.swim ? null : g.player.sit ? (g.hayot && g.hayot.seat ? null : 'Turish') : 'Sakrash') }, // skameykada — o'rnidan turish (mebeldan turish [E] bilan)
   { key: 'L', codes: ['KeyL'], on: 'foot', bar: (g) => (g.sky.night > 0.35 ? (g.player.lampOn ? "Fonarni o'chirish" : 'Fonar') : null),
     run: (g) => { const pl = g.player; pl.lampOn = !pl.lampOn; g.toast(pl.lampOn ? 'Fonar yoqildi 🔦' : "Fonar o'chirildi"); g.audio.sfx('click'); } },
-  { key: 'Z', codes: ['KeyZ'], on: 'foot', hold: 1 }, // durbin — bosib turiladi
-  { key: 'R', codes: ['KeyR'], on: 'foot', run: (g) => { const pl = g.player, nr = T.nearestRoad(pl.p[0], pl.p[2], 12); if (nr.edge >= 0) { pl.place(T.roads.x[nr.i], T.roads.z[nr.i], pl.yaw); g.toast("Yo'lga qaytdingiz"); } } },
+  { key: 'Z', codes: ['KeyZ'], on: 'foot', hold: 1, bar: (g) => (g.ui && g.ui.hud && g.ui.hud.classList.contains('touch') && !g.player.swim && !(g.interior && g.interior.inside) ? 'Durbin' : null) }, // durbin — bosib turiladi; telefonda klaviatura yo'q — ekranda tugma bo'lib chiqadi
+  // uy/do'kon ichida ishlamaydi (ichki makondan ko'chaga "teleport" bo'lib qolmasin); yo'l uzoq bo'lsa — jimgina hech narsa qilmaslik o'rniga sababini aytadi
+  { key: 'R', codes: ['KeyR'], on: 'foot', ok: outdoor, run: (g) => { const pl = g.player, nr = T.nearestRoad(pl.p[0], pl.p[2], 12); if (nr.edge >= 0) { pl.place(T.roads.x[nr.i], T.roads.z[nr.i], pl.yaw); g.cam.snap(); g.toast("Yo'lga qaytdingiz"); } else g.toast("Yaqin atrofda (12 m) yo'l yo'q — xaritani oching [M]"); } },
   // --- transportda ---
   { key: 'Shift', codes: ['ShiftLeft', 'ShiftRight'], on: 'car', hold: 1, bar: () => 'Nitro' },
   { key: 'Probel', codes: ['Space'], on: 'car', hold: 1, bar: () => "Qo'l tormozi" },

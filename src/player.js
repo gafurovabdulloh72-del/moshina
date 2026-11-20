@@ -62,7 +62,7 @@ export class Player {
     if (moving) { this.yaw += angDiff(Math.atan2(mx, mz), this.yaw) * Math.min(1, dt * 11); this.faceYaw = null; }
     else if (this.faceYaw != null) { const d = angDiff(this.faceYaw, this.yaw); this.yaw += d * Math.min(1, dt * 10); if (Math.abs(d) < 0.01) this.faceYaw = null; }
     if (this.swim) { v[1] += ((wy - 1.28 - p[1]) * 6 - v[1]) * Math.min(1, dt * 6); this.grounded = false; }
-    else { v[1] -= 24 * dt; if (jump && this.grounded) { v[1] = 7.6; this.grounded = false; g.audio.sfx('jump'); } }
+    else { v[1] -= 24 * dt; if (jump && this.grounded) { const tir = this.tiredT > 0; v[1] = tir ? 5.6 : 7.6; this.grounded = false; st.energy = Math.max(0, st.energy - 2.5); g.audio.sfx('jump'); } } // sakrash biroz kuch oladi; charchaganda pastroq sakraydi
     // yangi joy
     let nx = p[0] + v[0] * dt, nz = p[2] + v[2] * dt;
     // tik qiyalikka chiqa olmaydi
@@ -86,6 +86,10 @@ export class Player {
     // transportlar (o'zimizniki va boshqalar) — oddiy doira
     { const c = g.car, R = c.R, s = c.spec; const lx = (nx - c.p[0]) * R[0] + (nz - c.p[2]) * R[6], lz = (nx - c.p[0]) * R[2] + (nz - c.p[2]) * R[8]; const hx = s.wid / 2 + 0.3, hz = s.len / 2 + 0.3;
       if (Math.abs(lx) < hx && Math.abs(lz) < hz && Math.abs(p[1] - (c.p[1] - s.com)) < s.hgt) { const ox = hx - Math.abs(lx), oz = hz - Math.abs(lz); if (ox < oz) { const k = Math.sign(lx || 1) * ox; nx += R[0] * k; nz += R[6] * k; } else { const k = Math.sign(lz || 1) * oz; nx += R[2] * k; nz += R[8] * k; } } }
+    // yo'ldagi boshqa mashinalar (life.js) — to'xtab turgan mashina ichidan o'tib ketmaydi
+    { const LC = g.life && g.life.cars; if (LC) for (const c of LC) { if (!c.placed || !c.m.root.visible || Math.abs(c.x - nx) > 8 || Math.abs(c.z - nz) > 8) continue; if (Math.abs(p[1] - (c.y - c.com)) > c.sp.hgt) continue;
+      const fx = Math.sin(c.yaw), fz = Math.cos(c.yaw), dx = nx - c.x, dz = nz - c.z, lx = dx * fz - dz * fx, lz = dx * fx + dz * fz, hx = c.halfW + 0.3, hz = c.half + 0.3; if (Math.abs(lx) >= hx || Math.abs(lz) >= hz) continue;
+      const ox = hx - Math.abs(lx), oz = hz - Math.abs(lz); if (ox < oz) { const k = Math.sign(lx || 1) * ox; nx += fz * k; nz -= fx * k; } else { const k = Math.sign(lz || 1) * oz; nx += fx * k; nz += fz * k; } } }
     nx = clamp(nx, -3150, 3150); nz = clamp(nz, -3150, 3150);
     const avx = dt > 1e-4 ? (nx - p[0]) / dt : 0, avz = dt > 1e-4 ? (nz - p[2]) / dt : 0; // haqiqiy siljish (devorga tiralganda ~0) — animatsiya uchun
     p[0] = nx; p[2] = nz; p[1] += v[1] * dt;
