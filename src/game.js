@@ -39,7 +39,9 @@ function defState() {
     errCur: null, // topshiriq.js: bajarilayotgan topshiriq (tur, beruvchi, bosqich) — qayta yuklanganda davom etadi; null — yo'q
     sovrin: { rec: {}, cups: {}, best: { n: 0, pts: 0 }, tricks: 0, tlog: {}, paid: {} }, // tryuk.js: transport rekordlari {chellenj: {transport: [natija, medal]}}, kuboklar {poyga: soni}, eng yaxshi kombo, tryuklar soni, tryuklar daftari, to'langan medal mukofotlari
     suv: { row: 0, sail: 0, glide: 0, km: 0, best: 0, fish: 0 }, // suv.js: eshkakli/yelkanli qayiq ijaralari va deltaplan parvozlari soni, qayiqda suzilgan masofa (m), eng uzoq parvoz (m), qayiqdan tutilgan baliq
-    qulay: { guide: 0, tips: {}, tipsOff: false, ach: {}, achInit: 0, day: null, streak: 0, last: -1, chests: 0, win: 0 } }; // qulay.js/yutuq.js: «Birinchi safar» qadami (0 — aniqlanmagan, 99 — tugagan, <0 — ko'rsatilmaydi), ko'rilgan maslahatlar, yutuqlar, kunlik uchlik (kun, ketma-ketlik, sandiqlar), yulduzli chellenjlar soni
+    qulay: { guide: 0, tips: {}, tipsOff: false, ach: {}, achInit: 0, day: null, streak: 0, last: -1, chests: 0, win: 0 }, // qulay.js/yutuq.js: «Birinchi safar» qadami (0 — aniqlanmagan, 99 — tugagan, <0 — ko'rsatilmaydi), ko'rilgan maslahatlar, yutuqlar, kunlik uchlik (kun, ketma-ketlik, sandiqlar), yulduzli chellenjlar soni
+    poyga: { inf: {}, circ: {}, seg: {}, runs: 0 }, // poyga.js: cheksiz poyga rekordlari {transport: [darvoza, masofa m]}, aylanmalar {id: {s, best, lap, n}}, yo'l bo'laklari {bo'lak: [vaqt, transport, egami]}, cheksiz poygalar soni
+    mahorat: { yy: [], veh: {} } }; // mahorat.js: Yulduz yo'lidan olingan sovg'alar (tartib raqamlari), transport mahorati {transport: {km, dr, top, trip, b, tr}}
 }
 function loadState() {
   const d = defState(); let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* saqlangan o'yin yo'q */ }
@@ -176,7 +178,7 @@ export function initGame(game) {
 
   // ================= CHELLENJ ISHGA TUSHIRISH =================
   let act = null; game.act = null;
-  const starsFor = (a) => (a.cat === 'inf' ? 0 : st.stars[a.id] || 0);
+  const starsFor = (a) => (a.cat === 'inf' ? 0 : a.own ? a.own() : st.stars[a.id] || 0); // own — yulduzi alohida saqlanadigan chellenj (poyga.js: aylanma, cheksiz poyga), umumiy 270 yulduzga kirmaydi
   // Cheksiz tezkor buyurtma: har safar yangi manzil
   game.infJob = (pid) => { const others = Object.values(site.places).filter((q) => q.board && q.id !== pid && q.id !== 'muzkol' && q.id !== 'choqqi' && q.id !== 'vulqon'), from = site.places[pid]; const t = others[(Math.random() * others.length) | 0], d = Math.hypot(t.x - from.x, t.z - from.z); const kinds = [['del', 'Tezkor yetkazma', 'Posilkani'], ['frag', "Mo'rt posilka", "Mo'rt yukni"], ['taxi', 'Shoshilinch yo\'lovchi', "Yo'lovchini"]], k = kinds[(Math.random() * 3) | 0];
     return { id: 'inf', cat: 'inf', type: k[0], place: pid, order: 1, name: `♾ ${k[1]}`, desc: `${k[2]} ${t.name} manziliga eltib bering (${fmtDist(d)}).`, target: t.id, reward: Math.round(120 + d * 0.22), opt: {} }; };
@@ -252,7 +254,7 @@ export function initGame(game) {
     let reward = 0;
     if (ok) {
       const mult = [0, 0.55, 0.8, 1][stars]; reward = Math.round(a.reward * mult * (a.cat === 'inf' ? 1 : prev >= stars ? 0.3 : 1));
-      if (stars > prev && a.cat !== 'inf') st.stars[a.id] = stars; if (a.cat === 'inf') game.live.count('inf');
+      if (stars > prev && a.cat !== 'inf' && !a.own) st.stars[a.id] = stars; if (a.cat === 'inf') game.live.count('inf');
       addMoney(reward, 'Chellenj: ' + a.name); st.xp += stars * 45 + 20;
       game.audio.sfx(stars >= 3 ? 'win' : 'medal');
     } else if (why !== 'cancel') game.audio.sfx('fail');
@@ -288,7 +290,7 @@ export function initGame(game) {
       // o'rin: raqiblarning marshrutdagi indeksi bilan solishtirish
       let my = 0, bd = 1e18; const lo = act.cpi ? act.cps[act.cpi - 1] : 0; for (let i = Math.max(0, lo - 5); i <= Math.min(pts.length - 1, ci + 5); i++) { const d = (pts[i][0] - p[0]) ** 2 + (pts[i][1] - p[2]) ** 2; if (d < bd) { bd = d; my = i; } }
       act.place = game.coopRace ? game.coopRace.place || 1 : 1 + rivals.filter((r) => r.active && (r.fin || r.ap.i > my)).length; act.my = my;
-      act.lines = [`Nazorat: ${act.cpi}/${act.cps.length}`, `O'rin: ${act.place}/${game.coopRace ? game.coopRace.n : 4}`, `Oltin: ${fmtTime(a._t[2])}`];
+      act.lines = [`Nazorat: ${act.cpi}/${act.cps.length}`, `O'rin: ${act.place}/${game.coopRace ? game.coopRace.n : 4}`, `Oltin: ${fmtTime(a._t[2])}`]; if (a.lines2) act.lines.unshift(...a.lines2(act));
       act.timer = act.t; return;
     }
     act.timer = act.limit - act.t;

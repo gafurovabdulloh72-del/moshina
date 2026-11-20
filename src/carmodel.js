@@ -12,6 +12,9 @@ export const PAINTS = [
   { id: 'firuza', name: 'Firuza', hex: 0x24b8b0, cost: 1200 },
   { id: 'oltin', name: 'Oltin (Katta Safar sovrini)', hex: 0xe8b23a, cost: -1 },
   { id: 'chempion', name: 'Chempion (15 ta kubok sovrini)', hex: 0xb3122e, cost: -1 },
+  { id: 'yulduz', name: "Yulduzli kumush (Yulduz yo'li sovg'asi)", hex: 0xaeb9cc, cost: -1 },
+  { id: 'samoviy', name: "Samoviy (Yulduz yo'li sovg'asi)", hex: 0x2c5fd8, cost: -1 },
+  { id: 'usta', name: 'Usta zumradi (5 ta «Usta» belgisi)', hex: 0x168a5c, cost: -1 },
 ];
 
 // Jip korpusi: tik old oyna, qutisimon salon, orqasi tik (orqa eshikda zaxira g'ildirak)
