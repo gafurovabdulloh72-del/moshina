@@ -114,7 +114,8 @@ export class UI {
     const a = g.act;
     if (a) {
       const low = a.def.type !== 'race' && a.timer < 10;
-      const html = `<h3>${a.def.name}</h3><div class="timer${low ? ' low' : ''}">${fmtTime(a.timer || 0)}</div>${(a.lines || []).filter(Boolean).map((l) => `<div class="ln">${l}</div>`).join('')}${a.bar ? `<div class="ln">${a.bar.label}</div><div class="bar"><i style="width:${Math.round(a.bar.v * 100)}%;background:${a.bar.v > 0.5 ? 'var(--good)' : a.bar.v > 0.25 ? 'var(--ac)' : 'var(--bad)'}"></i></div>` : ''}<div class="ln" style="opacity:.6;font-size:11.5px;margin-top:4px">[X] — bekor qilish</div>`;
+      const qs = g.qulay && g.qulay.stars(a); // yulduz chegaralari shkalasi (qulay.js) — bo'lsa, eski chegara yozuvi va yuk/qulaylik chizig'i o'rnini egallaydi
+      const html = `<h3>${a.def.name}</h3><div class="timer${low ? ' low' : ''}">${fmtTime(a.timer || 0)}</div>${(a.lines || []).filter((l) => l && !(qs && /^(★ |Oltin:)/.test(l))).map((l) => `<div class="ln">${l}</div>`).join('')}${qs ? qs.html : ''}${a.bar && !qs ? `<div class="ln">${a.bar.label}</div><div class="bar"><i style="width:${Math.round(a.bar.v * 100)}%;background:${a.bar.v > 0.5 ? 'var(--good)' : a.bar.v > 0.25 ? 'var(--ac)' : 'var(--bad)'}"></i></div>` : ''}<div class="ln" style="opacity:.6;font-size:11.5px;margin-top:4px">[X] — bekor qilish${g.qulay && g.qulay.canRestart() ? ' · [⌫] — qayta boshlash' : ''}</div>`;
       if (this._ah !== html) { this._ah = html; this.actP.innerHTML = html; } this.actP.style.display = '';
       this.countEl.textContent = a.state === 'count' ? (a.count3 > 0.25 ? Math.ceil(a.count3 - 0.2) : 'OLG\'A!') : (a.def.type === 'race' && a.t < 0.9 ? "OLG'A!" : '');
     } else { if (this._ah) { this._ah = null; this.actP.style.display = 'none'; } this.countEl.textContent = ''; }
@@ -225,7 +226,7 @@ export class UI {
       <div class="m-foot">v2.0 · W A S D — haydash · F — tushish/chiqish · Probel — drift · Shift — nitro</div>`;
     m.onclick = (e) => { const b = e.target.closest('[data-a]'); if (!b) return; g.audio.init(); g.audio.sfx('click'); const a = b.dataset.a;
       if (a === 'play') { st.fresh = false; this.screenName = null; this.close(); g.startPlay(); }
-      else if (a === 'new') this.confirm("Yangi o'yin", "Barcha yutuqlar, pul, transportlar va uy o'chiriladi. Rostdan ham boshidan boshlaysizmi?", "Ha, yangidan boshlash", () => g.resetSave(), 'menu');
+      else if (a === 'new') this.confirm("Yangi o'yin", "Hozirgi o'yin zaxiraga olinadi (Sozlamalar → Zaxiradan tiklash), keyin hammasi boshidan boshlanadi. Rostdan ham yangidan boshlaysizmi?", "Ha, yangidan boshlash", () => g.resetSave(), 'menu');
       else if (a === 'online') this.open('online', { back: 'menu' });
       else if (a === 'help') this.open('help', { back: 'menu' }); else if (a === 'set') this.open('settings', { back: 'menu' });
       else if (a === 'full') { const d = document; if (d.fullscreenElement) d.exitFullscreen(); else d.documentElement.requestFullscreen && d.documentElement.requestFullscreen().catch(() => {}); } };
@@ -242,14 +243,14 @@ export class UI {
     col.appendChild(btn("Ustaxonaga evakuatsiya (200 so'm)", () => { this.close(); g.tow(); }, 'sec'));
     col.appendChild(btn('Boshqaruv', () => this.open('help', { back: 'pause' }), 'sec')); col.appendChild(btn('Sozlamalar', () => this.open('settings', { back: 'pause' }), 'sec'));
     col.appendChild(btn('Bosh menyu', () => { g.save(); this.open('menu'); g.cam.mode = 3; }, 'sec'));
-    col.appendChild(btn("Yangi o'yin (boshidan boshlash)", () => this.confirm("Yangi o'yin", "Barcha yutuqlar, pul, transportlar va uy o'chiriladi. Rostdan ham boshidan boshlaysizmi?", "Ha, yangidan boshlash", () => g.resetSave(), 'pause'), 'sec'));
+    col.appendChild(btn("Yangi o'yin (boshidan boshlash)", () => this.confirm("Yangi o'yin", "Hozirgi o'yin zaxiraga olinadi (Sozlamalar → Zaxiradan tiklash), keyin hammasi boshidan boshlanadi. Rostdan ham yangidan boshlaysizmi?", "Ha, yangidan boshlash", () => g.resetSave(), 'pause'), 'sec'));
   }
   s_help(w, d, btn, x) {
     const K = (a) => a.map((k) => `<kbd>${k}</kbd>`).join(' ');
     const rows = (list) => list.map(([k, t]) => `<div>${K(k)}</div><div>${t}</div>`).join('');
     w.innerHTML = `<h1>Boshqaruv</h1><div class="grid2"><div><h4 style="margin:8px 0 2px">Transportda</h4><div class="keys">${rows([[['W', 'S'], 'Gaz / tormoz va orqaga'], [['A', 'D'], 'Burilish'], [['Probel'], "Qo'l tormozi — drift"], [['Shift'], 'Nitro'], [['F'], 'Transportdan tushish'], [['R'], "Yo'lga qaytarish"], [['H', 'L'], 'Signal · faralar'], [['T'], 'Evakuator (motor o\'chganda)'], [['E'], "Taxta / ustaxona / yo'lovchi olish"]])}</div></div>
       <div><h4 style="margin:8px 0 2px">Piyoda</h4><div class="keys">${rows([[['W', 'A', 'S', 'D'], 'Yurish'], [['Shift'], 'Yugurish'], [['Probel'], 'Sakrash'], [['F'], 'Transportga chiqish'], [['V'], 'Transportni chaqirish'], [['E'], 'Harakat (silkitish, gaplashish, terish…)'], [['Q', 'G', 'Y'], "O't yulish · gul ekish · yeyish"], [['B'], 'Harakatlar menyusi'], [['1', '2', '3'], 'Raqs · dutor · salom'], [['L', 'Z'], 'Fonar · durbin']])}</div></div></div>
-      <div class="keys" style="margin-top:10px">${rows([[['M'], 'Xarita va GPS'], [['I'], 'Sumka, topshiriqlar, albom'], [['Tab'], 'Sayohat pasporti'], [['C'], 'Kamera · sichqoncha bilan aylantirish'], [['X'], 'Chellenjni bekor qilish'], [['N', 'P'], 'Musiqa · surat rejimi'], [['O', 'U'], 'Onlayn (do\'stlar bilan) · chat'], [['Esc'], 'Pauza']])}</div>
+      <div class="keys" style="margin-top:10px">${rows([[['M'], 'Xarita va GPS'], [['I'], 'Sumka, topshiriqlar, albom'], [['Tab'], 'Sayohat pasporti'], [['C'], 'Kamera · sichqoncha bilan aylantirish'], [['X'], 'Chellenjni bekor qilish'], [['⌫'], 'Chellenjni qayta boshlash'], [['9', '0'], 'Yutuqlar daftari · kunlik uchlik'], [['N', 'P'], 'Musiqa · surat rejimi'], [['O', 'U'], 'Onlayn (do\'stlar bilan) · chat'], [['Esc'], 'Pauza']])}</div>
       <p class="sub" style="margin-top:12px">Geympad ham ishlaydi: RT/LT — gaz/tormoz, chap stik — rul, A — qo'l tormozi, X — nitro.</p>`;
     w.appendChild(btn('Orqaga', () => this.open(d.back)));
   }

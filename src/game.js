@@ -25,7 +25,7 @@ const ICON = { sheep: 0xf6f3ea, shell: 0xffc8d8, mush: 0xfff2d0, oar: 0xc79a66, 
 
 function defState() {
   return { v: 2, money: 300, xp: 0, stars: {}, best: {}, up: { engine: 0, nitro: 0, tires: 0, susp: 0, armor: 0, brake: 0 }, paint: 'qizil', paints: ['qizil'], coins: [], chests: [], places: {},
-    stats: { dist: 0, top: 0, jump: 0, smashed: 0, crashes: 0, time: 0, drift: 0, air: 0, walk: 0 }, set: { vol: 0.8, music: true, gfx: 2, damage: true }, hour: 9.5, pos: null, dmg: null, fresh: true,
+    stats: { dist: 0, top: 0, jump: 0, smashed: 0, crashes: 0, time: 0, drift: 0, air: 0, walk: 0 }, set: { vol: 0.8, music: true, gfx: 2, damage: true, ui: 100 }, hour: 9.5, pos: null, dmg: null, fresh: true,
     veh: { own: ['jip', 'velo'], cur: 'jip', dmg: {}, paint: {} }, foot: null,
     inv: { seed: 3, sapling: 0, fruit: 0, berry: 0, veg: 0, bread: 1, mush: 0, shell: 0, flower: 0, wood: 0, hay: 0, fish: 0, bigfish: 0, egg: 0, ore: 0, gem: 0, kit: 0, water: 1, juice: 0, sweets: 0, snack: 0, canister: 0, friedfish: 0, kabob: 0, soup: 0, omlet: 0, salad: 0, dimlama: 0, tea: 0 },
     tools: {}, hats: [], hat: null, karma: 0, sat: 100, energy: 100,
@@ -38,7 +38,8 @@ function defState() {
     biz: {}, home2: {}, tetik: 100, hurmat: 0, errands: {}, soat: 0, // hayot3: biznes (biznes.js), uy kengaytmalari (uy2.js), tetiklik — charchoq va o'tgan o'yin soatlari (kun.js), hurmat va topshiriqlar (topshiriq.js)
     errCur: null, // topshiriq.js: bajarilayotgan topshiriq (tur, beruvchi, bosqich) — qayta yuklanganda davom etadi; null — yo'q
     sovrin: { rec: {}, cups: {}, best: { n: 0, pts: 0 }, tricks: 0, tlog: {}, paid: {} }, // tryuk.js: transport rekordlari {chellenj: {transport: [natija, medal]}}, kuboklar {poyga: soni}, eng yaxshi kombo, tryuklar soni, tryuklar daftari, to'langan medal mukofotlari
-    suv: { row: 0, sail: 0, glide: 0, km: 0, best: 0, fish: 0 } }; // suv.js: eshkakli/yelkanli qayiq ijaralari va deltaplan parvozlari soni, qayiqda suzilgan masofa (m), eng uzoq parvoz (m), qayiqdan tutilgan baliq
+    suv: { row: 0, sail: 0, glide: 0, km: 0, best: 0, fish: 0 }, // suv.js: eshkakli/yelkanli qayiq ijaralari va deltaplan parvozlari soni, qayiqda suzilgan masofa (m), eng uzoq parvoz (m), qayiqdan tutilgan baliq
+    qulay: { guide: 0, tips: {}, tipsOff: false, ach: {}, achInit: 0, day: null, streak: 0, last: -1, chests: 0, win: 0 } }; // qulay.js/yutuq.js: «Birinchi safar» qadami (0 — aniqlanmagan, 99 — tugagan, <0 — ko'rsatilmaydi), ko'rilgan maslahatlar, yutuqlar, kunlik uchlik (kun, ketma-ketlik, sandiqlar), yulduzli chellenjlar soni
 }
 function loadState() {
   const d = defState(); let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* saqlangan o'yin yo'q */ }
