@@ -968,7 +968,7 @@ export function initCoop(game) {
   // ---- har kadr ----
   const flags = () => { const g = game, foot = g.player.onFoot, s = g.input.state, m = g.carModel; let f = 0; if (m.spot && m.spot.intensity > 0) f |= 1; if (!foot && ((s.brake > 0.1 && g.car.fwd > 1) || s.handbrake)) f |= 2; if (foot) f |= 4; if (g.car.nitroOn) f |= 8; return f; };
   // bo'yoq qoplamasi va ikkinchi rang (boyoq.js): [qoplama №, ikkinchi rang yoki -1]; oddiy yaltiroq bir rangli bo'yoqda yuborilmaydi
-  const paintCode = (g) => { const V = g.state.veh, f = finishIndex(V.fin[V.cur] || 'yal'), t = V.tone[V.cur]; return f || t != null ? [f, t != null ? t | 0 : -1] : null; };
+  const paintCode = (g) => { const V = g.state.veh, f = finishIndex((V.fin && V.fin[V.cur]) || 'yal'), t = V.tone && V.tone[V.cur]; return f || t != null ? [f, t != null ? t | 0 : -1] : null; };
   // n — tartib raqami, ms — yuboruvchi vaqti, i — turibdi (siyrak paketlar); transport/rang/shapka — o'zgarganda va har 10-paketda
   function packet(idle) {
     const g = game, c = g.car, pl = g.player, foot = pl.onFoot, a = g.act;

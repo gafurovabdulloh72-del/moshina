@@ -44,6 +44,7 @@ import { initSir } from './sir.js';
 import { initKurash } from './kurash.js';
 import { initBoyoq } from './boyoq.js';
 import { initUslub } from './uslub.js';
+import { initDaromad } from './daromad.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -113,6 +114,7 @@ async function boot() {
   initPoyga(game); initMahorat(game); // poygalar: cheksiz poyga, aylanma poygalar, yo'l egasi ([1]); Yulduz yo'li va transport mahorati (qulay/tryuk'dan keyin — ular ustiga quriladi)
   initSir(game); // mish-mishlar, aholi munosabati, qazilma maydoni va muzey, oltin muhrlar, kun vaqti ahamiyati
   initBoyoq(game); initUslub(game); initKurash(game); // bo'yoq ustaxonasi va shina to'plamlari, uy uslubi (zamonaviy / an'anaviy hovli), Karvonsaroydagi kurash davrasi
+  initDaromad(game); // ish e'lonlari va yangi daromad yo'llari: transport ishlari, piyoda ishlar, savdo va hunar, sarmoya; telefon «Daromad»
   game.applyQuality('boot'); resize();
   game.gfx.precompile(); // barcha sheyderlar yuklash paytida tayyorlanadi
   // videokarta konteksti yo'qolsa (drayver qayta ishga tushdi va h.k.) — kutamiz va qaytganda hammasini qayta tiklaymiz
