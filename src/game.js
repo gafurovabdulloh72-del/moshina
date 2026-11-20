@@ -41,7 +41,8 @@ function defState() {
     suv: { row: 0, sail: 0, glide: 0, km: 0, best: 0, fish: 0 }, // suv.js: eshkakli/yelkanli qayiq ijaralari va deltaplan parvozlari soni, qayiqda suzilgan masofa (m), eng uzoq parvoz (m), qayiqdan tutilgan baliq
     qulay: { guide: 0, tips: {}, tipsOff: false, ach: {}, achInit: 0, day: null, streak: 0, last: -1, chests: 0, win: 0 }, // qulay.js/yutuq.js: «Birinchi safar» qadami (0 — aniqlanmagan, 99 — tugagan, <0 — ko'rsatilmaydi), ko'rilgan maslahatlar, yutuqlar, kunlik uchlik (kun, ketma-ketlik, sandiqlar), yulduzli chellenjlar soni
     poyga: { inf: {}, circ: {}, seg: {}, runs: 0 }, // poyga.js: cheksiz poyga rekordlari {transport: [darvoza, masofa m]}, aylanmalar {id: {s, best, lap, n}}, yo'l bo'laklari {bo'lak: [vaqt, transport, egami]}, cheksiz poygalar soni
-    mahorat: { yy: [], veh: {} } }; // mahorat.js: Yulduz yo'lidan olingan sovg'alar (tartib raqamlari), transport mahorati {transport: {km, dr, top, trip, b, tr}}
+    mahorat: { yy: [], veh: {} }, // mahorat.js: Yulduz yo'lidan olingan sovg'alar (tartib raqamlari), transport mahorati {transport: {km, dr, top, trip, b, tr}}
+    sir: { rum: [], rlog: [], rumN: 0, rumOk: 0, gold: {}, err: {}, fire: 0, finds: {}, museum: {}, broken: 0, found: 0, arx: 0, dig: null, react: null, rep: null, tod: '' } }; // sir.js: faol mish-mishlar (≤3, xarita doirasi) va daftar, oltin muhrlar {manzil: vaqt}, manzil bo'yicha bajarilgan topshiriqlar, tutilgan qo'ng'izlar; qazilma (dig — katak holatlari, qatlam, ijara kuni), topilmalar, muzey; munosabat hisobi va kunlik hurmat chegarasi
 }
 function loadState() {
   const d = defState(); let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* saqlangan o'yin yo'q */ }

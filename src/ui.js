@@ -440,6 +440,7 @@ export class UI {
       for (const id in g.site.places) { const p = g.site.places[id]; const nm = st.places[id] || id === 'uy' ? p.name : '?'; const tw = c.measureText(nm).width + 6, px = P(p.x), pz = P(p.z);
         let ly = pz - 13, lx = px; for (const [ox, oy] of [[0, -13], [0, 27], [tw / 2 + 12, 5], [-tw / 2 - 12, 5], [0, -31], [0, 45]]) { const bx = px + ox, by = pz + oy; if (!boxes.some((b) => Math.abs(b[0] - bx) < (b[2] + tw) / 2 && Math.abs(b[1] - by) < 17)) { lx = bx; ly = by; break; } }
         boxes.push([lx, ly, tw]); c.lineWidth = 4; c.strokeStyle = 'rgba(10,14,24,.85)'; c.strokeText(nm, lx, ly); c.fillStyle = st.places[id] ? '#fff' : '#ffd0a0'; c.fillText(nm, lx, ly); }
+      if (g.mapExtra) for (const f of g.mapExtra) f(c, P, k, dot); // boshqa modullarning qatlami (sir.js: mish-mish doiralari, oltin muhrlar)
       if (g.way) dot(g.way.x, g.way.z, 8, '#35e0ff', '#141824');
       if (pl.onFoot) dot(g.car.p[0], g.car.p[2], 6, '#d8392b', '#fff');
       if (g.netDots) for (const d of g.netDots) { dot(d[0], d[1], 9, d[2], '#141824'); c.lineWidth = 4; c.strokeStyle = 'rgba(10,14,24,.85)'; c.strokeText(d[3], P(d[0]), P(d[1]) - 14); c.fillStyle = d[2]; c.fillText(d[3], P(d[0]), P(d[1]) - 14); }
@@ -451,7 +452,7 @@ export class UI {
       info.innerHTML = '';
       if (pl2) { const acts = g.acts.byPlace[pl2.id] || []; const got = acts.reduce((s, a) => s + (st.stars[a.id] || 0), 0); const known = st.places[pl2.id] || pl2.id === 'uy'; info.innerHTML = `<h4 style="margin:0 0 4px">${known ? pl2.name : "Noma'lum manzil"}</h4><p class="sub">${pl2.id === 'uy' ? 'Sizning uyingiz' : `${acts.length} chellenj · ★ ${got}/${acts.length * 3}`}<br>Masofa: ${fmtDist(Math.hypot(pl2.x - me[0], pl2.z - me[2]))}</p>`;
         if (pl2.id === 'uy' && !g.act) { const b = btn('Uyga qaytish — bepul', () => travel(() => g.goHome()), ''); b.style.marginTop = '6px'; info.appendChild(b); }
-        else if (st.places[pl2.id] && pl2.board && !g.act) { const b = btn(`Tez sayohat — 120 so'm`, () => { if (st.money < 120) { g.toast('Pul yetarli emas', 'bad'); return; } g.addMoney(-120, 'Tez sayohat'); travel(() => { g.car.place(pl2.board.x + 6, pl2.board.z + 6, 0); g.respawn(); if (pl.onFoot) g.live.mount(false); }); }, 'sec'); b.style.marginTop = '6px'; info.appendChild(b); } }
+        else if (st.places[pl2.id] && pl2.board && !g.act) { const fee = g.sir && g.sir.freeTravel(pl2.id) ? 0 : 120; const b = btn(fee ? `Tez sayohat — 120 so'm` : 'Tez sayohat — tekin 🏅', () => { if (st.money < fee) { g.toast('Pul yetarli emas', 'bad'); return; } if (fee) g.addMoney(-fee, 'Tez sayohat'); travel(() => { g.car.place(pl2.board.x + 6, pl2.board.z + 6, 0); g.respawn(); if (pl.onFoot) g.live.mount(false); }); }, 'sec'); b.style.marginTop = '6px'; info.appendChild(b); } }
       else info.innerHTML = `<p class="sub">GPS belgilandi.<br>Masofa: ${fmtDist(Math.hypot(wx - me[0], wz - me[2]))}</p>`;
       const cl = btn('GPS ni tozalash', () => { g.setWaypoint(null); draw(); info.innerHTML = ''; }, 'sec'); cl.style.marginTop = '6px'; info.appendChild(cl);
     };
