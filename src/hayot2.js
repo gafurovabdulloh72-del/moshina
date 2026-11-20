@@ -166,7 +166,7 @@ export function initHayot2(game) {
       toast(`${m[2]} ${m[1]} — ${drink ? 'rohat!' : 'juda mazali!'} · to'qlik ${Math.round(a)}% → ${Math.round(st.sat)}% · 💧 ${Math.round(st.thirst)}%`, 'good'); }, drink ? 'cup' : 'spoon'); pl.sit = true; HY.seat = sp; d.eating = true; };
   H2.eatNext = eatNext;
   const sitCafe = (sp) => { pl.p[0] = sp.x + Math.sin(sp.yaw) * 0.1; pl.p[2] = sp.z + Math.cos(sp.yaw) * 0.1; pl.p[1] = T.ground(pl.p[0], pl.p[2], pl.p[1] + 1).y; pl.yaw = sp.yaw; pl.v[0] = pl.v[2] = 0; pl.sit = true; pl.emote = null; HY.seat = sp;
-    if (H2.dishes.length && H2.dishes[0].sp !== sp) clearDishes(); if (!H2.toldSit) { H2.toldSit = 1; toast("Ofitsiant: «Xush kelibsiz! Menyuni ko'rasizmi?» — [E]", 'gold'); } };
+    if (H2.dishes.length && H2.dishes[0].sp !== sp) { const ids = H2.dishes.map((d) => d.id); clearDishes(); putDishes(sp, ids); } if (!H2.toldSit) { H2.toldSit = 1; toast("Ofitsiant: «Xush kelibsiz! Menyuni ko'rasizmi?» — [E]", 'gold'); } }; // boshqa stolga o'tilsa — taomlar ham ko'chadi (avval pulga olingan ovqat yo'qolardi)
 
   // --- KIYIM DO'KONI ---
   const K = (IN.X.kiyim = mkI(KIYIM_O)); scene.add(K.grp); K.grp.visible = false;
@@ -255,7 +255,7 @@ export function initHayot2(game) {
   // ================= KADR YANGILANISHI =================
   const up0 = L.update;
   L.update = (dt) => { up0(dt); const k = IN.inside;
-    if (k && IN.X[k]) { game.curPlace = { name: NAMES[k] }; game.region = k === 'cafe' ? (HY.seat && HY.seat.k === 'csit' ? (HY.seat.topchan ? 'Topchanda' : 'Stol atrofida') : 'Ofitsiant Sobir aka') : k === 'kiyim' ? 'Sotuvchi Nilufar' : 'Akmal usta'; if (HY.seat && !pl.sit) { if (HY.seat.k === 'csit' && H2.dishes.length && pl.lock <= 0) clearDishes(); HY.seat = null; } }
+    if (k && IN.X[k]) { game.curPlace = { name: NAMES[k] }; game.region = k === 'cafe' ? (HY.seat && HY.seat.k === 'csit' ? (HY.seat.topchan ? 'Topchanda' : 'Stol atrofida') : 'Ofitsiant Sobir aka') : k === 'kiyim' ? 'Sotuvchi Nilufar' : 'Akmal usta'; if (HY.seat && !pl.sit) HY.seat = null; } // turib ketilsa taom stolda kutadi (choyxonadan chiqqanda yig'iladi)
     if (BR.cut) L.prompt = `✂️ Sartarosh ishlayapti… ${Math.min(100, Math.round(BR.cut.t / BR.cut.dur * 100))}%`;
     for (const b of H2.bld) L.dots.push([b.x, b.z, b.dot]); };
   // ofitsiant, mijozlar, sotuvchi, sartarosh — faqat ichkarida bo'lganda
@@ -266,7 +266,7 @@ export function initHayot2(game) {
       const w = WT; let an = 'idle', sp = 0;
       if (w.ph === 'go' || w.ph === 'back') { setTool(waiter, w.ph === 'go' ? 'tray' : null); if (w.path.length) { if (stepTo(w, w.path[0][0], w.path[0][1], 1.7, dt)) w.path.shift(); an = 'walk'; sp = 1.7; }
         if (!w.path.length) { if (w.ph === 'go') { w.ph = 'serve'; w.t = 0; const s = w.seat; w.yaw = Math.atan2(C.o[0] + s.table[0] - w.x, C.o[2] + s.table[1] - w.z); waiter.actDur = 1.2; } else { w.ph = 'idle'; w.yaw = Math.PI; } } }
-      else if (w.ph === 'serve') { an = 'bend'; w.t += dt; if (w.t > 1.0) { setTool(waiter, null); if (HY.seat === w.seat) { putDishes(w.seat, w.carry); toast('Ofitsiant: «Yoqimli ishtaha! 😊» — [E] bilan yeng', 'gold'); sfx('pop'); } w.carry.length = 0; w.ph = 'back'; const s = w.seat.serve; w.path = [[C.o[0], C.o[2] + s[1]], [C.o[0] + W0[0], C.o[2] + W0[1]]]; } }
+      else if (w.ph === 'serve') { an = 'bend'; w.t += dt; if (w.t > 1.0) { setTool(waiter, null); { const sat = HY.seat && HY.seat.k === 'csit'; putDishes(sat ? HY.seat : w.seat, w.carry); if (sat) { toast('Ofitsiant: «Yoqimli ishtaha! 😊» — [E] bilan yeng', 'gold'); sfx('pop'); } else toast('Ofitsiant buyurtmani stolga qo\'ydi — o\'tirib yeng [E]', 'gold'); } w.carry.length = 0; w.ph = 'back'; const s = w.seat.serve; w.path = [[C.o[0], C.o[2] + s[1]], [C.o[0] + W0[0], C.o[2] + W0[1]]]; } }
       else if (w.carry.length && HY.seat && HY.seat.k === 'csit') { w.seat = HY.seat; const s = w.seat.serve; w.path = [[C.o[0], C.o[2] + s[1]], [C.o[0] + s[0], C.o[2] + s[1]]]; w.ph = 'go'; }
       else if (Math.hypot(pl.p[0] - w.x, pl.p[2] - w.z) < 3) w.yaw = Math.atan2(pl.p[0] - w.x, pl.p[2] - w.z);
       waiter.root.position.set(w.x, C.o[1], w.z); waiter.root.rotation.y = w.yaw; poseRig(waiter, an, dt, sp);

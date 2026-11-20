@@ -131,7 +131,8 @@ export function initHayot(game) {
       case 'tap': pl.yaw = sp.yaw; sfx('pour'); return pl.act('drink', 2.2, () => { st.thirst = clamp(st.thirst + 45, 0, 100); sfx('sip'); toast(`Bir stakan muzdek suv 💧 ${Math.round(st.thirst)}%`, 'good'); }, 'cup');
       case 'sink': pl.yaw = sp.yaw; sfx('pour'); return pl.act('wash', 2.6, () => { st.energy = Math.min(st.sat, st.energy + 4); toast("Qo'llaringiz top-toza ✨", 'good'); });
       case 'mirror': { pl.yaw = sp.yaw; const own = st.hats; let msg = "Ko'zgudagi o'zingizga qo'l silkidingiz 😄"; if (own.length) { const i = own.indexOf(st.hat), nx = i + 1 < own.length ? own[i + 1] : null; st.hat = nx; pl.setHat(nx); msg = nx ? 'Yangi bosh kiyim yarashdi! 😎' : "Bosh kiyimsiz ham chiroyli ko'rinasiz 🙂"; } return pl.act('wave', 1.6, () => toast(msg, 'good')); }
-      case 'shower': pl.yaw = sp.yaw; sfx('pour'); HY.showerT = 4.6; return pl.act('shower', 4.6, () => { st.energy = Math.min(st.sat, st.energy + 20); st.tetik = Math.min(100, (st.tetik == null ? 100 : st.tetik) + 15); toast(`Dushdan keyin tetik bo'ldingiz! 🚿 Tetiklik ${Math.round(st.tetik)}%`, 'good'); });
+      case 'shower': pl.p[0] = sp.x - 0.12; pl.p[2] = sp.z - 0.12; pl.v[0] = pl.v[2] = 0; pl.yaw = sp.yaw; sfx('pour'); // kabina ichiga, suv ostiga (avval kabina tashqarisida turib cho'milardi)
+      HY.showerT = 4.6; return pl.act('shower', 4.6, () => { st.energy = Math.min(st.sat, st.energy + 20); st.tetik = Math.min(100, (st.tetik == null ? 100 : st.tetik) + 15); toast(`Dushdan keyin tetik bo'ldingiz! 🚿 Tetiklik ${Math.round(st.tetik)}%`, 'good'); });
       case 'tv': { if (!IN.tvOn) { IN.tvOn = true; IN.tvCh = 0; } else if (IN.tvCh < 2) IN.tvCh++; else IN.tvOn = false; sfx('click'); return toast(IN.tvOn ? `📺 ${TV_CH[IN.tvCh]} — divanga o'tirib tomosha qiling` : "📺 Televizor o'chirildi"); }
       case 'radio': { const s = st.set; s.music = !s.music; game.audio.setMusic(s.music); return toast(s.music ? '📻 Radio yoqildi — kuy chalinmoqda' : "📻 Radio o'chirildi"); }
       case 'kettle': pl.yaw = sp.yaw; sfx('pour'); return pl.act('cook', 2.6, () => { pl.act('drink', 2.2, () => { st.thirst = clamp(st.thirst + 30, 0, 100); st.energy = Math.min(100, st.energy + 10); toast(`Issiq ko'k choy 🍵 · 💧 ${Math.round(st.thirst)}% · kuch +10`, 'good'); sfx('sip'); }, 'cup'); });
@@ -148,7 +149,7 @@ export function initHayot(game) {
     switch (sp.k) {
       case 'door': return '<kbd>E</kbd> Tashqariga chiqish';
       case 'bed': return napNow() ? "<kbd>E</kbd> Mizg'ib olish (2 soat) 🛏" : `<kbd>E</kbd> Uxlash (budilnik ${hm(st.alarm || 6.5)}) 🛏`;
-      case 'sit': if (pl.sit && HY.seat === sp) return sp.table ? (bestDish() ? `<kbd>E</kbd> Ovqatlanish (${ITEMS[bestDish()][1]} ${ITEMS[bestDish()][0]})` : "Yegulik yo'q — plitada pishiring") : null; return sp.sofa ? "<kbd>E</kbd> Divanga o'tirish" : "<kbd>E</kbd> O'tirish";
+      case 'sit': if (pl.sit && HY.seat === sp) return sp.table && bestDish() ? `<kbd>E</kbd> Ovqatlanish (${ITEMS[bestDish()][1]} ${ITEMS[bestDish()][0]})` : null; // yegulik yo'q — [E] o'rnidan turg'izadi (avval «yegulik yo'q» taklifi turishni to'sib qo'yardi) return sp.sofa ? "<kbd>E</kbd> Divanga o'tirish" : "<kbd>E</kbd> O'tirish";
       case 'stove': return '<kbd>E</kbd> Ovqat pishirish 🍳';
       case 'fridge': return `<kbd>E</kbd> ${st.home.lvl < 2 ? 'Salqin quti' : 'Muzlatkich'} 🧊`;
       case 'tap': return '<kbd>E</kbd> Bir stakan suv ichish 💧';

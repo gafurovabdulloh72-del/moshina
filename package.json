@@ -31,7 +31,8 @@
     "test:poyga": "node tools/shot.mjs tools/s_poyga.js",
     "test:sir": "node tools/shot.mjs tools/s_sir.js",
     "test:kurash": "node tools/shot.mjs tools/s_kurash.js",
-    "test:daromad": "node tools/shot.mjs tools/s_daromad.js"
+    "test:daromad": "node tools/shot.mjs tools/s_daromad.js",
+    "test:mebel": "node tools/shot.mjs tools/s_mebel.js"
   },
   "dependencies": {
     "esbuild": "^0.28.2",
