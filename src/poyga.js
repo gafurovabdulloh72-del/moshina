@@ -135,7 +135,7 @@ export function initPoyga(game) {
   };
   // darvozadan o'tganda qo'shiladigan vaqt: yo'l uzunligi va burilishlarga qarab, darvoza ko'paygan sari biroz kamayadi
   // (oldingi bo'lak bilan birga baholanadi — darvozadan to'xtamay o'tiladi, start tezlanishi hisobga kirmasin)
-  const refill = (A, seg, prev) => { const run = prev ? estimateTime(prev.pts.concat(seg.pts.slice(1)), A.vmax, 6.5) - estimateTime(prev.pts, A.vmax, 6.5) : estimateTime(seg.pts, A.vmax, 6.5); return +clamp(run * Math.max(1, 1.32 - A.gates * 0.012) + 2, 6, 40).toFixed(1); };
+  const refill = (A, seg, prev) => { const run = prev ? estimateTime(prev.pts.concat(seg.pts.slice(1)), A.vmax, 6.5) - estimateTime(prev.pts, A.vmax, 6.5) : estimateTime(seg.pts, A.vmax, 6.5); return +clamp(run * Math.max(0.95, 1.22 - A.gates * 0.01) + 2, 6, 40).toFixed(1); };
   P.refill = refill;
   const infTick = (A) => {
     if (A.state !== 'run') return;
