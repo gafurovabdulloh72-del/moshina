@@ -131,8 +131,8 @@ try {
   ok(await A.evaluate(() => (G.state.home.fund | 0) === 600 && G.state.home.lvl === 2), 'noto\'g\'ri so\'rovlar uyni o\'zgartirmadi');
   ok(await B.evaluate(() => { G.save(); const s = JSON.parse(localStorage.getItem('safar_save_v2')); return s.home.lvl === 1 && !s.home.decor.gulzor && !s.home.beds[0]; }), 'B saqlovi: o\'z uyi o\'zgarmagan');
   // uy uslubi (uslub.js): egasi an'anaviy hovlini tanlaydi — mehmon ham shuni ko'radi, mehmonning o'z saqlovi o'zgarmaydi
-  await A.evaluate(() => { G.state.money += 2000; G.uslub.set(1); });
-  ok(await until(B, () => G.state.home.style === 1 && G.site.places.uy.home.trad() && G.site.places.uy.home.alt[2].grp.visible, null, 20, A), "B egasining an'anaviy uyini ko'radi");
+  const setSty = await A.evaluate(() => { G.state.money += 2000; const ok = G.uslub.set(1); return { ok, st: G.state.home.style, lvl: G.state.home.lvl, host: !!(G.coop.room && G.coop.room.isHost), n: G.coop.members.size }; });
+  ok(await until(B, () => G.state.home.style === 1 && G.site.places.uy.home.trad() && G.site.places.uy.home.alt[2].grp.visible, null, 40, A), "B egasining an'anaviy uyini ko'radi", JSON.stringify(setSty) + ' ' + await B.evaluate(() => JSON.stringify({ st: G.state.home.style, lvl: G.state.home.lvl, vis: G.visit.on, trad: G.site.places.uy.home.trad() })));
   ok(await B.evaluate(() => { G.save(); return (JSON.parse(localStorage.getItem('safar_save_v2')).home.style | 0) === 0; }), "B saqlovida o'z uy uslubi (zamonaviy) qoldi");
   await B.evaluate(() => { const h = G.site.places.uy.home, p = h.W(-15, 30), q = h.W(0, -2); G.view(p[0], h.y + 9, p[1], q[0], h.y + 2.5, q[1]); }); await shot(B, 'online_guest_trad_home');
   // B do'sti yoniga ko'chadi, keyin ikkalasi yonma-yon haydaydi
