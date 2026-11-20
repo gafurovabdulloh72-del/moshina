@@ -22,9 +22,9 @@ export function initIshlar3(game, D) {
   // ================= 1. YO'L TA'MIRI =================
   const yg = giverAt('yol', 'qala', 1.1, "Yo'l ustasi Akbar", { shirt: 0xe2902a, pants: 0x3a3f4c, vest: 0xffd23a, hair: 0x2a1d16, stache: true });
   const holeG = (() => { const g = new GB(4201); g.jit = 0.04; g.color(0xffffff).cyl(10, 0.75, 0.85, 0, 0.05, { cap: true }); return g.build(); })();
-  const holeIM = new THREE.InstancedMesh(holeG, MAT.flat, 6); holeIM.count = 0; holeIM.receiveShadow = true; scene.add(holeIM);
+  const holeIM = new THREE.InstancedMesh(holeG, MAT.flat, 6); holeIM.count = 0; holeIM.frustumCulled = false; holeIM.receiveShadow = true; scene.add(holeIM);
   const coneG = (() => { const g = new GB(4202); g.jit = 0.01; g.color(0x2a2c33).box(0, 0.03, 0, 0.5, 0.06, 0.5); g.color(0xff6a1a).cyl(10, 0.2, 0.04, 0.06, 0.78, { cap: true }); g.color(0xf2f2ee).cyl(10, 0.145, 0.115, 0.36, 0.48); return g.build(); })();
-  const coneIM = new THREE.InstancedMesh(coneG, MAT.flat, 2); coneIM.count = 0; coneIM.castShadow = true; scene.add(coneIM);
+  const coneIM = new THREE.InstancedMesh(coneG, MAT.flat, 2); coneIM.count = 0; coneIM.frustumCulled = false; coneIM.castShadow = true; scene.add(coneIM);
   const HOLE_C = [0x1a1714, 0x8a7a64, 0x3a3c42];
   const drawRoad = (J) => { let n = 0; if (J) J.holes.forEach((h) => { dm.position.set(h.x, gy(h.x, h.z) + (h.s === 2 ? 0.02 : 0.005), h.z); dm.rotation.set(0, h.yaw, 0); dm.scale.set(1, 1, 1); dm.updateMatrix(); holeIM.setMatrixAt(n, dm.matrix); holeIM.setColorAt(n, col.setHex(HOLE_C[h.s])); n++; }); holeIM.count = n; holeIM.instanceMatrix.needsUpdate = true; if (holeIM.instanceColor) holeIM.instanceColor.needsUpdate = true;
     n = 0; if (J) for (const c of J.cones) if (c.on) { dm.position.set(c.x, gy(c.x, c.z), c.z); dm.rotation.set(0, 0, 0); dm.updateMatrix(); coneIM.setMatrixAt(n++, dm.matrix); } coneIM.count = n; coneIM.instanceMatrix.needsUpdate = true; };
@@ -50,9 +50,9 @@ export function initIshlar3(game, D) {
   let pen = null; if (qg) { pen = D.spotNear(qg.x, qg.z, 12, 40, (x, z, si) => si.slope < 0.15 && si.roadD > 8, 0.3, 6); if (pen) { const g = new GB(4211); g.jit = 0.03; for (let i = 0; i < 20; i++) { if (i === 0 || i === 19) continue; const a = (i / 20) * 6.283 + D.roadYaw(pen.x, pen.z), x = pen.x + Math.sin(a) * 6, z = pen.z + Math.cos(a) * 6, y = gy(x, z);
     g.push().translate(x, y, z).rotY(a + Math.PI / 2); g.color(0x8a6a44).box(0, 0.5, 0, 0.1, 1.0, 0.1); g.color(0x9a7a50).box(0.95, 0.35, 0, 1.9, 0.07, 0.05).box(0.95, 0.75, 0, 1.9, 0.07, 0.05); g.pop(); } const m = mesh(g); scene.add(m); pen.yaw = D.roadYaw(pen.x, pen.z); } }
   const sheepG = (() => { const g = new GB(4212); g.jit = 0.03; g.color(0xf2efe6).blob(0.36, 1, { cy: 0.62, sz: 1.35, shade: 0.12 }); g.color(0x2a2420).push().translate(0, 0.74, 0.48).rotX(-0.4).blob(0.14, 1, { sz: 1.4 }).pop(); g.color(0x2a2420); for (const [x, z] of [[-0.14, -0.26], [0.14, -0.26], [-0.14, 0.26], [0.14, 0.26]]) g.box(x, 0.2, z, 0.07, 0.4, 0.07); return g.build(); })();
-  const sheepIM = new THREE.InstancedMesh(sheepG, MAT.flat, 8); sheepIM.count = 0; sheepIM.castShadow = true; scene.add(sheepIM);
+  const sheepIM = new THREE.InstancedMesh(sheepG, MAT.flat, 8); sheepIM.count = 0; sheepIM.frustumCulled = false; sheepIM.castShadow = true; scene.add(sheepIM);
   const postG = (() => { const g = new GB(4213); g.jit = 0.02; g.color(0x8a6a44).box(0, 0.6, 0, 0.08, 1.2, 0.08); g.color(0x5fd38a).box(0.18, 1.05, 0, 0.32, 0.2, 0.02); return g.build(); })();
-  const postIM = new THREE.InstancedMesh(postG, MAT.flat, 10); postIM.count = 0; scene.add(postIM);
+  const postIM = new THREE.InstancedMesh(postG, MAT.flat, 10); postIM.count = 0; postIM.frustumCulled = false; scene.add(postIM);
   const PR = 14, PEN_R = 5.2;
   D.reg({ id: 'qoy', ic: '🐑', name: "Qo'y boqish", cat: 'foot', place: 'tegirmon', mins: 5, xp: 13, pay: "550–1 100 so'm", need: 'piyoda yoki transportda — qo\'ylar sizdan qochadi',
     desc: "Ergash boboning podasini qo'rada chiqarib, yaylovga (yashil bayroqchalar) haydaysiz, o'tlatib, yana qo'raga qaytarasiz. Qo'ylar sizdan qochadi — ortidan yurib yo'naltiring.",
@@ -82,7 +82,7 @@ export function initIshlar3(game, D) {
   // ================= 3. QURUVCHI =================
   const bg = giverAt('quruvchi', 'kol', 3.3, 'Brigadir Jasur', { shirt: 0x3d74a6, pants: 0x3a3f4c, vest: 0xffd23a, hair: 0x2a1d16 }, 10, 55);
   const brickG = (() => { const g = new GB(4221); g.jit = 0.01; g.color(0xb8542e).box(0, 0.11, 0, 0.5, 0.22, 0.24); g.color(0xd8d2c6).box(0, 0.225, 0, 0.5, 0.01, 0.24); return g.build(); })();
-  const brickIM = new THREE.InstancedMesh(brickG, MAT.flat, 40); brickIM.count = 0; brickIM.castShadow = true; brickIM.receiveShadow = true; scene.add(brickIM);
+  const brickIM = new THREE.InstancedMesh(brickG, MAT.flat, 40); brickIM.count = 0; brickIM.frustumCulled = false; brickIM.castShadow = true; brickIM.receiveShadow = true; scene.add(brickIM);
   const ghost = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.22, depthWrite: false })); ghost.visible = false; scene.add(ghost);
   const carryB = (() => { const g = new GB(4222); g.jit = 0.01; for (let i = 0; i < 3; i++) g.color(0xb8542e).box(0, i * 0.12, 0, 0.42, 0.11, 0.2); const m = mesh(g); m.position.set(0, -0.05, 0.28); return m; })();
   const COLS = 6, ROWS = 3;
