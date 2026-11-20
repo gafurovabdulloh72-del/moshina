@@ -236,6 +236,7 @@ export class UI {
     col.appendChild(btn('▶  Davom etish', () => this.close()));
     col.appendChild(btn("🌐 Onlayn — do'stlar bilan", () => this.open('online'), 'sec'));
     col.appendChild(btn('📅 Haftalik chellenj va nishonlar', () => this.open('hafta'), 'sec'));
+    col.appendChild(btn('🏆 Sovrinlar: kubok, medal va tryuklar', () => this.open('sovrin'), 'sec'));
     col.appendChild(btn('Xarita', () => this.open('map'), 'sec')); col.appendChild(btn('Sumka va topshiriqlar', () => this.open('bag'), 'sec')); col.appendChild(btn('Sayohat pasporti', () => this.open('progress'), 'sec'));
     col.appendChild(btn('Vaqtni almashtirish (dam olish)', () => this.open('rest'), 'sec'));
     col.appendChild(btn("Ustaxonaga evakuatsiya (200 so'm)", () => { this.close(); g.tow(); }, 'sec'));

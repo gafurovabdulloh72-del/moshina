@@ -3,6 +3,25 @@
 import { clamp, lerp } from './util.js';
 
 const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+// Dvigatel xarakterlari: to'lqin turlari (w), ovoz ulushlari (g), 2- va 3-generator chastota nisbati (r), salt/aylanish (idle, span — Hz),
+// filtr (lp: asos, aylanishga, gazga), rezonans (q), pulsatsiya (lfo — asosiy chastotaga nisbat, ld — chuqurligi), balandlik (vol), havo tormozi (air)
+export const ENGINES = {
+  jip: { w: ['sawtooth', 'square', 'sawtooth'], g: [0.5, 0.35, 0.2], r: [0.5, 1.51], idle: 30, span: 82, lp: [260, 1500, 700], q: 1.2, lfo: 0.25, ld: 0.25, vol: 1 },
+  skuter: { w: ['square', 'square', 'sawtooth'], g: [0.42, 0.3, 0.12], r: [1, 2.02], idle: 34, span: 70, lp: [600, 1700, 800], q: 3.2, lfo: 0.5, ld: 0.6, vol: 0.75 }, // ikki taktli «pat-pat»
+  moto: { w: ['sawtooth', 'sawtooth', 'square'], g: [0.5, 0.3, 0.16], r: [0.5, 2.0], idle: 32, span: 90, lp: [420, 2400, 900], q: 2.2, lfo: 0.5, ld: 0.42, vol: 0.9 }, // xirildoq
+  kart: { w: ['square', 'sawtooth', 'square'], g: [0.4, 0.3, 0.18], r: [2.0, 3.01], idle: 40, span: 92, lp: [900, 2600, 800], q: 4, lfo: 1, ld: 0.18, vol: 0.7 }, // g'uvillagan arra
+  kvadro: { w: ['square', 'sawtooth', 'sawtooth'], g: [0.45, 0.32, 0.16], r: [0.5, 1.5], idle: 30, span: 84, lp: [450, 1700, 800], q: 1.8, lfo: 0.5, ld: 0.45, vol: 0.9 },
+  dizel: { w: ['sawtooth', 'square', 'sine'], g: [0.55, 0.4, 0.35], r: [0.5, 0.25], idle: 26, span: 60, lp: [150, 650, 420], q: 0.9, lfo: 0.5, ld: 0.75, vol: 1.15 }, // traktor, yuk mashinasi — «duk-duk»
+  avtobus: { w: ['sawtooth', 'square', 'sawtooth'], g: [0.5, 0.42, 0.14], r: [0.5, 0.75], idle: 24, span: 58, lp: [170, 850, 400], q: 0.8, lfo: 0.25, ld: 0.35, vol: 1.05, air: 1 }, // past g'uvillash + havo tormozi
+  v8: { w: ['sawtooth', 'sawtooth', 'square'], g: [0.55, 0.4, 0.22], r: [0.5, 0.505], idle: 28, span: 78, lp: [220, 1100, 850], q: 1.5, lfo: 0.5, ld: 0.48, vol: 1.1 }, // yo'g'on gurillash
+  shahar: { w: ['sawtooth', 'triangle', 'sawtooth'], g: [0.42, 0.4, 0.14], r: [0.5, 2.0], idle: 32, span: 84, lp: [300, 1300, 600], q: 1, lfo: 0.5, ld: 0.18, vol: 0.85 }, // tekis, mayin
+  ralli: { w: ['sawtooth', 'square', 'sawtooth'], g: [0.5, 0.3, 0.24], r: [0.5, 1.5], idle: 33, span: 92, lp: [360, 2100, 950], q: 2.2, lfo: 0.25, ld: 0.32, vol: 1 },
+  sport: { w: ['sawtooth', 'sawtooth', 'sawtooth'], g: [0.4, 0.32, 0.3], r: [2.0, 3.0], idle: 36, span: 100, lp: [620, 3600, 1200], q: 2.6, lfo: 0.25, ld: 0.1, vol: 0.9 }, // chinqiriq
+  velo: { w: ['triangle', 'triangle', 'triangle'], g: [0.2, 0.1, 0.05], r: [2, 3], idle: 30, span: 60, lp: [800, 800, 0], q: 1, lfo: 0.5, ld: 0.2, vol: 0 }, // dvigatel yo'q
+};
+const ENG_OF = { velo: 'velo', skuter: 'skuter', moto: 'moto', kart: 'kart', kvadro: 'kvadro', bagi: 'kvadro', traktor: 'dizel', yuk: 'dizel', otochar: 'dizel', avtobus: 'avtobus', muskul: 'v8', monstr: 'v8', pikap: 'v8',
+  xetch: 'shahar', sedan: 'shahar', limuzin: 'shahar', furgon: 'shahar', ralli: 'ralli', kupe: 'sport', super: 'sport', bolid: 'sport', jip: 'jip' };
+export const engineOf = (id) => ENG_OF[id] || 'jip';
 export class Sound {
   constructor() { this.ctx = null; this.vol = 0.8; this.musicVol = 0.5; this.musicOn = true; this.ready = false; this.t = 0; this.nextBar = 0; this.bar = 0; this.amb = 0; }
   init() {
@@ -19,16 +38,24 @@ export class Sound {
     // dvigatel
     const eg = (this.engG = c.createGain()); eg.gain.value = 0; const ef = (this.engF = c.createBiquadFilter()); ef.type = 'lowpass'; ef.frequency.value = 400; ef.Q.value = 1.2;
     const o1 = (this.o1 = c.createOscillator()); o1.type = 'sawtooth'; const o2 = (this.o2 = c.createOscillator()); o2.type = 'square'; const o3 = (this.o3 = c.createOscillator()); o3.type = 'sawtooth';
-    const g1 = c.createGain(); g1.gain.value = 0.5; const g2 = c.createGain(); g2.gain.value = 0.35; const g3 = c.createGain(); g3.gain.value = 0.2;
+    const g1 = (this.g1 = c.createGain()); g1.gain.value = 0.5; const g2 = (this.g2 = c.createGain()); g2.gain.value = 0.35; const g3 = (this.g3 = c.createGain()); g3.gain.value = 0.2;
     o1.connect(g1); o2.connect(g2); o3.connect(g3); g1.connect(ef); g2.connect(ef); g3.connect(ef);
-    const am = (this.am = c.createGain()); am.gain.value = 0.75; const lfo = (this.lfo = c.createOscillator()); lfo.type = 'sine'; const lg = c.createGain(); lg.gain.value = 0.25; lfo.connect(lg); lg.connect(am.gain);
+    const am = (this.am = c.createGain()); am.gain.value = 0.75; const lfo = (this.lfo = c.createOscillator()); lfo.type = 'sine'; const lg = (this.lg = c.createGain()); lg.gain.value = 0.25; lfo.connect(lg); lg.connect(am.gain);
     ef.connect(am); am.connect(eg); eg.connect(this.master); o1.start(); o2.start(); o3.start(); lfo.start();
     this.road = noise('lowpass', 420, 0.5); this.wind = noise('bandpass', 700, 0.7); this.skid = noise('bandpass', 1900, 2.5); this.nitro = noise('highpass', 1800, 0.5); this.ambN = noise('lowpass', 500, 0.4);
     // musiqa shinasi + aks-sado
     this.mus = c.createGain(); this.mus.gain.value = this.musicOn ? this.musicVol * 0.5 : 0; this.mus.connect(this.master);
     const dl = c.createDelay(1.5); dl.delayTime.value = 0.39; const fb = c.createGain(); fb.gain.value = 0.32; const df = c.createBiquadFilter(); df.type = 'lowpass'; df.frequency.value = 2200;
     this.send = c.createGain(); this.send.gain.value = 0.5; this.send.connect(dl); dl.connect(df); df.connect(fb); fb.connect(dl); df.connect(this.mus);
-    this.ready = true; this.nextBar = c.currentTime + 0.3;
+    // poyga doirasi: o'z shinasi musiqa shinasiga ulanadi (musiqa balandligi va N tugmasiga bo'ysunadi)
+    this.drum = c.createGain(); this.drum.gain.value = 0; this.drum.connect(this.mus);
+    this.ready = true; this.nextBar = c.currentTime + 0.3; if (this.vehId) { const v = this.vehId; this.vehId = null; this.setEngine(v); }
+  }
+  // transport almashganda dvigatel xarakterini qo'yish (har kadr emas — faqat almashganda; yangi tugun yaratilmaydi)
+  setEngine(id) {
+    const name = engineOf(id), p = ENGINES[name]; this.engName = name; this.eng = p; if (!this.ready) { this.vehId = id; return; } this.vehId = id;
+    this.o1.type = p.w[0]; this.o2.type = p.w[1]; this.o3.type = p.w[2]; this.g1.gain.value = p.g[0]; this.g2.gain.value = p.g[1]; this.g3.gain.value = p.g[2];
+    this.lg.gain.value = p.ld; this.am.gain.value = 1 - p.ld; this.engF.Q.value = p.q;
   }
   setVol(v) { this.vol = v; if (this.master) this.master.gain.value = v; }
   setMusic(on, vol) { this.musicOn = on; if (vol != null) this.musicVol = vol; if (this.mus) this.mus.gain.setTargetAtTime(on ? this.musicVol * 0.5 : 0, this.ctx.currentTime, 0.3); }
@@ -37,9 +64,9 @@ export class Sound {
     const g = c.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(vol, t0 + attack); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g); g.connect(dest || this.master); o.start(t0); o.stop(t0 + dur + 0.05); return g;
   }
-  burst(t0, dur, type, f, q, vol, slide = 1) {
+  burst(t0, dur, type, f, q, vol, slide = 1, dest = null) {
     const c = this.ctx; const s = c.createBufferSource(); s.buffer = this.noiseBuf; const fl = c.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, t0); if (slide !== 1) fl.frequency.exponentialRampToValueAtTime(f * slide, t0 + dur); fl.Q.value = q;
-    const g = c.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); s.connect(fl); fl.connect(g); g.connect(this.master); s.start(t0, Math.random()); s.stop(t0 + dur + 0.05);
+    const g = c.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); s.connect(fl); fl.connect(g); g.connect(dest || this.master); s.start(t0, Math.random()); s.stop(t0 + dur + 0.05);
   }
   sfx(name, k = 1) {
     if (!this.ready) return; const t = this.ctx.currentTime;
@@ -89,10 +116,13 @@ export class Sound {
   update(dt, car, env) {
     if (!this.ready) return; const c = this.ctx, t = c.currentTime;
     const ek = env.eng == null ? 1 : env.eng, rpm = car.rpm, thr = env.foot ? 0 : car.throttle, sp = env.foot ? 0 : Math.abs(car.fwd);
-    const f0 = (30 + rpm * 82) * (ek || 1);
-    this.o1.frequency.setTargetAtTime(f0, t, 0.03); this.o2.frequency.setTargetAtTime(f0 * 0.5, t, 0.03); this.o3.frequency.setTargetAtTime(f0 * 1.51, t, 0.03); this.lfo.frequency.setTargetAtTime(f0 * 0.25, t, 0.05);
-    this.engF.frequency.setTargetAtTime(260 + rpm * 1500 + thr * 700, t, 0.05);
-    this.engG.gain.setTargetAtTime(env.mute || env.foot || !ek ? 0 : (0.055 + thr * 0.075 + rpm * 0.03) * (env.dead ? 0.25 : 1) * (ek > 1.3 ? 0.8 : 1), t, 0.06);
+    if (env.veh && env.veh !== this.vehId) this.setEngine(env.veh);
+    const E = this.eng || ENGINES.jip, f0 = (E.idle + rpm * E.span) * (ek || 1);
+    this.o1.frequency.setTargetAtTime(f0, t, 0.03); this.o2.frequency.setTargetAtTime(f0 * E.r[0], t, 0.03); this.o3.frequency.setTargetAtTime(f0 * E.r[1], t, 0.03); this.lfo.frequency.setTargetAtTime(f0 * E.lfo, t, 0.05);
+    this.engF.frequency.setTargetAtTime(E.lp[0] + rpm * E.lp[1] + thr * E.lp[2], t, 0.05);
+    this.engG.gain.setTargetAtTime(env.mute || env.foot || !ek ? 0 : (0.055 + thr * 0.075 + rpm * 0.03) * (env.dead ? 0.25 : 1) * (ek > 1.3 ? 0.8 : 1) * E.vol, t, 0.06);
+    // avtobus: to'xtaganda havo tormozi «pshsh»
+    if (E.air && !env.mute && !env.foot) { if (sp > 2.2) this._airArm = 1; else if (this._airArm && sp < 0.35) { this._airArm = 0; this.burst(t, 0.75, 'highpass', 2600, 0.6, 0.16, 0.7); this.burst(t + 0.02, 0.5, 'bandpass', 5200, 1.2, 0.06, 0.8); } }
     const rough = env.surf === 0 || env.surf === 8 ? 0.6 : env.surf === 7 ? 0.3 : 1;
     this.road.g.gain.setTargetAtTime(env.mute ? 0 : Math.min(0.2, sp * 0.0045) * rough * (car.onGround ? 1 : 0) * (ek ? 1 : 0.5), t, 0.1); this.road.f.frequency.setTargetAtTime(280 + sp * 14, t, 0.1);
     this.wind.g.gain.setTargetAtTime(env.mute ? 0 : Math.min(0.16, sp * sp * 0.00011), t, 0.2); this.wind.f.frequency.setTargetAtTime(500 + sp * 18, t, 0.2);
@@ -108,6 +138,23 @@ export class Sound {
       if (env.fire) for (let i = 0; i < 3; i++) this.burst(t + Math.random() * 0.5, 0.03, 'bandpass', 2400 + Math.random() * 1500, 3, 0.1 * env.fire);
     }
     if (this.musicOn) this.music(env);
+    this.doiraTick();
+  }
+  // --- poyga doirasi: 6/8 usul (bum . tak tak . tak), raceK (0..1) oshgani sari tezlashadi, zil va bum qo'shiladi; 0 — to'xtaydi ---
+  doiraTick() {
+    const c = this.ctx, t = c.currentTime, k = this.raceK || 0, on = k > 0.01 && this.musicOn, D = this.doira || (this.doira = { on: false, next: 0, n: 0, hits: 0 });
+    if (on !== D.on) { D.on = on; this.drum.gain.setTargetAtTime(on ? 1 : 0, t, on ? 0.12 : 0.22); if (on) { D.next = t + 0.06; D.n = 0; } }
+    if (!on) return;
+    const e8 = 60 / (100 + 44 * k) / 2, B = this.drum;
+    while (D.next < t + 0.22) {
+      const tt = D.next, b = D.n % 6, bar = Math.floor(D.n / 6), v = 0.55 + 0.45 * k;
+      if (b === 0) { this.burst(tt, 0.26, 'lowpass', 170, 0.8, 0.8 * v, 1, B); this.tone(74, tt, 0.24, 'sine', 0.5 * v, B, 0.003, 0.58); }
+      if (b === 2 || b === 3 || b === 5) this.burst(tt, 0.08, 'bandpass', 2500, 1.3, (b === 3 ? 0.5 : 0.32) * v, 1, B);
+      if (k > 0.45 && (b === 1 || b === 4)) this.burst(tt, 0.05, 'highpass', 6400, 0.8, 0.12 * k, 1, B); // zil (doira halqalari)
+      if (k > 0.7 && b === 3 && bar % 2) { this.burst(tt, 0.2, 'lowpass', 150, 0.8, 0.6 * v, 1, B); this.tone(66, tt, 0.2, 'sine', 0.35, B, 0.003, 0.6); } // qo'shimcha bum
+      if (k > 0.95 && (b === 0 || b === 1)) this.tone(52, tt + 0.02, 0.16, 'sine', 0.45, B, 0.004, 0.7); // oxirgi darvoza — yurak urishi
+      D.next += e8; D.n++; D.hits++;
+    }
   }
   // --- generativ musiqa ---
   music(env) {
