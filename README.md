@@ -356,6 +356,38 @@ Transportda **1** (yoki pauza menyusi, telefon → 🏁 Poygalar, e'lonlar taxta
 | **🎁 Yulduz yo'li** | Har 15 yulduzda sovg'a (18 ta): 300–3 000 so'm, ta'mir to'plamlari, 3 ta tekin tyuning bosqichi (eng arzon keyingi bosqich), «Yulduzli kumush» va «Samoviy» bo'yoqlari, kepka, do'ppi, oltin toj. Eski saqlovda oldin yig'ilgan yulduzlar ham hisoblanadi. Yangi sovg'a ochilganda banner, HUDda «🎁 2» belgisi; «Olish» / «Hammasini olish». Pasportda «keyingi sovg'agacha N ★» |
 | **🎖 Transport mahorati** | Har transportda 5 nishon: 10 km yo'l, chellenj medali (Sovrinlar), bir driftda 3 000 ochko yoki toza tryuk, urilmasdan 3 km, o'z eng yuqori tezligining 90 %. Har nishon +100 so'm, beshtasi — «Usta» (+400 so'm); 5 ta «Usta» — «Usta zumradi» bo'yog'i. Ustaxona transport kartalarida va oynadagi jadvalda ko'rinadi |
 
+### 2.16. Daromad: ish e'lonlari va 19 ta yangi pul topish yo'li
+
+Hamma ish bitta joyda — **💼 Ish e'lonlari** (telefon → 📋 E'lonlar, pauza menyusi, har bir e'lonlar taxtasi): har ishning joyi va masofasi, haq oralig'i, kerakli transport, obro' darajasi, «📍 Yo'l» va «Boshlash». Ish beruvchilar xaritada **to'q sariq katta nuqta**; oldiga borib **E**. Bir vaqtda bitta ish (eski non/taksi/dala ishlari va chellenjlar bilan to'qnashmaydi), **X** — tugatish (topilgani qoladi). Har to'lov ekranda katta «+N so'm · manba» bo'lib chiqadi va bankka manba nomi bilan yoziladi.
+
+**Obro':** har ishning o'z darajasi — Shogird → Ishchi (30) → Tajribali (80) → Usta (160) → Mohir (280) → Afsona (450 tajriba). Har daraja haqni **+8 %** oshiradi va yaxshiroq buyurtma ochadi (mo'rt yuk va uzoq manzillar, 5 ta posilka, 4 ta olov/manzil/surat, 8 ta qo'y).
+
+**📈 Daromad** (telefon): bugun va oxirgi 7 o'yin kunida qayerdan qancha pul topilgani (barcha manbalar — eski ishlar, biznes, chellenjlar ham), xarajat, har ishdagi obro'.
+
+| Ish | Qayerda | Qanday | Haq (bitta ish) |
+|---|---|---|---|
+| 🚚 **Yuk tashish** | Tosh karyeri, ombor mudiri Sherzod | omborga to'xtab **E** — qutilar transport ustiga ortiladi, boshqa manzil taxtasiga eltib **E**. Sig'im: yuk mashinasi 3, traktor/furgon/pikap/avtobus 2, boshqasi 1 quti (velosiped, karting, bolid — yo'q). Vaqtida +15 %. Tajribaliga mo'rt yuk ×1,6, har urilish −25 % | 500–2 500 |
+| 🚌 **Avtobus marshruti** | Bog'iston, dispetcher Komil aka | Bog'istondan Tegirmon/Bandargoh/Qal'a/Uy/Mayoqqa 4–7 bekat (sariq nur). Bekatda to'xtab turilsa eshik o'zi ochiladi, kutayotganlar chiqadi. Bekat 60 + yo'lovchi 15, jadvalga ±25 s +40, oxirida 300 × qulaylik. Avtobus, furgon yoki limuzin (×0,6) | 600–1 600 |
+| 📦 **Kuryer** | Baliqchilar bandargohi, pochtachi Zuhra opa | 4–5 posilka orolning turli uylariga, tartib — o'zingizdan. Bittasi shoshilinch (qizil) — vaqtida bo'lsa ×2. Transportda derazadan yoki piyoda **E**. Har qanday transport | 600–1 500 |
+| 🛻 **Evakuator** | Eski aerodrom, usta Farhod | yo'lda avariya chirog'i yonib turgan mashina — to'xtab **E**, trosga ilinadi va ortingizdan sudraladi. 80 km/soatdan tez yoki ikki marta urilsangiz tros uziladi (−15 %). Eng yaqin ustaxonaga. Yuk/pikap/traktor ×1,25 | 450–1 300 |
+| 🚑 **Tez yordam** | Bog'iston tibbiyot punkti, doktor Malika | uyidagi bemorni (yotgan, yonida qarindoshi) olib, punktga tez qaytish. Urilish −20 %, sakrash −10 %; qolgan vaqt — bonus. Furgon ×1,25 | 450–1 200 |
+| 🔥 **O't o'chirish** | Oltin o'rmon, qo'riqchi Botir | 3–4 joyda o'rmon yonmoqda. Olov yoniga borib sekinlansangiz suv o'zi sepiladi; qarovsiz olov qayta avj oladi. Bak (o't o'chirish mashinasida 100, boshqasida 40) — gidrant (**E**) yoki suvga kirish. Har olov 260 + bonus | 700–1 600 |
+| ❄️ **Qor tozalash** | Qorli lager, Anvar aka | lagerdan chiquvchi yo'lda 12 qor uyumi — ustidan 50 km/soatgacha o'tsangiz tozalanadi, tez o'tsangiz sachraydi-yu qoladi. Traktor ×1,4, yuk mashinasi ×1,3; qor yog'ayotgan bo'lsa yana ×1,4 | 550–1 500 |
+| 🧭 **Sayyohlarga gid** | Bandargoh, agent Laylo | 3–4 diqqatga sazovor joy; har birida to'xtab **E** — hikoya: uch faktdan to'g'risini tanlaysiz. Urilish va sakrash qulaylikni tushiradi, oxirida sayyohlar ★ baho qo'yadi. Mashina ×0,9, furgon ×1,1, limuzin ×1,3, avtobus ×1,5 | 900–2 500 |
+| 🚧 **Yo'l ta'miri** | Ko'hna qal'a, yo'l ustasi Akbar | yo'lning bir bo'lagida: ikki chetga konus, 4 chuqurga shag'al to'kib kurak bilan zichlash, keyin konuslarni yig'ish (piyoda **E**) | 600–1 100 |
+| 🐑 **Qo'y boqish** | Shamol tegirmonlari, cho'pon Ergash bobo | 6–8 qo'yni qo'radan yaylovga (yashil bayroqchalar) haydaysiz: qo'ylar sizdan qochadi (transportda uzoqroqdan). 25 s o'tlatib, qo'raga qaytarasiz | 550–1 100 |
+| 🧱 **Quruvchi** | Ko'zgu ko'l, brigadir Jasur | dala hovliga 18 g'ishtli devor: taxlamdan 3 tadan olib, devorga birma-bir terasiz (devor ko'z oldingizda o'sadi). 2 daqiqadan tez — +120 | 600–1 100 |
+| 📷 **Fotograf** | Mayoq burni, muharrir Dilnoza | 3–4 surat buyurtmasi (qal'a, tegirmonlar, krater, Muzko'l, yaylovdagi qo'y…). Piyoda, kamerani o'sha tomonga qaratsangiz «📷 Suratga olish · kadr N %» chiqadi: markazda va to'g'ri masofada — qimmatroq, tong/shom nuri +15 % | 900–1 700 |
+| ⚖️ **Savdogar** | har bir e'lonlar taxtasi (rasta) | 8 tovar: qovun, baliq qoqi, tuz, ziravor, yong'oq (sotib olinadi) + asal, sopol, gilam (o'zingiz tayyorlaysiz). Har manzilda (arzon ×0,62 … qimmat ×1,45) va har kuni (±12 %) boshqa narx, ko'p sotsangiz narx tushadi va soat sayin tiklanadi. Yuk joyi transportga bog'liq: velosiped 4 … yuk mashinasi 30 | reysiga 300–1 500 foyda |
+| 🐝 **Asalarichilik** | Oltin o'rmon, Hamida opa | uya 450 so'm (6 tagacha) o'yin soatiga ~0,5 banka asal yig'adi (uxlaganda ham, sig'imi 4 — Usta darajasida 6). Uya oldida **E** — yuk joyiga; Hamida opaga 52 so'mdan yoki rastalarda 40–95 so'mdan | uya kuniga ~600 |
+| 🏺 **Kulolchilik** | Ko'hna qal'a, usta Abdulla | loy 25 so'm; charxda ko'rsatkich yashil joyga kelganda bosish (5 marta, zona torayib boradi) → 0, 1 yoki 2 ta sopol idish (ustaga 102, qimmat manzilda ~175 so'm) | idish 100–175 |
+| 🧶 **Gilamdo'zlik** | Karvonsaroy, Oysha opa | ip 60 so'm; naqsh ranglari ketma-ket yonadi — xuddi shunday takrorlaysiz (3 qator, 4–6 rang). 2 qator to'g'ri — gilam (ustaga 238, qimmat manzilda ~400), uchala — +60 mukofot | gilam 240–400 |
+| 🔑 **Transport ijarasi** | telefon yoki ustaxona taxtasi | ishlatmayotgan transportni 6/12/24 o'yin soatiga beraysiz: soatiga narxining 0,35 % (superkar ~98 so'm/soat), qaytganda bankka; 12 % hollarda 10 % ta'mirga ushlanadi. Bir vaqtda 3 ta, ijaradagisini minib bo'lmaydi | superkar 24 soatda ~2 350 |
+| 🏦 **Bank omonati** | telefon → Bank / Sarmoya | 60 000 so'mgacha; har yangi o'yin kunida 1,2 % to'g'ridan-to'g'ri hisobga. Qo'yish va yechish daromad hisoblanmaydi | kuniga ≤ 720 |
+| 📊 **Kooperativ ulushi** | telefon → Bank / Sarmoya | ulush ~100 so'm (300 tagacha), narxi har o'yin kunida −7…+8 % o'zgaradi, ba'zan «yomon kun» (−18 %). Dividend kuniga narxning 0,8 % | xavfli |
+
+**Muvozanat:** faol ishlar daqiqasiga taxminan 200–650 so'm beradi (eng tezi — yuk mashinasida yuk tashish), o'rtacha 3–8 daqiqada 600–2 500 so'm; vaqt bonuslari chegaralangan. Passiv daromad (ijara, omonat, kooperativ, asal) sekin, lekin o'yinchi boshqa ish bilan band paytida ham yig'iladi.
+
 ---
 
 ## 3. Boshqaruv
@@ -480,6 +512,11 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `tryuk.js` | havodagi tryuklar va kombo (havoda boshqaruv shu yerda), har transportning rekordi va medali, g'olib kuboklari, «Sovrinlar» oynasi, uydagi sovrinlar javoni, doira jadalligi |
 | `poyga.js` | «Poygalar» oynasi va **1** tugmasi; cheksiz poyga (yo'l bo'ylab yuruvchi `walk`, darvozalar), 5 aylanma poyga (`CIRCS` — tugunlar halqasi; mavjud `race` turi ustida, `a.own`/`a.lines2`), «Yo'l egasi» (bo'lak sanog'i, me'yor, rekord) |
 | `mahorat.js` | Yulduz yo'li (`ROAD` — 18 sovg'a) va transport mahorati (`BADGES`), ustaxona kartasidagi nishonlar, HUD «🎁» belgisi |
+| `daromad.js` | yangi ishlar tizimi: ish e'lonlari oynasi (`s_elonlar`), ish oynasi (`s_ish2`), bitta ish o'rni (`D.cur`), ish beruvchilar, nur belgilari, HUD, obro' darajasi, «+so'm» ko'rinishi, daromad manbalari (`st.daromad.days`), telefon «E'lonlar» va «Daromad», taxta va pauza menyusiga ulanish |
+| `ishlar2.js` | transport ishlari: yuk tashish, avtobus marshruti, kuryer, evakuator, tez yordam (tibbiyot punkti binosi), o't o'chirish (olov — InstancedMesh, gidrant), qor tozalash, sayyohlarga gid (hikoya oynasi `s_gid`) |
+| `ishlar3.js` | piyoda ishlar: yo'l ta'miri (chuqur va konuslar), qo'y boqish (qo'ra, yaylov, qochuvchi pada), quruvchi (g'isht devor), fotograf (kamera yo'nalishi bo'yicha kadr sifati) |
+| `savdo.js` | savdo (8 tovar, manzil/kun narxi, narx bosimi, yuk joyi, `s_savdo`), asalarichilik (uyalar, `s_asal`), kulolchilik va gilamdo'zlik mini-o'yinlari (`s_hunar`), `D.transfer` — daromad hisoblanmaydigan pul ko'chirish |
+| `moliya.js` | sarmoya: transport ijarasi (ijaradagi transport `setVehicle`da to'siladi), bank omonati, kooperativ ulushi (`s_moliya`, telefon bankida qator) |
 | `controls.js` | boshqaruv jadvali (`ACTIONS`): har bir klavisha nima qiladi, qachon ishlaydi va ekranda qanday tugma bo'lib chiqadi — klaviatura va ekran tugmalari uchun yagona manba |
 | `input.js` | klaviatura, geympad, sensorli ekran | (+ virtual joystik qiymatlari `touch.jx/jy`)
 | `ui.js` | HUD, mini-xarita, menyu va barcha oynalar (o'zbekcha) |
@@ -557,6 +594,7 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 
 | `G.poyga` | `startInf()`, `infDef`, `lastGate`, `lastInf`, `circs`, `circBy`, `startCirc(id)`, `lastCirc`, `segs`, `seg` (joriy sanoq, `last`), `par(bo'lak)`, `owned()`, `open(bo'lim)` |
 | `G.mahorat` | `open()`, `claimable()`, `next()`, `claim(i)`, `claimAll()`, `rec(transport)`, `check(transport)`, `count(transport)`, `prog(transport, nishon)` |
+| `G.daromad` | `order`, `defs`, `givers`, `cur`, `start(id, majburiy)`, `finish(ok)`, `quit()`, `pay(id, n, izoh)`, `lvl(id)`, `mul(id)`, `today()`, `week()`, `open()`; savdo — `buy/sell(tovar, manzil, n)`, `buyP/sellP`, `marketAt()`, `cargoCap()`; `buyHive()`, `collectHive(i)`, `craft('kulol'\|'gilam', sifat)`, `rentOut(id, soat)`, `deposit/withdraw(n)`, `bankTick()`, `coopBuy/coopSell(n)`, `coopTick()`; `dbg2/dbg3/dbg4` — joylar (ombor, klinika, qo'ra, qurilish, asalxona) |
 
 ### 4.11. Qanday qo'shiladi
 
@@ -590,7 +628,8 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `npm run test:suv` | suv va havo: qayiq ijarasi va suzishi, qirg'oqqa tiralib quruqlikka chiqmasligi, tushish, qayta o'tirish va iskalaga qaytish, qayiqdan baliq ovi, yelkanli qayiq tezligi shamol burchagiga bog'liqligi va burilib o'tish (tack), HUD shamol o'qi, Cho'qqidan deltaplan (asta pastlash, W/S, havoda tushib bo'lmasligi, NaN'siz qo'nish va mukofot, qattiq/yumshoq qo'nish), saqlov. `SHOTS=0` — skrinshotsiz | ~3 daq |
 | `npm run test:tryuk` | tryuklar (salto, gir, qo'sh orqaga salto), kombo ko'paytuvchisi, kuyishi va pulga aylanishi; haqiqiy fizikada gir va havodagi W/S bilan salto, bosib turilgan gaz ag'darmasligi; 12 xil dvigatel ovozi; doira poygada boshlanishi, oxirgi darvozada eng jadal, tugaganda va musiqa o'chiq bo'lsa jim; transport medali (avtobus > jip > bolid bir xil vaqtda), kubok, «Chempion» bo'yog'i, «Sovrinlar» oynasi va telefon ilovasi, javon, saqlov va eski saqlov. `SHOTS=1` — skrinshotlar | ~2 daq |
 | `npm run test:qulay` | qulayliklar: yo'riqnoma yangi saqlovda bor va qadamlari o'tadi, eskisida yo'q; maslahat bir marta; yulduz chegaralari (poyga, yetkazish, mo'rt yuk, drift); **⌫** va pauzadan qayta boshlash; kunlik uchlik (kun bo'yicha bir xil, bajarilishi, sandiq, ketma-ketlik, almashtirish, telefon); yutuq ochilishi va daftar; interfeys o'lchami saqlanishi; saqlov kodi va fayli aylanmasi, buzilgan kod rad etilishi, import; zaxira va tiklash; 390 px telefonda yangi oynalar sig'ishi. `SHOTS=1` — skrinshotlar | ~1,5 daq |
-| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta, life3, suv, tryuk, qulay) | ~8–10 daq |
+| `npm run test:daromad` | 19 daromad yo'li: har biri boshlanadi, bosqichlari o'tadi (ortish/tushirish, bekatlar, posilkalar, tros va uzilish, bemor, olov va bak, qor uyumlari tez/sekin, gid hikoyasi va baho, konus-chuqur, qochuvchi qo'ylar va yaylov, g'isht devor, kamera kadri, savdo foydasi va narx bosimi, asal, charx va naqsh o'yinlari, ijara to'sig'i, omonat foizi, kooperativ), haq formulaga mos, bankka va «Daromad»ga manba nomi bilan yoziladi; e'lonlar oynasi, taxta, telefon, obro', eski ishlar bilan to'qnashuv, iqtisod me'yori, saqlov (eski saqlov ham). `SHOTS=1` — skrinshotlar | ~3 daq |
+| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta, life3, suv, tryuk, qulay, poyga, daromad) | ~8–10 daq |
 
 Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuterda Google Chrome o'rnatilgan bo'lishi kerak). Xato bo'lsa yoki `TEST … FAIL` satri chiqsa — chiqish kodi 1.
 
