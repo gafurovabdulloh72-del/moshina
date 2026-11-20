@@ -134,9 +134,9 @@ export function initSir(game) {
   // ================= XARITA =================
   game.mapExtra = game.mapExtra || [];
   game.mapExtra.push((c, P, k) => {
-    c.save(); c.setLineDash([10, 7]); for (const q of S.rum) { c.beginPath(); c.arc(P(q.x), P(q.z), Math.max(14, q.r * k), 0, 6.283); c.fillStyle = 'rgba(255,170,60,.16)'; c.fill(); c.lineWidth = 3; c.strokeStyle = '#ffaa3c'; c.stroke(); c.font = '900 22px system-ui'; c.textAlign = 'center'; c.fillStyle = '#ffd08a'; c.fillText('?', P(q.x), P(q.z) + 8); }
-    c.setLineDash([]); for (const id of boards) { if (!S.gold[id]) continue; const p = places[id]; c.beginPath(); c.arc(P(p.x), P(p.z), 15, 0, 6.283); c.lineWidth = 4; c.strokeStyle = '#ffd23a'; c.stroke(); c.font = '900 16px system-ui'; c.textAlign = 'center'; c.fillStyle = '#ffd23a'; c.fillText('★', P(p.x), P(p.z) + 27); }
-    const s = Q.site; c.font = '20px system-ui'; c.textAlign = 'center'; c.fillText('⛏', P(s.x), P(s.z) + 7); c.restore(); });
+    c.save(); c.setLineDash([22, 14]); for (const q of S.rum) { const r = Math.max(24, q.r * k); c.beginPath(); c.arc(P(q.x), P(q.z), r, 0, 6.283); c.fillStyle = 'rgba(255,150,40,.28)'; c.fill(); c.lineWidth = 8; c.strokeStyle = '#ff8a1a'; c.stroke(); c.font = '900 44px system-ui'; c.textAlign = 'center'; c.lineWidth = 7; c.strokeStyle = 'rgba(10,14,24,.85)'; c.strokeText('?', P(q.x), P(q.z) + 15); c.fillStyle = '#ffd08a'; c.fillText('?', P(q.x), P(q.z) + 15); }
+    c.setLineDash([]); for (const id of boards) { if (!S.gold[id]) continue; const p = places[id]; c.beginPath(); c.arc(P(p.x), P(p.z), 24, 0, 6.283); c.lineWidth = 8; c.strokeStyle = '#ffd23a'; c.stroke(); c.font = '900 38px system-ui'; c.textAlign = 'center'; c.lineWidth = 6; c.strokeStyle = 'rgba(10,14,24,.85)'; c.strokeText('★', P(p.x), P(p.z) + 62); c.fillStyle = '#ffd23a'; c.fillText('★', P(p.x), P(p.z) + 62); }
+    const s = Q.site; c.font = '34px system-ui'; c.textAlign = 'center'; c.fillText('⛏', P(s.x), P(s.z) + 7); c.restore(); });
   { const m0 = ui.s_map; ui.s_map = function (...a) { m0.apply(this, a); const lg = this.screen.querySelector('.legend'); if (lg) lg.insertAdjacentHTML('beforeend', `<div><i style="background:#ffaa3c"></i>Mish-mish (taxminiy doira)</div><div><i style="background:#ffd23a"></i>Oltin muhr ★ (tez sayohat tekin)</div><div><i style="background:#e0a050"></i>Qazilma maydoni ⛏</div>`); }; }
 
   // ================= OYNALAR VA TELEFON =================

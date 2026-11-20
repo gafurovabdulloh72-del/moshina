@@ -65,14 +65,14 @@ export function initQazilma(game) {
     g.pop(); COL.addBox(camp.x, camp.z - 0.4, 1.15, 0.55, 0, ty - 1, ty + 0.9);
     // muzey javoni: tomli yog'och rasta, 2 tokcha × 4 joy
     const my = gy(mus.x, mus.z); g.push().translate(mus.x, my, mus.z).rotY(-Math.PI / 2);
-    g.color(0xd8c8a0).box(0, 0.08, 0, 5.2, 0.16, 2.2); g.color(0x7a5232); for (const x of [-2.4, 2.4]) for (const z of [-0.9, 0.9]) g.box(x, 1.5, z, 0.14, 2.9, 0.14);
+    g.color(0xd8c8a0).box(0, 0.12, 0, 5.2, 0.3, 2.2); g.color(0x7a5232); for (const x of [-2.4, 2.4]) for (const z of [-0.9, 0.9]) g.box(x, 1.5, z, 0.14, 2.9, 0.14);
     g.color(0x8a5a36).box(0, 0.75, -0.5, 4.6, 0.08, 0.8).box(0, 1.55, -0.5, 4.6, 0.08, 0.8).box(0, 1.15, -0.88, 4.6, 1.6, 0.06); for (let k = 0; k < 5; k++) g.box(-2.2 + k * 1.1, 1.15, -0.5, 0.06, 0.8, 0.78);
     g.color(0x2f6fb0).box(0, 3.0, 0, 5.6, 0.12, 2.6, { tx: 0.9, tz: 0.85 }); g.color(0xf0c040).box(0, 2.85, 1.3, 5.6, 0.18, 0.06);
     g.pop(); COL.addBox(mus.x + 0.5, mus.z, 0.55, 2.4, 0, my - 1, my + 1.8);
     mk(g); }
   // muzey yozuvi (CanvasTexture)
   { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 96; const c = cv.getContext('2d'); c.fillStyle = '#f6efd8'; c.fillRect(0, 0, 512, 96); c.fillStyle = '#7a3a1a'; c.font = '800 44px system-ui,sans-serif'; c.textAlign = 'center'; c.fillText('QADIMIY SHAHAR MUZEYI', 256, 64);
-    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const m = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 0.78), new THREE.MeshBasicMaterial({ map: tx, color: 0xbbbbbb }));
+    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const m = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 0.66), new THREE.MeshBasicMaterial({ map: tx, color: 0xbbbbbb }));
     m.position.set(mus.x - 1.28, gy(mus.x, mus.z) + 2.5, mus.z); m.rotation.y = -Math.PI / 2; scene.add(m); }
   // javondagi topilmalar (8 ta alohida kichik model: topshirilganda ko'rinadi)
   const FIND_G = {
