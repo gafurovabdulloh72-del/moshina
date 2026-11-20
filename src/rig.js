@@ -232,6 +232,7 @@ const TOOLS = {
   cup: (g) => { g.color(0xdfeef5).cyl(8, 0.034, 0.04, -0.05, 0.06, { cap: true }); g.color(0x5aa8e0).cyl(8, 0.03, 0.036, -0.04, 0.03, { cap: true }); },
   spoon: (g) => { g.color(0x9a6a42); g.push().rotX(1.35); g.cyl(5, 0.012, 0.01, -0.05, 0.36); g.pop(); g.color(0xb9bec8).push().rotX(1.35).translate(0, 0.38, 0).blob(0.04, 0, { sy: 0.45 }).pop(); },
   paper: (g) => { g.color(0xf2efe4).box(0.13, 0.02, 0.06, 0.3, 0.24, 0.01); g.color(0x3a3d46).box(0.13, 0.1, 0.066, 0.24, 0.035, 0.004); for (let i = 0; i < 4; i++) g.color(0x8a8d96).box(0.13, 0.05 - i * 0.035, 0.066, 0.24, 0.012, 0.004); },
+  brush: (g) => { g.color(0x9a6a42); g.push().rotX(1.35); g.cyl(6, 0.014, 0.014, -0.04, 0.2); g.pop(); g.color(0xe8d8a8).push().rotX(1.35).translate(0, 0.24, 0).box(0, 0, 0, 0.05, 0.09, 0.025).pop(); }, // arxeolog cho'tkasi (qazilma.js)
   phone: (g) => { g.color(0x1d1e22).box(0, 0.02, 0.03, 0.075, 0.15, 0.012); g.color(0x4fb0ff).box(0, 0.025, 0.037, 0.064, 0.125, 0.003); }, // telefon (hayot2)
   sickle: (g) => { g.color(0x9a6a42).cyl(5, 0.016, 0.016, -0.06, 0.12); g.color(0xb9bec8); for (let i = 0; i < 6; i++) { const a = 0.3 + i * 0.42; g.box(Math.sin(a) * 0.12, 0.13 + Math.cos(a) * 0.1 - 0.02, 0, 0.05, 0.016, 0.008); } }, // o'roq
   sheaf: (g) => { g.color(0xe2c060); g.push().rotX(1.3); g.cyl(7, 0.07, 0.09, -0.05, 0.55); g.color(0xf0d070).cyl(7, 0.12, 0.06, 0.5, 0.75); g.color(0x8a6a3a).cyl(7, 0.085, 0.085, 0.2, 0.25); g.pop(); }, // bog'langan bug'doy boyi

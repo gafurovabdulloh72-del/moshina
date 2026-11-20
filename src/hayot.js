@@ -180,7 +180,7 @@ export function initHayot(game) {
   const closeDlg = (done) => { const D = HY.dlg; if (!D) return; HY.dlg = null; D.o.waveT = 1.2; if (pl.emote === 'talk') pl.emote = null; drawDlg();
     if (done) { L.count('talk'); if (Math.random() < 0.18) { give('seed'); toast(`${D.o.name}: «Mana, sizga urug'» 🌱 +1`, 'good'); } } };
   HY.nextDlg = () => { const D = HY.dlg; if (!D) return; sfx('click'); if (++D.i >= D.lines.length) closeDlg(true); else drawDlg(); };
-  HY.openDlg = openDlg; HY.closeDlg = closeDlg;
+  HY.openDlg = openDlg; HY.closeDlg = closeDlg; HY.drawDlg = drawDlg; // drawDlg — sir.js mish-mish qatorini qo'shgach qayta chizadi
   L.chat = (o) => openDlg(o); // living.js: oddiy suhbatdosh NPC → dialog
 
   // ================= [E] VA KADR YANGILANISHI =================
