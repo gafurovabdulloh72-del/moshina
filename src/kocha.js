@@ -28,7 +28,7 @@ export function initKocha(game) {
     const r = makeRig({ shirt: 0xf2f6fa, pants: 0x3d74a6, seed: 121, hair: 0x2a1d16, stache: true }); r.root.position.set(vx, T.gridHeight(vx, vz), vz); r.root.rotation.y = yaw + Math.PI; scene.add(r.root);
     COL.addCircle(vx, vz, 0.28, y - 1, y + 1.8); // sotuvchining ichidan o'tib bo'lmaydi
     K.ice = { x, z, vx, vz, yaw, rig: r, wave: 0 }; }
-  K.iceOpen = () => game.hour >= 8 && game.hour < 21; // muzqaymoqchi kechasi uyiga ketadi
+  K.iceOpen = () => game.hour >= 8 && game.hour < 21 && !(game.dunyo && (game.dunyo.type === 'qor' || game.dunyo.type === 'dovul')); // muzqaymoqchi kechasi uyiga ketadi
   K.buyIce = () => { if (st.money < 8) return toast("Pul yetarli emas (8 so'm)", 'bad'); game.addMoney(-8, 'Muzqaymoq'); K.ice.wave = 1.5; sfx('buy'); pl.act('eat', 3.2, () => { st.sat = Math.min(100, st.sat + 8); st.thirst = clamp(st.thirst + 6, 0, 100); st.energy = Math.min(100, st.energy + 4); L.count('eat'); st.stats.ice = (st.stats.ice || 0) + 1; toast('🍦 Muzqaymoq — muzdek va shirin! 😋', 'good'); }, 'icecream'); };
 
   // ================= KAPTARLAR =================
@@ -100,13 +100,15 @@ export function initKocha(game) {
     else { BUS.k += Math.min(10, 1 + (BUS.k - tgt) * 0.2) * dt * 0.5; if (BUS.k > tgt + 65) { BUS.on = false; busM.visible = false; } }
     const [x, y, z, yaw] = busPos(BUS.k); busM.position.set(x, y, z); busM.rotation.y = yaw; busM.userData.lights.visible = game.sky.night > 0.25 || !!game.wxDark; busO.on = true; busO.x = x; busO.z = z; busO.fx = Math.sin(yaw); busO.fz = Math.cos(yaw); busO.v = BUS.ph === 'stop' || !dt ? 0 : 4; busO.vx = busO.fx * busO.v; busO.vz = busO.fz * busO.v; };
   K.ride = (pid) => { const p = game.site.places[pid]; if (!p || !p.board) return; if (st.money < 15) return toast("Pul yetarli emas (15 so'm)", 'bad'); game.addMoney(-15, 'Avtobus'); const f = game.ui.fade; if (f) f.style.opacity = 1; game.ui.close(); BUS.ph = 'go';
-    setTimeout(() => { pl.place(p.board.x + 4, p.board.z + 3, 0); game.cam.snap(); if (f) f.style.opacity = 0; toast(`🚌 Avtobus sizni ${p.name}ga olib keldi. Transportingiz qolgan joyda — telefondan taksi chaqirsa bo'ladi`, 'good'); st.stats.bus = (st.stats.bus || 0) + 1; }, game.paused ? 0 : 420); };
-  K.rideNow = (pid) => { const p = game.site.places[pid]; game.addMoney(-15, 'Avtobus'); BUS.ph = 'go'; pl.place(p.board.x + 4, p.board.z + 3, 0); st.stats.bus = (st.stats.bus || 0) + 1; }; // sinov uchun (kutishsiz)
+    setTimeout(() => { K.arrive(p); game.cam.snap(); if (f) f.style.opacity = 0; toast(`🚌 Avtobus sizni ${p.name}ga olib keldi. Transportingiz qolgan joyda — telefondan taksi chaqirsa bo'ladi`, 'good'); st.stats.bus = (st.stats.bus || 0) + 1; }, game.paused ? 0 : 420); };
+  // manzilga tushirish: bekatda o'tirgan bo'lsa turg'iziladi (ilgari yangi joyda ham havoda o'tirib qolardi), e'lonlar taxtasiga qaraydi
+  K.arrive = (p) => { pl.sit = false; pl.emote = null; K.atStop = 0; pl.place(p.board.x + 4, p.board.z + 3, Math.atan2(-4, -3)); };
+  K.rideNow = (pid) => { const p = game.site.places[pid]; game.addMoney(-15, 'Avtobus'); BUS.ph = 'go'; K.arrive(p); st.stats.bus = (st.stats.bus || 0) + 1; }; // sinov uchun (kutishsiz)
 
   // ================= [E] TAKLIFLARI =================
   const ex0 = L.extra;
   L.extra = (offer, px, pz, p) => { ex0(offer, px, pz, p); if (IN.inside || (game.hayot && game.hayot.dlg)) return;
-    if (K.ice) { const d = Math.hypot(K.ice.x - px, K.ice.z - pz) - 0.6; if (d < 1.8) { if (K.iceOpen()) offer(d, "<kbd>E</kbd> Muzqaymoq olish 🍦 — 8 so'm", K.buyIce); else offer(d, "<kbd>E</kbd> Muzqaymoq aravachasi 🍦 — yopiq (8:00–21:00)", () => toast('🌙 Muzqaymoqchi uyiga ketgan — ertalab soat 8 da qaytadi')); } }
+    if (K.ice) { const d = Math.hypot(K.ice.x - px, K.ice.z - pz) - 0.6; if (d < 1.8) { if (K.iceOpen()) offer(d, "<kbd>E</kbd> Muzqaymoq olish 🍦 — 8 so'm", K.buyIce); else { const wx = game.hour >= 8 && game.hour < 21; offer(d, `<kbd>E</kbd> Muzqaymoq aravachasi 🍦 — yopiq${wx ? '' : ' (8:00–21:00)'}`, () => toast(wx ? "🌨 Bunday havoda muzqaymoqchi uyda o'tiribdi — havo ochilganda qaytadi" : '🌙 Muzqaymoqchi uyiga ketgan — ertalab soat 8 da qaytadi')); } } }
     if (K.birds) { const d = Math.hypot(K.birds.x - px, K.birds.z - pz); if (d < 5 && K.birds.feedT <= 0) offer(d + 0.8, "<kbd>E</kbd> Kaptarlarga don sepish 🕊", K.feed); }
     if (K.pitch) { const d = Math.hypot(ball.x - px, ball.z - pz); if (d < 1.6 && ball.goalT <= 0) offer(d - 0.2, "<kbd>E</kbd> To'pni tepish ⚽", () => { pl.yaw += angDiff(Math.atan2(ball.x - pl.p[0], ball.z - pl.p[2]), pl.yaw) * 0.6; K.kick(); }); }
     if (stop) { const s = stop.seat, d = Math.hypot(s.x - px, s.z - pz);
@@ -116,7 +118,7 @@ export function initKocha(game) {
   // ================= KADR =================
   const up0 = L.update;
   L.update = (dt) => { up0(dt); const px = pl.p[0], pz = pl.p[2], foot = pl.onFoot, ins = !!IN.inside;
-    if (K.ice) { const d = Math.hypot(K.ice.vx - px, K.ice.vz - pz), op = K.iceOpen(); K.ice.rig.root.visible = d < 140 && !ins && op; if (!op) K.ice.wave = 0; if (d < 60) { if (K.ice.wave > 0) K.ice.wave -= dt; poseRig(K.ice.rig, K.ice.wave > 0 || (foot && d < 4) ? 'wave' : 'idle', dt, 0); } L.dots.push([K.ice.x, K.ice.z, '#ff8ab0']); }
+    if (K.ice) { const d = Math.hypot(K.ice.vx - px, K.ice.vz - pz), op = K.iceOpen(); K.ice.rig.root.visible = d < 140 && !ins && op; if (!op) K.ice.wave = 0; if (d < 60) { if (K.ice.wave > 0) K.ice.wave -= dt; poseRig(K.ice.rig, K.ice.wave > 0 || (foot && d < 4) ? 'wave' : 'idle', dt, 0); } if (op) L.dots.push([K.ice.x, K.ice.z, '#ff8ab0']); }
     if (K.birds && !ins && Math.abs(K.birds.x - px) < 150 && Math.abs(K.birds.z - pz) < 150) { const B = K.birds, dm = _d; if (B.feedT > 0) B.feedT -= dt;
       for (let i = 0; i < B.list.length; i++) { const b = B.list[i], dp = Math.hypot(b.x - px, b.z - pz);
         if (b.fly <= 0 && !foot && car.speed > 3 && Math.hypot(b.x - car.p[0], b.z - car.p[2]) < 7) { b.fly = 1; b.tx = B.x + (Math.random() - 0.5) * 6; b.tz = B.z + (Math.random() - 0.5) * 6; if (i === 0) sfx('rustle', 0.6); } // mashina ustidan bostirib kelsa ham uchadi

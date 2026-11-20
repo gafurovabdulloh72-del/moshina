@@ -27,4 +27,12 @@ export default async ({ page, shot }) => {
   r = await ev(`(() => { const S = G.shahar, n = G.T.roads.nodeBy.vil; G.hour = 12; G.live.mount(true); G.car.place(n.x + 40, n.z + 40, 0); G.prevP = G.car.p.slice(); G.cam.snap(); G.sim(1); const w = S.walkers.find((q) => q.vis && !q.cross && !q.curb); if (!w) return { none: 1 }; const yaw = Math.atan2(w.x - (w.x - 12), 0); G.car.place(w.x - 12 * Math.sin(w.yaw + 1.57), w.z - 12 * Math.cos(w.yaw + 1.57), w.yaw + 1.57); G.prevP = G.car.p.slice(); let minD = 99;
     for (let i = 0; i < 40; i++) { const f = [Math.sin(w.yaw + 1.57), Math.cos(w.yaw + 1.57)]; G.car.v[0] = f[0] * 9; G.car.v[2] = f[1] * 9; G.sim(0.03); const p = w.rig.root.position; minD = Math.min(minD, Math.hypot(p.x - G.car.p[0], p.z - G.car.p[2])); } return { minD: +minD.toFixed(2), scare: w.scare > 0 || Math.hypot(w.ox || 0, w.oz || 0) > 0.5 }; })()`);
   T_('walker-dodge', r.none || (r.scare && r.minD > 0.9), r);
+  // 7. piyodalar zebradan haqiqatan o'tadi (kunduz — svetofor bilan, tunda — sariq miltillaganda, mashina yo'q bo'lsa)
+  r = await ev(`(() => { const S = G.shahar, n = G.T.roads.nodeBy.vil, res = {}; G.live.dismount(true); G.player.place(n.x + 25, n.z + 25, 0); G.cam.snap(); G.state.set.gfx = 2;
+    for (const [k, h, fn] of [['day', 12, false], ['night', 2, true]]) { S.forceNight = fn; G.hour = h; let cross = 0, mid = 0; const side = S.walkers.map((w) => w.side); for (let i = 0; i < 400; i++) { G.sim(0.25); S.walkers.forEach((w, j) => { if (w.side !== side[j]) { cross++; side[j] = w.side; } if (w.cross && w.cross.t > 0.4 && w.cross.t < 0.6) mid++; }); } res[k] = { cross, mid, phase: S.phase, cars: S.cars.filter((c) => c.on).length }; }
+    S.forceNight = null; G.hour = 12; return res; })()`);
+  T_('walkers-cross', r.day.cross > 0 && r.day.mid > 0 && r.night.cross > 0 && r.night.phase === 'N' && r.night.cars < r.day.cars, r);
+  // 8. avtobusda bekatdan ketganda manzilda o'tirib qolmaydi
+  r = await ev(`(() => { const K = G.kocha; if (!K.stop) return { none: 1 }; G.live.dismount(true); const s = K.stop.seat; G.player.place(s.x, s.z, 0); G.state.money = 500; G.player.sit = true; K.atStop = 1; K.rideNow('mayoq'); G.sim(0.5); const b = G.site.places.mayoq.board; return { sit: G.player.sit, d: +Math.hypot(G.player.p[0] - b.x, G.player.p[2] - b.z).toFixed(1) }; })()`);
+  T_('bus-ride-stand', r.none || (!r.sit && r.d < 6), r);
 };

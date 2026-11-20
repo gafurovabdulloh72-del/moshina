@@ -189,7 +189,8 @@ export function initTadbir(game) {
     const dots = L.dots, today = eventsOn(st.dunyo.day);
     for (const k of today) { const r = REFS[k]; if (r && r.c && game.hour < EV[k][4]) dots.push([r.c.x, r.c.z, EV[k][2], E.act[k] ? 1 : 0]); }
     if (E.force && REFS[E.force] && REFS[E.force].c && !today.includes(E.force)) dots.push([REFS[E.force].c.x, REFS[E.force].c.z, EV[E.force][2], 1]);
-    if (game.mode === 'play' && annDay !== st.dunyo.day && game.hour >= 7.5 && game.hour < 18 && today.length) { annDay = st.dunyo.day; const k = today[0]; game.toast(`${EV[k][1]} Bugun Bog'istonda — ${EV[k][0]} (${EV[k][3]}:00–${EV[k][4]}:00). Xaritada belgilangan`, 'gold'); }
+    const upk = today.filter((k) => game.hour < EV[k][4]); // tugagan tadbir e'lon qilinmaydi (ilgari soat 16 da «bugun bozor 7–15» deb chiqardi)
+    if (game.mode === 'play' && annDay !== st.dunyo.day && game.hour >= 7.5 && game.hour < 18 && upk.length) { annDay = st.dunyo.day; const k = upk[0]; game.toast(`${EV[k][1]} Bugun Bog'istonda — ${EV[k][0]} (${EV[k][3]}:00–${EV[k][4]}:00). Xaritada belgilangan`, 'gold'); }
     // eng yaqin faol tadbir
     let near = null, nd = 1e9; for (const k in E.act) if (E.act[k]) { const r = REFS[k], d = Math.hypot(r.c.x - cp.x, r.c.z - cp.z); if (d < nd) { nd = d; near = r; } }
     E.near = near; E.nearD = nd;
@@ -225,8 +226,8 @@ export function initTadbir(game) {
     // bozor: sotuvchilar chaqiradi (pufakcha + ovoz)
     bubT -= dt;
     if (live && near === E.bozorRef && bubT <= 0) { bubT = 3.5 + Math.random() * 4; let best = null, bd = 30; for (const s of near.stalls) { const d = Math.hypot(s.seller.x - pp[0], s.seller.z - pp[2]); if (d < bd && Math.random() < 0.6) { bd = d; best = s; } } if (best) { bubAt = best.seller; bub.textContent = CALLS[(Math.random() * CALLS.length) | 0]; bub.style.display = 'block'; dutT = 2.6; callSfx(clamp(1 - bd / 30, 0, 1)); } }
-    if (dutT > 0 && bubAt && game.mode === 'play') { dutT -= dt; V3.set(bubAt.x, gy(bubAt.x, bubAt.z) + 2.2, bubAt.z).project(game.camera); if (V3.z < 1 && Math.abs(V3.x) < 1.1 && Math.abs(V3.y) < 1.1) { bub.style.left = ((V3.x + 1) / 2) * innerWidth + 'px'; bub.style.top = ((1 - V3.y) / 2) * innerHeight + 'px'; bub.style.display = 'block'; } else bub.style.display = 'none'; if (dutT <= 0) bub.style.display = 'none'; }
-    else if (bub.style.display !== 'none' && (dutT <= 0 || game.mode !== 'play')) bub.style.display = 'none';
+    if (dutT > 0 && bubAt && game.mode === 'play' && !inside) { /* binoga kirganda pufakcha ekranda osilib qolmaydi */ dutT -= dt; V3.set(bubAt.x, gy(bubAt.x, bubAt.z) + 2.2, bubAt.z).project(game.camera); if (V3.z < 1 && Math.abs(V3.x) < 1.1 && Math.abs(V3.y) < 1.1) { bub.style.left = ((V3.x + 1) / 2) * innerWidth + 'px'; bub.style.top = ((1 - V3.y) / 2) * innerHeight + 'px'; bub.style.display = 'block'; } else bub.style.display = 'none'; if (dutT <= 0) bub.style.display = 'none'; }
+    else if (bub.style.display !== 'none' && (dutT <= 0 || game.mode !== 'play' || inside)) bub.style.display = 'none';
     void foot;
   };
   E.phoneHtml = () => { const up = E.upcoming(5), d0 = st.dunyo.day;

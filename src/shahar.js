@@ -23,9 +23,10 @@ export function initShahar(game) {
   { let best = 9, bi = 0, bj = 1; for (let i = 0; i < arms.length; i++) for (let j = i + 1; j < arms.length; j++) { const d = arms[i].dx * arms[j].dx + arms[i].dz * arms[j].dz; if (d < best) { best = d; bi = i; bj = j; } } arms[bi].grp = arms[bj].grp = 'A'; }
   const grpOf = {}; for (const a of arms) grpOf[a.ei] = a.grp;
   const phaseAt = (t) => { let u = ((t % CYC) + CYC) % CYC; for (const p of PH) { if (u < p[1]) return { k: p[0], left: p[1] - u }; u -= p[1]; } return { k: 'A', left: 1 }; };
+  S.nightMode = () => S.forceNight != null ? S.forceNight : game.hour >= 23.5 || game.hour < 5; // yarim tundan tonggacha
   // shu yo'ldan kelgan mashina to'xtashi kerakmi (qizil/sariq yoki o'tish joyida piyoda)
   const pedOn = () => S.walkers.some((w) => w.cross && w.cross.t > 0.02 && w.cross.t < 0.98);
-  const mustStop = (edge, gap) => { const ph = S.ph; if (pedOn()) return true; const g = grpOf[edge]; if (!g) return false; if (ph.k === g) return false; if (ph.k === g.toLowerCase()) return gap > 6; return true; };
+  const mustStop = (edge, gap) => { const ph = S.ph; if (pedOn()) return true; if (ph.k === 'N') return false; /* tunda svetofor sariq miltillaydi — to'xtamasdan, ehtiyot bo'lib o'tiladi */ const g = grpOf[edge]; if (!g) return false; if (ph.k === g) return false; if (ph.k === g.toLowerCase()) return gap > 6; return true; };
   // life.js mashinalari uchun: marshrutda chorrahagacha masofa
   // chorrahadan keyingi chiqish bo'lagi tiqilib qolganmi — bo'lsa chorrahaga kirmaydi (aks holda ichida qolib, yashil bo'lgan ko'ndalang oqim bilan bir-birining ichiga kirardi)
   const onExit = (B, x, z, yaw) => { const tx = B.TX[0], tz = B.TZ[0], dx = x - B.X[0], dz = z - B.Z[0], al = dx * tx + dz * tz; return al > -2 && al < 9 && Math.abs(dx * tz - dz * tx) < 1.6 && Math.sin(yaw) * tx + Math.cos(yaw) * tz > 0.7; }; // shu bo'lakda, shu yo'nalishda (qarshi bo'lakdagi navbat hisoblanmaydi)
@@ -57,7 +58,8 @@ export function initShahar(game) {
   // har guruhning chirog'i alohida mesh (o'z materiali bilan); geometriya ustunlar bo'yicha guruhga ajratiladi
   for (const gk of ['A', 'B']) for (const c of ['r', 'y', 'g']) { const gb = new GB(4420); gb.jit = 0; for (const a of arms) if (a.grp === gk && a.lamp) { const p = a.at(18.5), px = p.x + p.tz * (a.hw + 1.3), pz = p.z - p.tx * (a.hw + 1.3), py = T.ground(px, pz, 1e9).y; gb.push().translate(px, py, pz).rotY(Math.atan2(p.tx, p.tz)).translate(0, c === 'r' ? 3.57 : c === 'y' ? 3.25 : 2.93, 0.14).rotX(Math.PI / 2).color(0xffffff).cyl(10, 0.11, 0.11, -0.03, 0.03, { cap: true }).pop(); }
     const geo = gb.build(); const m = new THREE.Mesh(geo, lm[gk + c]); scene.add(m); }
-  const setLamps = () => { const k = S.ph.k, blink = Math.sin(game.time * 6) > 0; for (const g of ['A', 'B']) { const gr = k === g, ye = k === g.toLowerCase();
+  const setLamps = () => { const k = S.ph.k, blink = Math.sin(game.time * 6) > 0;
+    if (k === 'N') { const on = Math.sin(game.time * 4.2) > 0; for (const g of ['A', 'B']) { lm[g + 'r'].color.setRGB(0.12, 0.03, 0.03); lm[g + 'g'].color.setRGB(0.02, 0.1, 0.04); lm[g + 'y'].color.setRGB(...(on ? [3.0, 1.9, 0.2] : [0.12, 0.09, 0.02])); } return; } for (const g of ['A', 'B']) { const gr = k === g, ye = k === g.toLowerCase();
     lm[g + 'r'].color.setRGB(...(!gr && !ye ? [3.2, 0.25, 0.12] : [0.12, 0.03, 0.03])); lm[g + 'y'].color.setRGB(...(ye ? [3.0, 1.9, 0.2] : [0.12, 0.09, 0.02])); lm[g + 'g'].color.setRGB(...(gr && !(S.ph.left < 2.5 && blink) ? [0.25, 2.9, 0.8] : [0.02, 0.1, 0.04])); } };
 
   // --- mashina modeli: kuzov (bo'yaladi), tafsilotlar, chiroqlar — 3 ta InstancedMesh ---
@@ -111,13 +113,15 @@ export function initShahar(game) {
   for (let i = 0; i < NW; i++) { const fem = i % 3 === 1, r = makeRig({ shirt: LOOKS[i][0], pants: LOOKS[i][1], seed: 600 + i * 13, long: fem, vest: i % 4 === 0 ? 0x2a2c33 : undefined }); r.root.visible = false; scene.add(r.root);
     const a = arms[i % arms.length]; walkers.push({ i, rig: r, arm: a, side: i % 2 ? 1 : -1, d: 25 + rnd() * 100, dir: rnd() < 0.5 ? 1 : -1, sp: 1.25 + rnd() * 0.4, wait: 0, cross: null, x: 0, z: 0, y: 0, yaw: 0, vis: false, far: 70 + rnd() * 70 }); }
   const sidePt = (w, d, side, o) => { const p = w.arm.at(d), off = w.arm.hw + 1.9; o.x = p.x + p.tz * off * side; o.z = p.z - p.tx * off * side; o.tx = p.tx; o.tz = p.tz; return o; };
+  // tungi rejimda: zebra yonida (25 m) mashina yo'q bo'lsa piyoda o'tadi
+  const zebraClear = (a) => { const z = a.at(15); for (const o of life.cars) if (o.placed && (o.x - z.x) ** 2 + (o.z - z.z) ** 2 < 625) return false; for (const o of cars) if (o.on && (o.x - z.x) ** 2 + (o.z - z.z) ** 2 < 625) return false; const pc = game.car.p; return (pc[0] - z.x) ** 2 + (pc[2] - z.z) ** 2 > 625 || game.player.onFoot; };
   const stepWalker = (w, dt) => {
     w.moving = false;
     if (w.cross) { // o'tish joyida
-      const c = w.cross; c.t += dt * w.sp * (S.ph.k === 'P' ? 1.15 : 1.9) / c.len; // qizil yonib qolsa — shoshiladi (mashinalar kutib turmasin) const t = Math.min(1, c.t); w.x = c.ax + (c.bx - c.ax) * t; w.z = c.az + (c.bz - c.az) * t; w.yaw = Math.atan2(c.bx - c.ax, c.bz - c.az); w.moving = true;
+      const c = w.cross; c.t += dt * w.sp * (S.ph.k === 'P' || S.ph.k === 'N' ? 1.15 : 1.9) / c.len; /* qizil yonib qolsa — shoshiladi (mashinalar kutib turmasin) */ const t = Math.min(1, c.t); w.x = c.ax + (c.bx - c.ax) * t; w.z = c.az + (c.bz - c.az) * t; w.yaw = Math.atan2(c.bx - c.ax, c.bz - c.az); w.moving = true;
       if (c.t >= 1) { w.cross = null; w.side = -w.side; w.dir = 1; w.d = 15.5; } return; }
     if (w.wait > 0) { w.wait -= dt; return; }
-    if (w.curb) { if (S.ph.k === 'P' && S.ph.left > 2 * (w.arm.hw + 1.9) / (w.sp * 1.15) + 0.5) { w.curb = false; sidePt(w, 15, w.side, P1); sidePt(w, 15, -w.side, P2); w.cross = { ax: P1.x, az: P1.z, bx: P2.x, bz: P2.z, len: Math.hypot(P2.x - P1.x, P2.z - P1.z), t: 0 }; } return; }
+    if (w.curb) { if ((S.ph.k === 'P' && S.ph.left > 2 * (w.arm.hw + 1.9) / (w.sp * 1.15) + 0.5) || (S.ph.k === 'N' && zebraClear(w.arm))) { w.curb = false; sidePt(w, 15, w.side, P1); sidePt(w, 15, -w.side, P2); w.cross = { ax: P1.x, az: P1.z, bx: P2.x, bz: P2.z, len: Math.hypot(P2.x - P1.x, P2.z - P1.z), t: 0 }; } return; }
     w.d += w.dir * w.sp * dt;
     if (w.dir < 0 && w.d <= 15.5) { w.d = 15.5; w.curb = true; }
     if (w.dir > 0 && w.d >= w.far) { w.dir = -1; w.wait = 1 + rnd() * 3; }
@@ -128,9 +132,10 @@ export function initShahar(game) {
   let tPh = 0;
   S.update = (dt) => {
     dt = Math.min(dt, 0.1); const q = game.state.set.gfx, cp = camP(), pc = game.car, pl = game.player, foot = pl.onFoot, night = game.sky.night;
-    tPh += dt; S.ph = phaseAt(tPh); S.phase = S.ph.k; setLamps();
+    tPh += dt; S.ph = S.nightMode() ? { k: 'N', left: 99 } : phaseAt(tPh); S.phase = S.ph.k; setLamps();
     const dC = Math.hypot(cp.x - C.x, cp.z - C.z), active = dC < 1100 && !(game.interior && game.interior.inside);
-    const nCars = active ? [4, 8, NC][q] : 0, nWalk = active ? [4, 8, NW][q] : 0;
+    const hr = game.hour, calm = hr < 5 || hr >= 23 ? 0.3 : hr < 6.5 || hr >= 21.5 ? 0.6 : 1; // tunda ko'chalar tinchroq
+    const nCars = active ? Math.round([4, 8, NC][q] * calm) : 0, nWalk = active ? Math.round([4, 8, NW][q] * calm) : 0;
     // mashinalar
     const obs = []; for (const c of cars) if (c.on) obs.push(c); for (const o of life.cars) if (o.placed && Math.abs(o.x - C.x) < RT + 200 && Math.abs(o.z - C.z) < RT + 200) obs.push(o);
     for (const o of life.ext) if (o.on && !o.sc.seg && o.sc.i == null) obs.push(o); obs.push({ x: pc.p[0], z: pc.p[2], v: 0, player: true }); if (foot) obs.push({ x: pl.p[0], z: pl.p[2], v: 0, player: true });
@@ -138,8 +143,8 @@ export function initShahar(game) {
     let vis = 0;
     for (let i = 0; i < NC; i++) {
       const c = cars[i];
-      if (i >= nCars && c.convoy < 0) { if (c.on || c.vis) { c.on = false; c.vis = false; bodyIM.setMatrixAt(i, ZERO); detIM.setMatrixAt(i, ZERO); lampIM.setMatrixAt(i, ZERO); } continue; }
-      if (!c.on) { if (c.convoy >= 0) continue; place(c, true); if (!c.on) continue; }
+      if (i >= nCars && c.convoy < 0 && !(active && c.on && seen(c.x, c.z))) { if (c.on || c.vis) { c.on = false; c.vis = false; bodyIM.setMatrixAt(i, ZERO); detIM.setMatrixAt(i, ZERO); lampIM.setMatrixAt(i, ZERO); } continue; }
+      if (!c.on) { if (c.convoy >= 0 || i >= nCars) continue; place(c, true); if (!c.on) continue; } // ortiqchasi ko'z oldida birdan yo'qolmaydi — ko'rinmay qolganda
       const g = c.seg, fx = Math.sin(c.yaw), fz = Math.cos(c.yaw);
       // tezlik: egrilik, chorraha, oldindagi to'siq (IDM), svetofor
       let v0 = c.v0; at(g, Math.min(g.L, c.s + 12), P0); v0 = Math.min(v0, Math.sqrt(2.2 / Math.max(Math.abs(P0.k), 1e-3))); if (g.conn && g.junc) v0 = Math.min(v0, 7);
@@ -173,7 +178,7 @@ export function initShahar(game) {
     // piyodalar
     let wv = 0;
     for (let i = 0; i < NW; i++) {
-      const w = walkers[i], on = i < nWalk;
+      const w = walkers[i], on = i < nWalk || (active && w.vis && Math.hypot(w.x - cp.x, w.z - cp.z) < 60);
       if (!on) { if (w.vis) { w.vis = false; w.rig.root.visible = false; } if (w.cross) { w.cross = null; w.side = -w.side; w.d = 16; w.dir = 1; } w.curb = false; continue; }
       stepWalker(w, dt);
       // mashina yaqinlashsa — chetga
