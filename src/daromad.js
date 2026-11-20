@@ -148,14 +148,14 @@ export function initDaromad(game) {
     this.on({ start: () => { this.close(); D.start(id); }, all: () => this.open('elonlar'), no: () => this.close() }); };
   D.open = (tab) => { if (game.mode === 'play' || game.mode === 'ui') ui.open('elonlar', tab ? { tab } : undefined); };
   // e'lonlar taxtasi: shu manzildagi ishlar
-  const sb = UI.prototype.s_board;
-  UI.prototype.s_board = function (w, pid, btn, x) { sb.call(this, w, pid, btn, x); const cards = w.querySelector('.cards'); if (!cards) return; const here = D.order.filter((id) => D.defs[id].place === pid || (D.defs[id].boards && D.defs[id].boards.includes(pid)));
+  const sb = ui.s_board;
+  ui.s_board = function (w, pid, btn, x) { sb.call(this, w, pid, btn, x); const cards = w.querySelector('.cards'); if (!cards) return; const here = D.order.filter((id) => D.defs[id].place === pid || (D.defs[id].boards && D.defs[id].boards.includes(pid)));
     for (const id of here) { const df = D.defs[id], c = el('div', 'card', D.card(id)), b = el('button', '', df.open ? 'Ochish' : 'Boshlash'); b.onclick = () => { sfx('click'); if (df.open) return df.boardOpen ? df.boardOpen(pid) : df.open(); this.close(); D.start(id, true); }; c.appendChild(b); cards.appendChild(c); }
     const r = el('div', 'row'); r.style.marginTop = '8px'; r.appendChild(btn("💼 Barcha ish e'lonlari", () => this.open('elonlar'), 'sec')); w.appendChild(r); };
-  const sp = UI.prototype.s_pause;
-  UI.prototype.s_pause = function (w, d, btn, x) { sp.call(this, w, d, btn, x); const col = w.querySelector('div'); if (col) col.insertBefore(btn("💼 Ish e'lonlari va daromad", () => this.open('elonlar'), 'sec'), col.children[3] || null); };
-  const sh = UI.prototype.s_help;
-  UI.prototype.s_help = function (w, d, btn, x) { sh.call(this, w, d, btn, x); const p = el('p', 'sub', "💼 Ish e'lonlari — telefon (<kbd>4</kbd>), pauza menyusi yoki e'lonlar taxtasi: yuk, avtobus, kuryer, evakuator, tez yordam, o't o'chirish, qor, sayyohlar, yo'l ta'miri, qo'y, asal, hunarmandchilik, quruvchi, fotograf, savdo, ijara, omonat, kooperativ. <kbd>X</kbd> — ishni tugatish"); const b = w.querySelector(':scope > button'); w.insertBefore(p, b); };
+  const sp = ui.s_pause;
+  ui.s_pause = function (w, d, btn, x) { sp.call(this, w, d, btn, x); const col = w.querySelector('div'); if (col) col.insertBefore(btn("💼 Ish e'lonlari va daromad", () => this.open('elonlar'), 'sec'), col.children[3] || null); };
+  const sh = ui.s_help;
+  ui.s_help = function (w, d, btn, x) { sh.call(this, w, d, btn, x); const p = el('p', 'sub', "💼 Ish e'lonlari — telefon (<kbd>4</kbd>), pauza menyusi yoki e'lonlar taxtasi: yuk, avtobus, kuryer, evakuator, tez yordam, o't o'chirish, qor, sayyohlar, yo'l ta'miri, qo'y, asal, hunarmandchilik, quruvchi, fotograf, savdo, ijara, omonat, kooperativ. <kbd>X</kbd> — ishni tugatish"); const b = w.querySelector(':scope > button'); w.insertBefore(p, b); };
   // telefon: «Ish e'lonlari» va «Daromad»
   const PH = game.phone;
   if (PH && PH.apps) {

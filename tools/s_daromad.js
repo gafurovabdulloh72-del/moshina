@@ -2,7 +2,7 @@
 // iqtisod muvozanati (bitta ish uchun haq chegaralari), saqlov va qayta yuklash (eski saqlov ham). Ishlatish: npm run test:daromad (avval npm run build). SHOTS=1 — skrinshotlar
 export default async ({ page, shot }) => {
   const ready = () => page.waitForFunction('window.__ready === true', null, { timeout: 180000 });
-  const reload = async () => { await page.evaluate(() => { window.onbeforeunload = null; }); await page.reload(); await ready(); await helpers(); };
+  const reload = async () => { await page.evaluate(() => { window.onbeforeunload = null; }); await page.reload({ timeout: 180000, waitUntil: 'commit' }); await ready(); await helpers(); };
   const T = async (name, expr) => { let r; try { r = await page.evaluate(expr); } catch (e) { r = { ok: false, err: e.message }; } const ok = r && r.ok !== false; console.log(`TEST ${name} ${ok ? 'OK' : 'FAIL'}`, JSON.stringify(r).slice(0, 600)); return r; };
   const SH = !!process.env.SHOTS, snap = async (n) => { if (SH) await shot('dr_' + n); };
   const helpers = () => page.evaluate(() => {
@@ -22,7 +22,7 @@ export default async ({ page, shot }) => {
   });
   await ready();
   await page.evaluate(() => { localStorage.clear(); }); await reload();
-  await page.evaluate(() => { window._save = G.save; G.save = () => {}; G.state.money = 60000; G.mode = 'play'; });
+  await page.evaluate(() => { window._save = G.save; G.save = () => {}; G.state.money = 60000; G.mode = 'play'; window._d0 = G.state.dunyo.day; });
 
   await T('tuzilish: 19 daromad yo\'li, ish beruvchilar, ilgaklar', `(()=>{ const D=G.daromad, ids=D.order, cats={}; for(const id of ids){ const c=D.defs[id].cat; cats[c]=(cats[c]||0)+1; }
     const noG=ids.filter(id=>D.defs[id].cat!=='pul' && !D.givers[id]); const places=new Set(ids.map(id=>D.defs[id].place));
@@ -126,6 +126,7 @@ export default async ({ page, shot }) => {
     const m0=G.state.money; D.coopSell(50); return { ok: n===50 && div>0 && div<=Math.round(50*p1*0.008)+1 && new Set(prices).size>4 && prices.every(p=>p>=35&&p<=400) && C.n===0 && G.state.money>m0, p0, p1, div, prices }; })()`);
 
   // ---------- Umumiy: e'lonlar, taxta, telefon, obro', to'qnashuv ----------
+  await page.evaluate(() => { G.state.dunyo.day = window._d0; });
   await T("ish e'lonlari oynasi: hamma ish, filtr, yo'l ko'rsatish", `(()=>{ H.fresh(); G.ui.open('elonlar',{tab:'all'}); const n=document.querySelectorAll('.win .cards .card').length; document.querySelector('.win [data-a="tab:veh"]').click(); const nv=document.querySelectorAll('.win .cards .card').length; document.querySelector('.win [data-a="go:yuk"]').click(); const way=!!G.way; G.setWaypoint(null);
     return { ok: n===G.daromad.order.length && nv===8 && way && G.ui.screenName!=='elonlar', n, nv }; })()`);
   await page.evaluate(() => { G.ui.open('elonlar', { tab: 'all' }); G.advance(0.05); }); await snap('elonlar');
