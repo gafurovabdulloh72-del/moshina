@@ -20,7 +20,7 @@ export const POLVON = [
   { name: 'Rustam', about: "Og'ir va ayyor", shirt: 0x2f6fd0, h: 1.06, b: 1.2, win: 0.94, gap: 1.08, atk: 0.36, pow: 0.44, feint: 0.24, res: 0.29, prize: 850 },
   { name: 'Bahodir', about: "Orolning eng kuchli polvoni", shirt: 0x3f9a58, h: 1.07, b: 1.24, win: 0.84, gap: 0.98, atk: 0.4, pow: 0.48, feint: 0.3, res: 0.27, prize: 1200 },
 ];
-export const CHAMP = { name: 'Qahramon', about: "Kunlik chempion bellashuvi: har o'yin kunida bir marta", shirt: 0xd8392b, h: 1.08, b: 1.26, win: 0.8, gap: 0.92, atk: 0.42, pow: 0.5, feint: 0.34, res: 0.26, prize: 700, time: 70 };
+export const CHAMP = { name: 'Qahramon', about: "Orolning eng zo'r polvoni — har o'yin kunida bir marta bellashadi", shirt: 0xd8392b, h: 1.08, b: 1.26, win: 0.8, gap: 0.92, atk: 0.42, pow: 0.5, feint: 0.34, res: 0.26, prize: 700, time: 70 };
 export const FEE = 100, REMATCH = 120, TIME = 60, BELT = 0xc8202a;
 const KEY = { L: 'KeyA', R: 'KeyD', F: 'KeyS', B: 'KeyW' }, KEYN = { L: 'A', R: 'D', F: 'S', B: 'W' }, ROT = { L: -90, R: 90, F: 180, B: 0 };
 const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };

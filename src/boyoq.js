@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { PAINTS } from './carmodel.js';
 import { VEHICLES, vehById } from './vehicles.js';
+import * as COL from './colliders.js';
 
 // m — metallik, r — g'adir-budurlik, cc — lak qatlami (doim > 0: 0 bo'lsa sheyder qayta yig'iladi), ccr — lak g'adirligi, p — sadaf (chetda tus o'zgarishi)
 export const FINISH = [
@@ -85,8 +86,8 @@ export function initBoyoq(game) {
     const render = () => {
       const s = B.saved(V.cur), d = B.draft || { hex: s.hex, fin: s.fin, tone: s.tone }, c = B.cost(d), v = vehById[V.cur];
       const sw = (hex, act, sel) => `<div class="bq-sw${sel ? ' sel' : ''}" data-a="${act}:${hex}" style="background:${hx(hex)}"></div>`;
-      w.innerHTML = `<h1>🎨 Bo'yoq ustaxonasi <small>💰 ${som(st.money)} so'm</small></h1>
-        <p class="sub">Rang va qoplamani tanlang — o'zgarish mashinaning o'zida ko'rinadi. To'lamaguningizcha hech narsa saqlanmaydi.</p>
+      w.innerHTML = `<h1>🎨 Bo'yoq ustaxonasi</h1>
+        <p class="sub">Rang va qoplamani tanlang — o'zgarish mashinaning o'zida ko'rinadi. To'lamaguningizcha hech narsa saqlanmaydi. Sizda 💰 ${som(st.money)} so'm.</p>
         <div class="bq-veh">${V.own.map((id) => `<button data-a="veh:${id}" class="${id === V.cur ? '' : 'sec'}">${vehById[id].name}</button>`).join('')}</div>
         <h4 class="lbl">Asosiy rang <small>(${som(COLOR_COST)} so'm)</small></h4>
         <div class="bq-pal">${PALETTE.map((h) => sw(h, 'col', d.hex === h)).join('')}<label class="bq-pick" title="O'zim tanlayman"><input type="color" value="${hx(d.hex)}" data-k="col">🎯</label></div>
@@ -110,10 +111,18 @@ export function initBoyoq(game) {
   game.hooks.push((dt) => {
     const open = game.ui && game.ui.screenName === 'boyoq';
     if (!open) { if (B.draft) revert(); orb = 0; return; }
-    orb += dt * 0.32; const m = game.carModel, s = m.spec, p = m.root.position, a = car.yaw + 0.9 + orb, R = Math.max(5.2, s.len * 1.25), cam = game.camera;
+    const m = game.carModel, s = m.spec, p = m.root.position, R = Math.max(5.2, s.len * 1.25), cam = game.camera;
+    if (B._snap || B._a0 == null) B._a0 = clearAngle(p, R); orb += dt * 0.3; const a = B._a0 + 0.55 * Math.sin(orb);
     cp.set(p.x + Math.sin(a) * R, p.y + 1.1 + s.hgt * 0.35, p.z + Math.cos(a) * R); cam.position.lerp(cp, Math.min(1, dt * 6 + (B._snap ? 1 : 0))); B._snap = false;
     const rx = Math.cos(a), rz = -Math.sin(a), off = R * 0.36; tg.set(p.x + rx * off, p.y + 0.35, p.z + rz * off); cam.lookAt(tg);
   });
+  // devor/bino orqasiga tushmaydigan eng ochiq tomon (to'qnashuv jismlari bo'yicha) — kamera shu atrofida tebranadi
+  const clearAngle = (p, R) => { let best = car.yaw + 0.9, bs = -1;
+    for (let i = 0; i < 24; i++) { const a = car.yaw + 0.9 + (i / 24) * 6.2832; let free = 0;
+      for (let d = 1.6; d <= R + 1.2; d += 0.5) { const x = p.x + Math.sin(a) * d, z = p.z + Math.cos(a) * d; if (COL.query(x, z, 0.6).some((o) => !o.dead && o.y1 > p.y + 0.3 && (o.t === 1 ? segD(o, x, z) < o.r + 0.6 : Math.hypot(o.x - x, o.z - z) < o.r + 0.6))) break; free = d; }
+      const sc = free - i * 0.001; if (sc > bs) { bs = sc; best = a; } }
+    return best; };
+  const segD = (o, x, z) => { const sx = o.x2 - o.x, sz = o.z2 - o.z, t = Math.max(0, Math.min(1, ((x - o.x) * sx + (z - o.z) * sz) / (sx * sx + sz * sz || 1))); return Math.hypot(x - o.x - sx * t, z - o.z - sz * t); };
   const op0 = ui.open; ui.open = function (name, data) { if (name === 'boyoq' && this.screenName !== 'boyoq') B._snap = true; return op0.call(this, name, data); };
   return B;
 }
