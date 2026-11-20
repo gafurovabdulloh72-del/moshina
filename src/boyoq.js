@@ -30,14 +30,14 @@ const TY = Object.fromEntries(TYRES.map((t) => [t.id, t]));
 const hx = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0');
 const som = (n) => Math.round(n).toLocaleString('ru-RU');
 
-// modelga bo'yoq: asosiy rang, qoplama, ikkinchi rang (kapot, oynalar, bamperlar — painted qismlar); onlayn do'st modeli ham shundan (coop.js)
+// modelga bo'yoq: asosiy rang, qoplama, ikkinchi rang (kuzovning bel chizig'idan yuqorisi — tom va ustunlar, hamda bo'yalgan qismlar: kapot, oynalar, bamperlar); onlayn do'st modeli ham shundan (coop.js)
 export function paintModel(m, hex, finId, tone) {
   if (!m || !m.paintMat) return; const F = FIN[finId] || FIN.yal, pm = m.paintMat, pp = m._partPaint;
   pm.color.setHex(hex);
   if (pp) { if (tone != null) { if (pp.color === pm.color) pp.color = new THREE.Color(); pp.color.setHex(tone); } else pp.color = pm.color; }
   for (const mt of pp ? [pm, pp] : [pm]) {
     mt.metalness = F.m; mt.roughness = F.r; mt.clearcoat = F.cc; mt.clearcoatRoughness = F.ccr;
-    const U = mt.userData.seam; if (U && U.uPearl) { U.uPearl.value = F.p; U.uPearlC.value.copy(mt.color).offsetHSL(0.16, 0.05, 0.22); }
+    const U = mt.userData.seam; if (U && U.uPearl) { U.uPearl.value = F.p; U.uPearlC.value.copy(mt.color).offsetHSL(0.16, 0.05, 0.22); U.uToneK.value = mt === pm && tone != null ? 1 : 0; if (tone != null) U.uTone.value.setHex(tone); }
   }
 }
 export const finishIndex = (id) => Math.max(0, FINISH.findIndex((f) => f.id === id));
@@ -94,7 +94,7 @@ export function initBoyoq(game) {
         <h4 class="lbl">Qoplama</h4>
         <div class="bq-fin">${FINISH.map((f) => `<button data-a="fin:${f.id}" class="${d.fin === f.id ? '' : 'sec'}" title="${f.d}">${f.icon} ${f.name}<small>${f.cost ? som(f.cost) + " so'm" : 'bepul'}</small></button>`).join('')}</div>
         <p class="sub" style="margin:6px 0 0">${FIN[d.fin].d}</p>
-        <h4 class="lbl">Ikki rangli <small>(kapot, oynalar va bamperlar · ${som(TONE_COST)} so'm)</small></h4>
+        <h4 class="lbl">Ikki rangli <small>(tom, ustunlar va oynalar · ${som(TONE_COST)} so'm)</small></h4>
         <div class="bq-pal small"><div class="bq-sw none${d.tone == null ? ' sel' : ''}" data-a="tone:-" title="Bir rangli">✕</div>${PALETTE.filter((_, i) => i % 2 === 0 || i > 17).map((h) => sw(h, 'tone', d.tone === h)).join('')}<label class="bq-pick" title="O'zim tanlayman"><input type="color" value="${hx(d.tone == null ? 0xffffff : d.tone)}" data-k="tone">🎯</label></div>
         <div class="bq-sum"><span>${v.name}: <b>${hx(d.hex).toUpperCase()}</b> · ${FIN[d.fin].name}${d.tone != null ? ' + ' + hx(d.tone).toUpperCase() : ''}</span><span>Jami: <b>${som(c)} so'm</b></span></div>`;
       const r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '10px';

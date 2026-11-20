@@ -69,7 +69,7 @@ export function initKurash(game) {
     K.m = { i, d, champ, rematch: !champ && i < S.lvl, ph: 'intro', t: 0, time: d.time || TIME, sc: 0, ag: 0, me: { bal: 0, sta: 100, idle: 9, reads: 0 }, op: { ob: 0, hits: 0 }, cue: null, next: 1.2, msg: '', msgT: 0, ang: 0, flash: 0, res: null };
     K.on = true; pl.sit = false; pl.emote = null; pl.v[0] = pl.v[1] = pl.v[2] = 0; pl.rig.root.rotation.order = 'YXZ'; pl.rig.kp = {}; pl.lamp.intensity = 0;
     const f = game.ui && game.ui.fade; if (f) { f.style.opacity = 1; setTimeout(() => (f.style.opacity = 0), 380); }
-    sfx('drum', 4); place(1); game.banner(`🤼 ${d.name}${champ ? ' — chempion bellashuvi' : ''}`, d.hint ? "Raqib og'ilgan tomonga o'q ko'rsatiladi: shu tugmani bosing. Muvozanati to'lganda — Probel!" : `${d.about} · ${K.m.time} soniya`, 'start');
+    sfx('drum', 4); place(1); toast(`🤼 <b>${d.name}${champ ? ' — chempion bellashuvi' : ''}</b> · ` + (d.hint ? "Raqib og'ilgan tomonga o'q ko'rsatiladi: shu tugmani bosing. Muvozanati to'lganda — Probel!" : `${d.about} · ${K.m.time} soniya`), 'gold');
     return true;
   };
   // ikki polvon davra markazida: o'yinchi kameraga orqa bilan, raqib qarshisida; juftlik sekin aylanib turadi
@@ -208,7 +208,7 @@ export function initKurash(game) {
       if (opp && !K.on && opp.root.visible) opp.root.visible = false; }
     if (K.on && K.m) { // kamera: o'yinchining orqasida, biroz yon tomondan — ikkala polvon ko'rinadi
       const u = pos.u, cam = game.camera, wx = -u[1], wz = u[0], k = Math.min(1, dt * 4);
-      camW.set(pos.me[0] - u[0] * 3.1 + wx * 0.9, C.y + 2.05, pos.me[1] - u[1] * 3.1 + wz * 0.9); camP.lerp(camW, k); cam.position.copy(camP); // o'z silliq nuqtamiz (main.js kamerasi har kadr qayta qo'yadi)
+      camW.set(pos.me[0] - u[0] * 2.7 + wx * 2.1, C.y + 2.3, pos.me[1] - u[1] * 2.7 + wz * 2.1); camP.lerp(camW, k); cam.position.copy(camP); // o'z silliq nuqtamiz (main.js kamerasi har kadr qayta qo'yadi)
       camT.set(C.x + u[0] * 0.35, C.y + 1.05, C.z + u[1] * 0.35); cam.lookAt(camT); }
   });
 

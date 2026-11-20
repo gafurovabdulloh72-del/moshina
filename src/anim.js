@@ -442,7 +442,7 @@ function sKurash(rig, A, o, t, dt, rq) {
     if (wn > 0.99) return; }
   const g = e * st * (1 - wn);
   o[CH.PY] -= (0.13 + 0.015 * br) * g; o[CH.HX] += (0.42 + 0.18 * fw - 0.62 * lf) * g; o[CH.SX] += (0.22 + 0.1 * fw - 0.3 * lf) * g; o[CH.CX] += (0.08 - 0.1 * lf) * g; o[CH.KX] -= (0.42 + 0.1 * fw - 0.3 * lf) * g;
-  o[CH.PZ] += (0.05 * fw - 0.06 * ht) * g; o[CH.PX] += 0.07 * sd * g; o[CH.HZ] += 0.22 * sd * g; o[CH.SZ] += 0.12 * sd * g; o[CH.KZ] -= 0.1 * sd * g;
+  o[CH.PZ] += (0.05 * fw - 0.06 * ht) * g; o[CH.PX] += 0.08 * sd * g; o[CH.HZ] -= 0.2 * sd * g; o[CH.SZ] -= 0.14 * sd * g; o[CH.KZ] += 0.08 * sd * g; // +sd — rigning chap tomoniga (+X) butun gavda og'adi
   o[CH.CY] += 0.65 * lf * g * (sd >= 0 ? 1 : -1); o[CH.HY] += 0.3 * lf * g * (sd >= 0 ? 1 : -1); o[CH.PY] += 0.06 * lf * g;
   const gp = { uf: 1.05 + 0.15 * ht + 0.7 * lf, ua: 0.32 + 0.2 * lf, ur: 0.25, ef: 0.95 - 0.25 * ht + 0.2 * lf, ep: 0.35, wf: 0.1, fg: 0.95 };
   armMix(o, AL, gp, g); armMix(o, AR, gp, g); o[CH.LOOK] = 0.3;
