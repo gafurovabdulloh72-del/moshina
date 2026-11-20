@@ -128,7 +128,7 @@ export function initUy2(game) {
     if (gObj) { dispVeh(); gObj.grp.visible = want; for (const c of gObj.cols) c.dead = !want; if (gDisp) gDisp.root.visible = want; } };
   // garajdagi (saqlangan) transport ko'rinishi — yengil nusxa, chirog'i olib tashlangan (chiroqlar soni o'zgarmasin)
   const dispVeh = () => { const id = HV().gVeh; if (gDisp && gDisp.id === id) return; if (gDisp) { scene.remove(gDisp.root); gDisp = null; } if (!id || !vehById[id] || !gObj) return;
-    const m = buildVehicle(id, { lite: true }); m.root.remove(m.spot); m.root.remove(m.spot.target); const pid = !visit() && st.veh.paint[id]; if (pid) { const pp = PAINTS.find((q) => q.id === pid); if (pp) m.paintMat.color.setHex(pp.hex); }
+    const m = buildVehicle(id, { lite: true }); m.root.remove(m.spot); m.root.remove(m.spot.target); const pid = !visit() && st.veh.paint[id]; if (pid) { const pp = PAINTS.find((q) => q.id === pid); if (pp) m.paintMat.color.setHex(pp.hex); } if (!visit() && game.applyPaint) game.applyPaint(m, id); // bo'yoq ustaxonasidagi rang va qoplama (boyoq.js)
     const sp = m.spec, fake = { wheels: [0, 1, 2, 3].map((k) => ({ len: sp.free - sp.sag, spin: 0, ly: (k < 2 ? sp.rF : sp.rR) + (sp.free - sp.sag) - sp.com })), steer: 0, fwd: 0 }; syncWheels(m, fake);
     const [x, z] = GL(0.4, -0.4); m.root.position.set(x, floorY + 0.08 + sp.com, z); m.root.rotation.y = yawH + gSite.a; if (m.rider) m.rider.visible = false; scene.add(m.root); gDisp = m; };
   U.garageDisp = () => gDisp;

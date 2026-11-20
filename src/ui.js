@@ -303,8 +303,9 @@ export class UI {
     const spot = pt && pt.x != null ? [pt.x, pt.z, 0] : null;
     const render = () => {
       const hp = d.health, cost = Math.round(((100 - hp) * 9 + d.tires.reduce((a, b) => a + b, 0) * 60) * Math.max(0.4, Math.sqrt(g.car.mass / 1500)));
-      let h = `<h1>Ustaxona <small>💰 ${som(st.money)} so'm · ${g.carModel.v.name}</small></h1><div class="tabs"><button data-a="tab:0" class="${this.gtab === 0 ? '' : 'sec'}">🔧 Ta'mir va tyuning</button><button data-a="tab:1" class="${this.gtab === 1 ? '' : 'sec'}">🚗 Transport saloni (${st.veh.own.length}/${VEHICLES.length})</button></div>`;
-      if (this.gtab === 1) h += `<p class="sub">Pul yig'ib yangi transport oling. Sotib olingani sizda qoladi — istalgan ustaxonada yoki uyingizda almashtirasiz.</p><div class="cards">${VEHICLES.map((v) => this.vehCard(v, st.veh.own.includes(v.id), st.veh.cur === v.id, st.money >= v.price)).join('')}</div>`;
+      let h = `<h1>Ustaxona <small>💰 ${som(st.money)} so'm · ${g.carModel.v.name}</small></h1><div class="tabs"><button data-a="tab:0" class="${this.gtab === 0 ? '' : 'sec'}">🔧 Ta'mir va tyuning</button><button data-a="tab:1" class="${this.gtab === 1 ? '' : 'sec'}">🚗 Transport saloni (${st.veh.own.length}/${VEHICLES.length})</button>${g.boyoq ? `<button data-a="tab:2" class="${this.gtab === 2 ? '' : 'sec'}">🛞 Shinalar</button><button data-a="paintshop" class="sec">🎨 Bo'yoq ustaxonasi</button>` : ''}</div>`;
+      if (this.gtab === 2 && g.boyoq) h += g.boyoq.tyreHtml();
+      else if (this.gtab === 1) h += `<p class="sub">Pul yig'ib yangi transport oling. Sotib olingani sizda qoladi — istalgan ustaxonada yoki uyingizda almashtirasiz.</p><div class="cards">${VEHICLES.map((v) => this.vehCard(v, st.veh.own.includes(v.id), st.veh.cur === v.id, st.money >= v.price)).join('')}</div>`;
       else {
         const ok = hp >= 100 && !d.tires.some(Boolean);
         h += `<div class="grid2"><div><div class="card"><h4>Ta'mirlash</h4><p>Holat: <b style="color:${hp > 70 ? 'var(--good)' : hp > 40 ? 'var(--ac)' : 'var(--bad)'}">${hp}%</b> · dvigatel ${Math.round(d.engine)}% ${d.tires.some(Boolean) ? '· yorilgan balon bor' : ''}${d.wrecked ? ' · <b style="color:var(--bad)">motor ishlamayapti</b>' : ''}</p><button data-a="fix" ${ok ? 'disabled' : ''}>${ok ? 'Transport soz ✓' : `To'liq ta'mirlash — ${som(Math.min(cost, st.money))} so'm`}</button></div>
@@ -315,7 +316,8 @@ export class UI {
       this.on({ tab: (a) => { this.gtab = +a; render(); }, fix: () => { const hp2 = d.health, c2 = Math.round(((100 - hp2) * 9 + d.tires.reduce((a, b) => a + b, 0) * 60) * Math.max(0.4, Math.sqrt(g.car.mass / 1500))); g.addMoney(-Math.min(c2, st.money), 'Ustaxona: ta\'mir'); d.repair(100); g.audio.sfx('repair'); g.save(); render(); },
         paint: (id) => { const p = PAINTS.find((q) => q.id === id), own = st.paints.includes(id); if (!own) { if (st.money < p.cost) return g.toast('Pul yetarli emas', 'bad'); g.addMoney(-p.cost, 'Ustaxona: bo\'yoq'); st.paints.push(id); g.audio.sfx('buy'); } g.setPaint(id); g.save(); render(); },
         up: (id) => { const u = UPG.find((q) => q.id === id), c = u.cost[st.up[id]]; if (st.money < c) return; g.addMoney(-c, 'Tyuning: ' + u.name); st.up[id]++; g.applyUpgrades(); g.audio.sfx('buy'); g.save(); render(); },
-        buy: (id) => { if (g.buyVehicle(id)) { g.pickVehicle(id, spot); render(); } }, pick: (id) => { g.pickVehicle(id, spot); g.audio.sfx('buy'); render(); } });
+        buy: (id) => { if (g.buyVehicle(id)) { g.pickVehicle(id, spot); render(); } }, pick: (id) => { g.pickVehicle(id, spot); g.audio.sfx('buy'); render(); },
+        tyre: (id) => { if (g.boyoq.fitTyre(id)) render(); }, paintshop: () => g.boyoq.open(pt) }); // shina to'plamlari va bo'yoq ustaxonasi (boyoq.js)
     };
     render();
   }
@@ -334,9 +336,9 @@ export class UI {
         </div><div>
           <h4 style="margin:0 0 6px">Garaj — transportni tanlang</h4><div class="vlist">${st.veh.own.map((id) => `<button class="${st.veh.cur === id ? '' : 'sec'}" data-a="veh:${id}">${VICON[id] || '🚗'} ${vehById[id].name}</button>`).join('')}</div>
           <p class="sub" style="margin:6px 0 12px">Yangi transportlar ustaxonadagi salonda sotiladi (${st.veh.own.length}/${VEHICLES.length}).</p>
-          <h4 style="margin:0 0 6px">Hovli bezaklari</h4>${DECOR.map((q) => `<div class="card" style="margin-bottom:6px;flex-direction:row;align-items:center"><div class="grow"><h4>${q.name}</h4><p>${q.desc}</p></div><button data-a="dec:${q.id}" class="${st.home.decor[q.id] ? 'sec' : ''}" ${st.home.decor[q.id] || st.money < q.cost || lv < 1 ? 'disabled' : ''}>${st.home.decor[q.id] ? '✓ Bor' : lv < 1 ? 'Kulba kerak' : som(q.cost) + " so'm"}</button></div>`).join('')}
+          <h4 style="margin:0 0 6px">Hovli bezaklari</h4>${DECOR.map((q) => `<div class="card" style="margin-bottom:6px;flex-direction:row;align-items:center"><div class="grow"><h4>${q.name}</h4><p>${q.desc}</p></div><button data-a="dec:${q.id}" class="${st.home.decor[q.id] ? 'sec' : ''}" ${st.home.decor[q.id] || st.money < q.cost || lv < 1 ? 'disabled' : ''}>${st.home.decor[q.id] ? '✓ Bor' : lv < 1 ? 'Kulba kerak' : som(q.cost) + " so'm"}</button></div>`).join('')}${g.uslub ? g.uslub.html() : ''}
         </div></div>`;
-      this.on({ upg: () => { if (L.upgradeHome()) render(); }, inc: () => { const n = L.collectIncome(); if (n) g.toast(`Daromad olindi: +${som(n)} so'm`, 'gold'); render(); }, sleep: (h) => { this.fade.style.opacity = 1; setTimeout(() => { L.sleep(+h); this.close(); this.fade.style.opacity = 0; }, 380); },
+      this.on({ sty: (v) => { if (g.uslub.set(+v)) render(); }, upg: () => { if (L.upgradeHome()) render(); }, inc: () => { const n = L.collectIncome(); if (n) g.toast(`Daromad olindi: +${som(n)} so'm`, 'gold'); render(); }, sleep: (h) => { this.fade.style.opacity = 1; setTimeout(() => { L.sleep(+h); this.close(); this.fade.style.opacity = 0; }, 380); },
         eat: (id) => { L.eat(id); render(); }, shop: () => this.open('shop', { back: ['home'] }), bag: () => this.open('bag'), dec: (id) => { if (L.buyDecor(id)) render(); },
         veh: (id) => { g.pickVehicle(id, [hm.park[0], hm.park[1], hm.parkYaw]); g.audio.sfx('buy'); g.toast(`${vehById[id].name} uy oldida turibdi`, 'good'); render(); } });
     };

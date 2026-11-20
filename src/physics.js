@@ -17,7 +17,7 @@ export class Car {
     this.R = new Float64Array(9);
     this.steer = 0; this.sN = 0; this.steerBias = 0; this.extraRR = 0; this.rearK = 1; this.cut = false;
     this.speed = 0; this.fwd = 0; this.onGround = 0; this.airTime = 0; this.flipT = 0; this.slipAng = 0; this.inWater = 0; this.lat = 0; this.slip = 0;
-    this.throttle = 0; this.reverse = false; this.nitroOn = false; this.rpm = 0.2; this.gear = 1; this.nitroMul = 1.55; this.grip = 1; this.wetGrip = 1; // wetGrip — ob-havo (yomg'ir/qor) ko'paytuvchisi, obhavo.js yozadi
+    this.throttle = 0; this.reverse = false; this.nitroOn = false; this.rpm = 0.2; this.gear = 1; this.nitroMul = 1.55; this.grip = 1; this.wetGrip = 1; this.surfMu = null; this.surfRear = 1; // wetGrip — ob-havo (yomg'ir/qor) ko'paytuvchisi, obhavo.js yozadi; surfMu — shina to'plami (yuza bo'yicha ko'paytuvchilar, boyoq.js), null — standart shina (hech narsa o'zgarmaydi)
     this.events = [];
     this.setSpec(spec || DEF_SPEC);
     this._updR();
@@ -143,7 +143,7 @@ export class Car {
         const sx = ny * hz - nz * hy, sy = nz * hx - nx * hz, sz = nx * hy - ny * hx; // chap
         const vlong = vcx * hx + vcy * hy + vcz * hz, vlat = vcx * sx + vcy * sy + vcz * sz;
         wh.vlong = vlong; wh.vlat = vlat;
-        const mu = MU[surf] * this.grip * this.wetGrip;
+        let mu = MU[surf] * this.grip * this.wetGrip; if (this.surfMu) mu *= this.surfMu[surf] * (wh.front ? 1 : this.surfRear);
         const share = m / 4;
         let Flat = (-vlat * share / dt) * 0.5;
         let Flong = driveF * this.drv[i];

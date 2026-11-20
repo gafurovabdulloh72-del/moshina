@@ -40,8 +40,8 @@ const V3 = () => new THREE.Vector3(), Q4 = () => new THREE.Quaternion();
 const _e = new THREE.Euler(), _q = Q4(), _q2 = Q4(), _q3 = Q4(), _v = V3(), _v2 = V3(), _v3 = V3(), _v4 = V3(), _m = new THREE.Matrix4(), _Y = new THREE.Vector3(0, 1, 0);
 const qE = (q, x, y, z, o) => q.setFromEuler(_e.set(x, y, z, o));
 
-const STATES = ['loco', 'air', 'swim', 'sit', 'bend', 'shake', 'dance', 'wave', 'talk', 'play', 'fish', 'swing', 'fall', 'pet', 'lie', 'eat', 'cook', 'drink', 'wash', 'shower', 'read', 'horn'];
-const BLEND = { loco: 0.16, air: 0.07, swim: 0.3, sit: 0.35, bend: 0.2, shake: 0.18, dance: 0.3, wave: 0.2, talk: 0.3, play: 0.3, fish: 0.25, swing: 0.15, fall: 0.08, pet: 0.25, lie: 0.45, eat: 0.35, cook: 0.25, drink: 0.2, wash: 0.25, shower: 0.3, read: 0.3, horn: 0.35 };
+const STATES = ['loco', 'air', 'swim', 'sit', 'bend', 'shake', 'dance', 'wave', 'talk', 'play', 'fish', 'swing', 'fall', 'pet', 'lie', 'eat', 'cook', 'drink', 'wash', 'shower', 'read', 'horn', 'kurash'];
+const BLEND = { loco: 0.16, air: 0.07, swim: 0.3, sit: 0.35, bend: 0.2, shake: 0.18, dance: 0.3, wave: 0.2, talk: 0.3, play: 0.3, fish: 0.25, swing: 0.15, fall: 0.08, pet: 0.25, lie: 0.45, eat: 0.35, cook: 0.25, drink: 0.2, wash: 0.25, shower: 0.3, read: 0.3, horn: 0.35, kurash: 0.22 };
 const MAP = { idle: 'loco', walk: 'loco', run: 'loco', jump: 'air' };
 const IVAR = ['look', 'stretch', 'watch', 'scratch', 'hips', 'cross', 'shrug', 'look'];
 const IVAR_M = ['look', 'roll', 'watch', 'neck', 'cross', 'look', 'stretch', 'roll', 'scratch', 'hips']; // erkak: yelka aylantirish, bo'yin cho'zish, atrofga qarash
@@ -433,6 +433,29 @@ function sRead(rig, A, o, t, dt) {
   o[CH.KX] += 0.42 * e; o[CH.KY] += 0.1 * sn(t * 0.8) * e; o[CH.LOOK] = 0.1; idleLayer(rig, A, o, 0.6, t, dt, false);
 }
 
+// Kurash (kurash.js): rig.kp = {side: -1..1 yonga og'ish, fwd: -1..1 oldinga/orqaga, lift: 0..1 ko'tarib otish, hit: 0..1 tortish zarbi, fly: 0..1 yiqilish (otilgan polvon), win: 0..1 qo'l ko'tarish}
+// Past tik turish, oyoqlar keng va zinapoyasimon, ikki qo'l raqib yelkasi/belbog'ida; yiqilganda — orqasi bilan yerga, oyoqlar FK
+function sKurash(rig, A, o, t, dt, rq) {
+  const k = rig.kp || {}, s = rig.s, e = sm(0, 0.3, t), sd = k.side || 0, fw = k.fwd || 0, lf = k.lift || 0, ht = k.hit || 0, fl = k.fly || 0, wn = k.win || 0, st = 1 - fl, br = sn(A.t * 2.6);
+  if (wn > 0.01) { // g'olib: qaddini rostlab, o'ng qo'lni ko'taradi
+    armMix(o, AR, { cle: 0.1, uf: 0.4, ua: 2.6, ur: 0.1, ef: 0.35, fg: 0.95 }, wn); armMix(o, AL, { uf: 0.1, ua: 0.15, ef: 0.3, fg: 0.6 }, wn); o[CH.KX] -= 0.15 * wn; o[CH.LOOK] = 0.6;
+    if (wn > 0.99) return; }
+  const g = e * st * (1 - wn);
+  o[CH.PY] -= (0.13 + 0.015 * br) * g; o[CH.HX] += (0.42 + 0.18 * fw - 0.62 * lf) * g; o[CH.SX] += (0.22 + 0.1 * fw - 0.3 * lf) * g; o[CH.CX] += (0.08 - 0.1 * lf) * g; o[CH.KX] -= (0.42 + 0.1 * fw - 0.3 * lf) * g;
+  o[CH.PZ] += (0.05 * fw - 0.06 * ht) * g; o[CH.PX] += 0.08 * sd * g; o[CH.HZ] -= 0.2 * sd * g; o[CH.SZ] -= 0.14 * sd * g; o[CH.KZ] += 0.08 * sd * g; // +sd — rigning chap tomoniga (+X) butun gavda og'adi
+  o[CH.CY] += 0.65 * lf * g * (sd >= 0 ? 1 : -1); o[CH.HY] += 0.3 * lf * g * (sd >= 0 ? 1 : -1); o[CH.PY] += 0.06 * lf * g;
+  const gp = { uf: 1.05 + 0.15 * ht + 0.7 * lf, ua: 0.32 + 0.2 * lf, ur: 0.25, ef: 0.95 - 0.25 * ht + 0.2 * lf, ep: 0.35, wf: 0.1, fg: 0.95 };
+  armMix(o, AL, gp, g); armMix(o, AR, gp, g); o[CH.LOOK] = 0.3;
+  rq[0] = rq[5] = 0.13 * s * g; rq[1] = (0.14 + 0.04 * sd) * s * g; rq[6] = (-0.1 + 0.04 * sd) * s * g; rq[11] = 1; rq[10] = 0.18;
+  if (fl > 0.001) { // otilgan: gavda orqaga ag'dariladi, havoda — chanoq ko'tariladi, oxirida yerda chalqancha
+    const up = sn(PI * cl(fl / 0.75, 0, 1)) * (1 - sm(0.75, 1, fl)), dn = sm(0.1, 0.85, fl);
+    o[CH.BX] = -1.52 * dn; o[CH.PY] = lerp(o[CH.PY], (0.16 - A.H0) / s, sm(0.55, 1, fl)) + 0.45 * up; o[CH.PZ] = 0;
+    armMix(o, AL, { uf: 1.4, ua: 0.8, ur: 0.1, ef: 0.5, fg: 0.3 }, fl); armMix(o, AR, { uf: 1.2, ua: 0.9, ur: 0.1, ef: 0.6, fg: 0.3 }, fl);
+    legFK(o, LL, 0.9 * up + 0.25 * dn, 1.2 * up + 0.35 * dn, -0.3 * dn); legFK(o, LR, 0.6 * up + 0.15 * dn, 0.9 * up + 0.2 * dn, -0.3 * dn);
+    o[CH.LIKL] = o[CH.LIKR] = 1 - sm(0, 0.15, fl); o[CH.KX] = 0.25 * dn; o[CH.HX] = 0; o[CH.SX] = 0.05; o[CH.CX] = 0.05; o[CH.LOOK] = 0;
+  }
+}
+
 // ===================== ASOSIY =====================
 export function animate(rig, anim, dt, speed, ctl) {
   const A = rig.A, root = rig.root;
@@ -511,6 +534,7 @@ export function animate(rig, anim, dt, speed, ctl) {
       case 'shower': sShower(rig, A, o, A.stT, dt); break;
       case 'read': sRead(rig, A, o, A.stT, dt); break;
       case 'horn': sHorn(rig, A, o, A.stT, dt); break;
+      case 'kurash': sKurash(rig, A, o, A.stT, dt, rq); break;
     }
     for (let i = 0; i < NCH; i++) acc2[i] += o[i] * w;
     for (let i = 0; i < 12; i++) rqa[i] += rq[i] * w;

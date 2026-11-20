@@ -416,7 +416,7 @@ export function buildDetails(scene, game, site) {
     const fx = game.fx; if (!fx || typeof fx.emit !== 'function' || !game.camera || dt <= 0) return;
     const cp = game.camera.position, share = 0.5 + 0.38 * night, wx = WINDDIR[0], wz = WINDDIR[1];
     for (const c of CHIM) {
-      if (c.lv != null && (!home || home.lvl !== c.lv)) continue;
+      if (c.lv != null && (!home || home.lvl !== c.lv || (c.sty != null && c.sty !== (home.trad && home.trad() ? 1 : 0)))) continue; // uy darajasi va uslubi (uslub.js)
       if ((c.x - cp.x) ** 2 + (c.z - cp.z) ** 2 > 300 * 300) continue;
       const on = 0.5 + 0.5 * Math.sin(t * 0.045 + c.ph) * Math.sin(t * 0.017 + c.ph * 2.3); if (c.k > share || on < 0.22) continue;
       c.acc += dt * (1.6 + 2.2 * on); const g = 0.6 + 0.4 * Math.sin(t * 0.41 + c.ph);

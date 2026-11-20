@@ -26,10 +26,10 @@ const ICON = { sheep: 0xf6f3ea, shell: 0xffc8d8, mush: 0xfff2d0, oar: 0xc79a66, 
 function defState() {
   return { v: 2, money: 300, xp: 0, stars: {}, best: {}, up: { engine: 0, nitro: 0, tires: 0, susp: 0, armor: 0, brake: 0 }, paint: 'qizil', paints: ['qizil'], coins: [], chests: [], places: {},
     stats: { dist: 0, top: 0, jump: 0, smashed: 0, crashes: 0, time: 0, drift: 0, air: 0, walk: 0 }, set: { vol: 0.8, music: true, gfx: 2, damage: true, ui: 100 }, hour: 9.5, pos: null, dmg: null, fresh: true,
-    veh: { own: ['jip', 'velo'], cur: 'jip', dmg: {}, paint: {} }, foot: null,
+    veh: { own: ['jip', 'velo'], cur: 'jip', dmg: {}, paint: {}, col: {}, fin: {}, tone: {}, tyre: {}, tyres: {} }, foot: null, // col/fin/tone — bo'yoq ustaxonasi (istalgan rang, qoplama, ikkinchi rang), tyre/tyres — shina to'plami va sotib olinganlari (boyoq.js); hammasi transport bo'yicha
     inv: { seed: 3, sapling: 0, fruit: 0, berry: 0, veg: 0, bread: 1, mush: 0, shell: 0, flower: 0, wood: 0, hay: 0, fish: 0, bigfish: 0, egg: 0, ore: 0, gem: 0, kit: 0, water: 1, juice: 0, sweets: 0, snack: 0, canister: 0, friedfish: 0, kabob: 0, soup: 0, omlet: 0, salad: 0, dimlama: 0, tea: 0 },
     tools: {}, hats: [], hat: null, karma: 0, sat: 100, energy: 100,
-    home: { lvl: 0, decor: {}, beds: [0, 0, 0, 0, 0, 0], wat: [0, 0, 0, 0, 0, 0], eggT: 0, mailT: 0, incT: 0, fund: 0 }, // fund — onlayn xonada do'stlar qo'shgan pul (keyingi darajaga)
+    home: { lvl: 0, decor: {}, beds: [0, 0, 0, 0, 0, 0], wat: [0, 0, 0, 0, 0, 0], eggT: 0, mailT: 0, incT: 0, fund: 0, style: 0 }, // fund — onlayn xonada do'stlar qo'shgan pul (keyingi darajaga); style — uy uslubi: 0 zamonaviy, 1 an'anaviy hovli (uslub.js)
     flowers: [], trees: [], flags: [], tasks: [], cnt: {}, seen: {}, peaks: {},
     thirst: 100, fuel: {}, fridge: {}, alarm: 6.5, // kundalik hayot (hayot.js): chanqoq, transport yoqilg'isi (%), muzlatkich, budilnik soati
     look: null, clothes: [], income: [], jobs: {}, // hayot2/ish: kiyim-soch ko'rinishi, sotib olingan kiyimlar, pul tarixi, ishlar hisobi
@@ -39,6 +39,7 @@ function defState() {
     errCur: null, // topshiriq.js: bajarilayotgan topshiriq (tur, beruvchi, bosqich) — qayta yuklanganda davom etadi; null — yo'q
     sovrin: { rec: {}, cups: {}, best: { n: 0, pts: 0 }, tricks: 0, tlog: {}, paid: {} }, // tryuk.js: transport rekordlari {chellenj: {transport: [natija, medal]}}, kuboklar {poyga: soni}, eng yaxshi kombo, tryuklar soni, tryuklar daftari, to'langan medal mukofotlari
     suv: { row: 0, sail: 0, glide: 0, km: 0, best: 0, fish: 0 }, // suv.js: eshkakli/yelkanli qayiq ijaralari va deltaplan parvozlari soni, qayiqda suzilgan masofa (m), eng uzoq parvoz (m), qayiqdan tutilgan baliq
+    kurash: { lvl: 0, champ: -1, belt: 0, title: 0, wins: 0, loss: 0, halol: 0, streak: 0, best: 0 }, // kurash.js: navbatdagi polvon (0..6), chempion bellashuvi o'tkazilgan kun, belbog' va unvon, g'alaba/mag'lubiyat, halol g'alabalar, ketma-ket mag'lubiyat (yengillik), eng ko'p ochko
     qulay: { guide: 0, tips: {}, tipsOff: false, ach: {}, achInit: 0, day: null, streak: 0, last: -1, chests: 0, win: 0 }, // qulay.js/yutuq.js: «Birinchi safar» qadami (0 — aniqlanmagan, 99 — tugagan, <0 — ko'rsatilmaydi), ko'rilgan maslahatlar, yutuqlar, kunlik uchlik (kun, ketma-ketlik, sandiqlar), yulduzli chellenjlar soni
     poyga: { inf: {}, circ: {}, seg: {}, runs: 0 }, // poyga.js: cheksiz poyga rekordlari {transport: [darvoza, masofa m]}, aylanmalar {id: {s, best, lap, n}}, yo'l bo'laklari {bo'lak: [vaqt, transport, egami]}, cheksiz poygalar soni
     mahorat: { yy: [], veh: {} }, // mahorat.js: Yulduz yo'lidan olingan sovg'alar (tartib raqamlari), transport mahorati {transport: {km, dr, top, trip, b, tr}}
@@ -416,8 +417,8 @@ export function initGame(game) {
     effects(dt);
     // nitro
     if (car.nitroOn) game.nitro = Math.max(0, game.nitro - dt * (0.3 - 0.045 * st.up.nitro)); else game.nitro = Math.min(1, game.nitro + dt * (0.05 + 0.02 * st.up.nitro));
-    // statistika
-    st.stats.time += dt; const dd = Math.hypot(p[0] - lastGround[0], p[2] - lastGround[1]); if (dd < 30 && !(game.coop && game.coop.ride)) { if (foot) st.stats.walk += dd; else st.stats.dist += dd; kmAcc += dd; if (kmAcc >= 1000) { kmAcc -= 1000; game.live.count('km'); } } else air = null; lastGround[0] = p[0]; lastGround[1] = p[2];
+    // statistika (yo'lovchi, qayiq/deltaplan va kurash davrasidagi siljish piyoda/yo'l masofasiga kirmaydi)
+    st.stats.time += dt; const dd = Math.hypot(p[0] - lastGround[0], p[2] - lastGround[1]); if (dd < 30 && !(game.coop && game.coop.ride) && !(game.suv && game.suv.cur) && !(game.kurash && game.kurash.on)) { if (foot) st.stats.walk += dd; else st.stats.dist += dd; kmAcc += dd; if (kmAcc >= 1000) { kmAcc -= 1000; game.live.count('km'); } } else air = null; lastGround[0] = p[0]; lastGround[1] = p[2];
     if (!foot && kmh > st.stats.top) st.stats.top = Math.round(kmh);
     // sakrash: uzun sakrash uchun tanga
     if (foot) air = null;

@@ -88,7 +88,7 @@ export function makeRig(o = {}) {
   const bw = o.build || (0.94 + rnd() * 0.16), hpW = fem ? 1.08 : 1;
   const skin = hexLin(o.skin || SKINS[(seed >>> 3) % SKINS.length]), skinD = mul(skin, 0.8), lip = mix3(skin, hexLin(0x8a3a32), 0.32);
   const shirt = cloth(o.shirt || 0x2f7fd0), pants = cloth(o.pants || 0x3a3f4c, 0.92), hair = hexLin(o.hair || 0x3a2a20), vest = o.vest ? cloth(o.vest) : null;
-  const shoe = hexLin(o.shoe || SHOES[(seed >>> 5) % SHOES.length]), sole = mix3(shoe, hexLin(0x8a7a66), 0.45), belt = hexLin(0x2a1f18);
+  const shoe = hexLin(o.shoe || SHOES[(seed >>> 5) % SHOES.length]), sole = mix3(shoe, hexLin(0x8a7a66), 0.45), belt = hexLin(o.beltCol || 0x2a1f18), bH = o.beltCol ? 0.032 : 0.012; // beltCol — polvon belbog'i (kurash.js): rangli va kengroq
   const sleeve = o.sleeve != null ? o.sleeve : fem ? 1 : rnd() < 0.45 ? 1 : 0.42; // 1 — uzun yeng, <1 — kalta (yelka bo'ylab ulush)
   const dress = fem && (o.dress != null ? o.dress : true), stache = !fem && (o.stache != null ? o.stache : rnd() < 0.35);
   // erkak: baquvvat, sportchi gavda (mu — mushak ulushi: o'yinchi to'liq, aholida 0.75..1); keng yelka, V-shaklli gavda, yo'g'on bo'yin, katta qo'l-oyoq
@@ -103,8 +103,8 @@ export function makeRig(o = {}) {
     [1.07, 0.147 * (fem ? 0.88 : M(1, 0.97)) * bw, M(0.1, 0.097) * bw, M(0.087, 0.09), 0, 0], [1.16, (fem ? 0.1434 : M(0.1576, 0.162)) * bw, (fem ? 0.1135 : M(0.109, 0.108)) * bw, M(0.0921, 0.1), 0, -0.003], [1.205, (fem ? 0.1506 : M(0.1645, 0.18)) * bw, (fem ? 0.1203 : M(0.1135, 0.115)) * bw, M(0.0946, 0.107), 0, -0.004], [fem ? 1.23 : 1.25, 0.168 * (fem ? 0.92 : M(1, 1.18)) * bw, (fem ? 0.124 : M(0.116, 0.123)) * bw, M(0.097, 0.112), 0, -0.006], [1.31, 0.176 * (fem ? 0.9 : M(1, 1.19)), fem ? 0.122 : M(0.114, 0.128), M(0.102, 0.118), 0, -0.012],
     [1.375, 0.18 * shW, M(0.095, 0.118), M(0.104, 0.118), 0, -0.022], [1.425, M(0.17, 0.176) * shW, M(0.075, 0.084), M(0.092, 0.108), 0, -0.03], [1.462, M(0.118, 0.13) * shW, M(0.062, 0.068), M(0.074, 0.088), 0, -0.034], [1.49, M(0.068, 0.082), M(0.052, 0.06), M(0.058, 0.07), 0, -0.035]];
   const beltY = 0.99, hemY = dress ? 0.99 : 0.99;
-  const torCol = (y, th) => { let c; if (y < beltY - 0.012) c = pants; else if (y < beltY + 0.012 && !dress) c = belt; else c = shirt; if (vest && y > beltY + 0.012 && y < 1.43 && Math.abs(Math.sin(th)) > 0.18) c = vest; let k = 1; if (y < 0.9) k *= 0.82 + (y - 0.835) * 2.5; if (y > 1.44) k *= 0.92; return mul(c, k * (0.97 + 0.03 * Math.cos(th))); };
-  { const ts = ringTs(TOR, [beltY - 0.012, beltY + 0.012]); const rings = ts.map((t) => { const r = prof(TOR, t); return { c: [0, t * s, r[5] * s], ru: r[1] * s, rf: r[2] * s, rb: r[3] * s, t }; });
+  const torCol = (y, th) => { let c; if (y < beltY - bH) c = pants; else if (y < beltY + bH && !dress) c = belt; else c = shirt; if (vest && y > beltY + bH && y < 1.43 && Math.abs(Math.sin(th)) > 0.18) c = vest; let k = 1; if (y < 0.9) k *= 0.82 + (y - 0.835) * 2.5; if (y > 1.44) k *= 0.92; return mul(c, k * (0.97 + 0.03 * Math.cos(th))); };
+  { const ts = ringTs(TOR, [beltY - bH, beltY + bH]); const rings = ts.map((t) => { const r = prof(TOR, t); return { c: [0, t * s, r[5] * s], ru: r[1] * s, rf: r[2] * s, rb: r[3] * s, t }; });
     g.tube({ n: 16, A: [0, 1, 0], V: [0, 0, 1], rot: Math.PI / 16, rings, cap0: 0.012 * s, cap1: 0.008 * s, surf: 8,
       // erkak ko'kragi old tomondan yassiroq va kengroq (dumaloq emas): kesim superellips tomon tortiladi
       xf: mu > 0 ? (p, th, k) => { const r = rings[k], c = Math.cos(th), w = sm(1.12, 1.22, r.t) * (1 - sm(1.4, 1.47, r.t)) * mu; if (w <= 0 || c <= 0.001) return p; p[2] = r.c[2] + (p[2] - r.c[2]) * (1 + (Math.pow(c, 0.5) / c - 1) * 0.55 * w); return p; } : null,

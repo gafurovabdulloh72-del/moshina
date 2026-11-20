@@ -130,6 +130,11 @@ try {
   await run(1, A, B);
   ok(await A.evaluate(() => (G.state.home.fund | 0) === 600 && G.state.home.lvl === 2), 'noto\'g\'ri so\'rovlar uyni o\'zgartirmadi');
   ok(await B.evaluate(() => { G.save(); const s = JSON.parse(localStorage.getItem('safar_save_v2')); return s.home.lvl === 1 && !s.home.decor.gulzor && !s.home.beds[0]; }), 'B saqlovi: o\'z uyi o\'zgarmagan');
+  // uy uslubi (uslub.js): egasi an'anaviy hovlini tanlaydi — mehmon ham shuni ko'radi, mehmonning o'z saqlovi o'zgarmaydi
+  const setSty = await A.evaluate(() => { G.state.money += 2000; const ok = G.uslub.set(1); return { ok, st: G.state.home.style, lvl: G.state.home.lvl, host: !!(G.coop.room && G.coop.room.isHost), n: G.coop.members.size }; });
+  ok(await until(B, () => G.state.home.style === 1 && G.site.places.uy.home.trad() && G.site.places.uy.home.alt[2].grp.visible, null, 40, A), "B egasining an'anaviy uyini ko'radi", JSON.stringify(setSty) + ' ' + await B.evaluate(() => JSON.stringify({ st: G.state.home.style, lvl: G.state.home.lvl, vis: G.visit.on, trad: G.site.places.uy.home.trad() })));
+  ok(await B.evaluate(() => { G.save(); return (JSON.parse(localStorage.getItem('safar_save_v2')).home.style | 0) === 0; }), "B saqlovida o'z uy uslubi (zamonaviy) qoldi");
+  await B.evaluate(() => { const h = G.site.places.uy.home, p = h.W(-15, 30), q = h.W(0, -2); G.view(p[0], h.y + 9, p[1], q[0], h.y + 2.5, q[1]); }); await shot(B, 'online_guest_trad_home');
   // B do'sti yoniga ko'chadi, keyin ikkalasi yonma-yon haydaydi
   const apid = await A.evaluate(() => G.coop.myId());
   await B.evaluate((p) => G.coop.teleportTo(p), apid);
@@ -144,7 +149,19 @@ try {
     await p.evaluate(() => { const m = [...G.coop.members.values()][0], w = m.remote.where(), me = G.player.onFoot ? G.player.p : G.car.p; const dx = w[0] - me[0], dz = w[1] - me[2], d = Math.hypot(dx, dz) || 1; const y = G.T.ground(me[0], me[2], 1e9).y; G.view(me[0] - dx / d * 7 + dz / d * 3, y + 3.2, me[2] - dz / d * 7 - dx / d * 3, (me[0] + w[0]) / 2, y + 1, (me[2] + w[1]) / 2); });
     await shot(p, name);
   }
-  await A.evaluate(() => G.live.mount(false));
+  // qayiq va deltaplan (suv.js): B do'stini suvda/havoda — qayiq yoki deltaplan modelida, o'rindiqda ko'radi (ilgari suv ustida tik turgan yoki havoda osilgan odam ko'rinardi)
+  await A.evaluate(() => { const b = G.boat; G.player.place(b.x + Math.cos(b.yaw) * 3.4, b.z - Math.sin(b.yaw) * 3.4, b.yaw); G.suv.enter(b, true); G.suv.auto = [1, 0.2]; });
+  await B.evaluate(() => { const b = G.boat; G.live.dismount(true); G.player.place(b.home[0] + Math.cos(b.home[2]) * 4, b.home[1] - Math.sin(b.home[2]) * 4, b.home[2]); });
+  const seesBoat = (k) => { const m = [...G.coop.members.values()][0], R = m && m.remote, bt = R && R.boats && R.boats[k]; if (!R || !R.wv || R.wv[0] !== k || !bt || !bt.m.root.visible || !bt.rider || R.rig.root.visible) return false; const w = R.where(); return Math.hypot(bt.m.root.position.x - w[0], bt.m.root.position.z - w[1]) < 0.5 && Math.abs(bt.m.root.position.y - (k === 2 ? R.fpos.y + 0.9 : R.fpos.y - 0.3)) < 0.01; };
+  ok(await until(B, seesBoat, 0, 40, A), "B A ni qayiqda ko'radi (qayiq modeli, o'rindiqda chavandoz, piyoda modeli yashirin)", await B.evaluate(() => { const m = [...G.coop.members.values()][0]; return JSON.stringify({ wv: m.remote.wv, foot: m.remote.foot, boats: Object.keys(m.remote.boats || {}) }); }));
+  await B.evaluate(() => { const m = [...G.coop.members.values()][0], w = m.remote.where(), me = G.player.p, y = m.remote.fpos.y; G.view(me[0], y + 4.5, me[2], w[0], y, w[1]); }); await shot(B, 'online_B_sees_A_boat');
+  await A.evaluate(() => { G.suv.auto = null; G.suv.off(); const k = G.glider.kiosk; G.player.place(k[0] + 2, k[1] + 1, 0); G.suv.enter(G.glider, true); G.suv.windSet(1, 1); G.suv.auto = [0, 0]; });
+  await B.evaluate(() => { const k = G.glider.kiosk; G.player.place(k[0] + 4, k[1] - 3, 0); });
+  ok(await until(B, seesBoat, 2, 40, A), "B A ni deltaplanda ko'radi", await B.evaluate(() => { const m = [...G.coop.members.values()][0]; return JSON.stringify({ wv: m.remote.wv, foot: m.remote.foot }); }));
+  ok(await B.evaluate(() => { const m = [...G.coop.members.values()][0], R = m.remote; return R.fpos.y - G.T.ground(R.fpos.x, R.fpos.z, R.fpos.y).y > 2; }), "deltaplan havoda (yerda emas)");
+  await A.evaluate(() => { G.suv.auto = null; G.suv.windSet(null); G.suv.land(false); G.live.mount(false); });
+  ok(await until(B, () => { const m = [...G.coop.members.values()][0], R = m.remote; return !R.wv && !Object.values(R.boats || {}).some((b) => b.m.root.visible); }, null, 30, A), "A tushgach qayiq/deltaplan B da yo'qoladi");
+  await B.evaluate(() => G.live.mount(false)); await B.evaluate((p) => G.coop.teleportTo(p), apid); await run(1.5, A, B); // keyingi sinovlar uchun yana yonma-yon
   // xaritada do'st nuqtasi
   ok(await A.evaluate(() => (G.netDots || []).length === 1 && G.netDots[0][3] === 'Malika'), 'A xaritasida Malika');
   await A.evaluate(() => { G.ui.open('online'); G.advance(0.05); }); await shot(A, 'online_room_window'); await A.evaluate(() => G.ui.close());

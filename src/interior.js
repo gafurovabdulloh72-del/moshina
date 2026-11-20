@@ -18,6 +18,7 @@ const LV = [
   { A: 3.2, B: 2.8, C: 2.6, D: 3.8, E: 3.8, bathD: 2.8, h: 2.9, wall: 0xe8e0d0, floor: 0x9a6a42, ceil: 0xf8f4ec, kfloor: 0xe2dccf, bfloor: 0xa8d0de },
   { A: 3.6, B: 3.0, C: 3.0, D: 4.2, E: 4.2, bathD: 3.0, h: 3.1, wall: 0xf6f2ea, floor: 0xded6ca, ceil: 0xfdfbf6, kfloor: 0xece8e0, bfloor: 0xbfdde6, villa: 1 },
 ];
+const TRAD_IN = { wall: 0xeadbbf, ceil: 0x8a5a36, floor: 0x8a5a36, kfloor: 0xc9ab80 }; // an'anaviy uslubdagi uy ichi ranglari
 export const ROOM_NAME = { liv: 'Mehmonxona', kit: 'Oshxona', bath: 'Hammom', bed: 'Yotoqxona', all: 'Chodir', shop: "Do'kon" };
 
 export function initInterior(game) {
@@ -163,9 +164,10 @@ export function initInterior(game) {
   scene.add(H.grp); scene.add(S.grp);
   const tvMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.12, 0.64), matTV); tvMesh.visible = false; tvMesh.frustumCulled = false; scene.add(tvMesh);
   const buildHome = (lvl) => {
-    const I = H, o = H.o; clearI(I); I.lvl = lvl; const L = LV[lvl], g = newGB(901 + lvl, o), gw = newGB(902, o), gl = newGB(903, o); I.curtain = [0xc84a3a, 0xc84a3a, 0x3d74a6, 0x8a5a36, 0x6a8a5a][lvl]; I.h = L.h;
+    const I = H, o = H.o; clearI(I); I.lvl = lvl; const tr = (game.state.home.style | 0) === 1 && lvl >= 2; I.sty = tr ? 1 : 0; // an'anaviy uslub (uslub.js): ganch devor, yog'och vassali shift, qizil gilam, atlas pardalar
+    const L = tr ? Object.assign({}, LV[lvl], TRAD_IN) : LV[lvl], g = newGB(901 + lvl, o), gw = newGB(902, o), gl = newGB(903, o); I.curtain = tr ? 0xb8322e : [0xc84a3a, 0xc84a3a, 0x3d74a6, 0x8a5a36, 0x6a8a5a][lvl]; I.h = L.h;
     const lamps = []; let rooms, doors;
-    const wood = lvl >= 3 ? 0x6e4a30 : 0x8a5a36, fab = [0x3a6ea8, 0x7a4e2e, 0x3d74a6, 0x5a6a7a, 0xd8d0c4][lvl];
+    const wood = tr ? 0x7a4a2a : lvl >= 3 ? 0x6e4a30 : 0x8a5a36, fab = tr ? 0x1f8a86 : [0x3a6ea8, 0x7a4e2e, 0x3d74a6, 0x5a6a7a, 0xd8d0c4][lvl];
     if (L.tent) {
       rooms = [{ t: 'all', x0: -1.9, z0: -1.9, x1: 1.9, z1: 1.9, floor: L.floor }]; doors = [{ ax: 'z', c: -1.9, a: -0.5, b: 0.5, exit: 1 }];
       buildShell(I, g, gw, gl, rooms, doors, L.h, L.wall, L.ceil, o);
@@ -194,7 +196,7 @@ export function initInterior(game) {
       const sx = (C - A) / 2 + 0.9, sofaW = Math.min(2.2, A + C - 2.6);
       putF(I, g, gl, sx, B - 0.5, Math.PI, (q) => F.sofa(q, sofaW, fab), [sofaW / 2, 0.42, 0.9], o);
       for (const k of [-0.25, 0.25]) spot(I, 'sit', sx + k * sofaW, B - 0.55, Math.PI, { sofa: 1, r: 1.0 });
-      putF(I, g, gl, sx, 0.1, 0, (q) => F.rug(q, Math.min(2.6, sofaW + 0.6), 2.0, lvl >= 4 ? 0x7a8a9a : 0xb84a34, lvl >= 4 ? 0xe6dccb : 0xf0b83a), null, o);
+      putF(I, g, gl, sx, 0.1, 0, (q) => F.rug(q, Math.min(2.6, sofaW + 0.6), 2.0, tr ? 0x9a1f24 : lvl >= 4 ? 0x7a8a9a : 0xb84a34, tr ? 0xe8b23a : lvl >= 4 ? 0xe6dccb : 0xf0b83a), null, o);
       putF(I, g, gl, sx, 0.75, 0, (q) => F.coffee(q, wood), [0.52, 0.3, 0.45], o); putF(I, g, gl, sx + 0.15, 0.75, 0.3, (q) => F.paper(q), null, o); spot(I, 'paper', sx + 0.15, 1.15, Math.PI, { r: 1.0 });
       if (lvl >= 2) { putF(I, g, gl, sx, -B + 0.24, 0, (q) => F.tvStand(q, wood), [0.75, 0.22, 1.3], o); spot(I, 'tv', sx, -B + 1.0, Math.PI, { r: 1.1 }); I.tv = [o[0] + sx, o[1] + 0.92, o[2] - B + 0.24 - 0.025, 0]; }
       else { putF(I, g, gl, sx, -B + 0.3, 0, (q) => { F.crate(q); q.translate(0, 0.5, 0); F.radio(q); }, [0.32, 0.27, 0.6], o); spot(I, 'radio', sx, -B + 1.0, Math.PI, { r: 1.0 }); I.tv = null; }
@@ -308,7 +310,7 @@ export function initInterior(game) {
   const mini = () => document.getElementById('mini');
   const fadeFlash = () => { const f = game.ui && game.ui.fade; if (!f) return; f.style.opacity = 1; setTimeout(() => { f.style.opacity = 0; }, 260); };
   IN.enter = (kind, ret) => {
-    if (kind === 'home' && H.lvl !== game.state.home.lvl) buildHome(game.state.home.lvl);
+    if (kind === 'home' && (H.lvl !== game.state.home.lvl || H.sty !== ((game.state.home.style | 0) === 1 && game.state.home.lvl >= 2 ? 1 : 0))) buildHome(game.state.home.lvl);
     const I = kind === 'home' ? H : kind === 'shop' ? S : IN.X[kind]; fadeFlash();
     IN.ret = ret || [pl.p[0], pl.p[2], pl.yaw + Math.PI]; IN.inside = kind; for (const J of [H, S, ...Object.values(IN.X)]) J.grp.visible = J === I;
     pl.place(I.o[0] + I.entry[0], I.o[2] + I.entry[1], I.entry[2]); pl.sit = false; pl.emote = null;
@@ -326,7 +328,7 @@ export function initInterior(game) {
   };
   IN.cur = cur;
   IN.roomAt = (x, z) => { const I = cur(); if (!I) return null; const lx = x - I.o[0], lz = z - I.o[2]; for (let i = 0; i < I.rooms.length; i++) { const r = I.rooms[i]; if (lx >= r.x0 - 0.05 && lx <= r.x1 + 0.05 && lz >= r.z0 - 0.05 && lz <= r.z1 + 0.05) return i; } return null; };
-  IN.rebuildHome = (force) => { if (force || H.lvl !== game.state.home.lvl) buildHome(game.state.home.lvl); };
+  IN.rebuildHome = (force) => { if (force || H.lvl !== game.state.home.lvl || H.sty !== ((game.state.home.style | 0) === 1 && game.state.home.lvl >= 2 ? 1 : 0)) buildHome(game.state.home.lvl); };
 
   // ---------- har kadr: yorug'lik, deraza rangi, TV, sotuvchi, yopiq joy kamerasi ----------
   const _c = new THREE.Color(), camT = new THREE.Vector3(), camW = new THREE.Vector3(), look = new THREE.Vector3();
