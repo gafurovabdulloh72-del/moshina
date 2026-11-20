@@ -68,7 +68,7 @@ export class Sound {
     const c = this.ctx; const s = c.createBufferSource(); s.buffer = this.noiseBuf; const fl = c.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, t0); if (slide !== 1) fl.frequency.exponentialRampToValueAtTime(f * slide, t0 + dur); fl.Q.value = q;
     const g = c.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); s.connect(fl); fl.connect(g); g.connect(dest || this.master); s.start(t0, Math.random()); s.stop(t0 + dur + 0.05);
   }
-  sfx(name, k = 1) {
+  sfx(name, k = 1, k2 = 1) {
     if (!this.ready) return; const t = this.ctx.currentTime;
     switch (name) {
       case 'coin': this.tone(1318, t, 0.12, 'triangle', 0.16); this.tone(1976, t + 0.07, 0.22, 'triangle', 0.16); break;
@@ -94,7 +94,9 @@ export class Sound {
       case 'pop': this.tone(500, t, 0.1, 'sine', 0.2, null, 0.002, 2.2); break;
       case 'tire': this.burst(t, 0.5, 'highpass', 900, 0.6, 0.5, 0.3); this.tone(120, t, 0.25, 'sine', 0.4, null, 0.002, 0.4); break;
       case 'cough': this.burst(t, 0.12, 'lowpass', 500, 0.8, 0.5); this.burst(t + 0.16, 0.1, 'lowpass', 380, 0.8, 0.4); this.tone(55, t, 0.2, 'sawtooth', 0.2, null, 0.002, 0.6); break;
-      case 'step': this.burst(t, 0.06, k === 0 || k === 8 || k === 5 ? 'bandpass' : 'lowpass', k === 3 ? 2400 : k === 0 || k === 8 ? 1100 : 600, 0.9, 0.09); break;
+      case 'step': { const r = 0.88 + Math.random() * 0.24; if (k === 6) { this.burst(t, 0.16, 'bandpass', 1500 * r, 1.1, 0.07 * k2, 0.6); break; } // sayoz suvda — chayqalish
+        this.burst(t, 0.06 * (k2 > 1 ? 0.85 : 1), k === 0 || k === 8 || k === 5 ? 'bandpass' : 'lowpass', (k === 3 ? 2400 : k === 0 || k === 8 ? 1100 : 600) * r, 0.9, 0.09 * k2 * (0.85 + Math.random() * 0.3)); break; } // har qadam biroz boshqacha (bir xil "tiq-tiq" emas), yugurganda balandroq
+      case 'swim': this.burst(t, 0.45, 'bandpass', 900 + Math.random() * 300, 0.8, 0.14, 0.55); this.burst(t + 0.18, 0.3, 'highpass', 2600, 0.7, 0.05, 0.8); break; // suzish: qo'l eshish
       case 'jump': this.tone(260, t, 0.12, 'sine', 0.1, null, 0.004, 1.8); break;
       case 'pluck': this.burst(t, 0.14, 'bandpass', 2200, 1.5, 0.3, 0.5); break;
       case 'rustle': this.burst(t, 0.5, 'highpass', 2600, 0.7, 0.28, 0.7); this.burst(t + 0.25, 0.4, 'highpass', 3200, 0.7, 0.2, 0.7); break;

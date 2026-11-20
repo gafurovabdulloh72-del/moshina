@@ -22,6 +22,12 @@ export class Input {
     addEventListener('mousemove', (e) => { if (this.mouse.down) { this.mouse.dx += e.movementX; this.mouse.dy += e.movementY; } });
     c.addEventListener('wheel', (e) => { this.mouse.wheel += Math.sign(e.deltaY); e.preventDefault(); }, { passive: false });
     c.addEventListener('contextmenu', (e) => e.preventDefault());
+    // sensorli ekran: bo'sh joyda barmoq surilsa kamera aylanadi (avval faqat sichqoncha bilan — telefonda kamerani burib bo'lmasdi). Joystik va tugmalar o'z teginishini o'zi ushlaydi
+    const tp = new Map();
+    c.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') return; tp.set(e.pointerId, [e.clientX, e.clientY]); this.mouse.down = true; });
+    c.addEventListener('pointermove', (e) => { const q = tp.get(e.pointerId); if (!q) return; this.mouse.dx += (e.clientX - q[0]) * 1.5; this.mouse.dy += (e.clientY - q[1]) * 1.2; q[0] = e.clientX; q[1] = e.clientY; });
+    const tEnd = (e) => { if (!tp.delete(e.pointerId)) return; if (!tp.size) this.mouse.down = false; };
+    c.addEventListener('pointerup', tEnd); c.addEventListener('pointercancel', tEnd);
   }
   down(...codes) { for (const c of codes) if (this.keys.has(c)) return true; return false; }
   hit(...codes) { for (const c of codes) if (this.pressed.has(c)) return true; return false; }
