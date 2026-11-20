@@ -623,7 +623,7 @@ function genTractor(v) {
   const wo = { prof: 'agri', rim: 0xf0b83a, style: 'disc', rimR: 0.45, rimM: 0.3 };
   B.wheels.push({ r: s.rF, w: 0.3, x: s.wx - 0.1, z: s.wzF, src: [0], front: true, o: wo }, { r: s.rF, w: 0.3, x: -s.wx + 0.1, z: s.wzF, src: [1], front: true, o: wo }, { r: s.rR, w: 0.52, x: s.wx, z: -s.wzR, src: [2], o: wo }, { r: s.rR, w: 0.52, x: -s.wx, z: -s.wzR, src: [3], o: wo });
   B.rider = { hip: [0, Y(1.2), -0.78], lean: 0.05, hand: [0.18, Y(1.6), -0.22], foot: [0.2, Y(1.08), -0.2], knee: 0.16, shirt: 0xb84a34, pants: 0x2f4a78 };
-  const m = assemble(v, B); m.open = false; m.riderAlways = true; return m;
+  const m = assemble(v, B); m.open = false; return m; // haydovchi faqat o'yinchi o'tirganda (oldin tushgandan keyin ham kabinada «egizak» qolardi)
 }
 
 // ---------- ochiq transportlar: karting, kvadrotsikl, bagi, bolid ----------

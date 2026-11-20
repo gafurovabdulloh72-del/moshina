@@ -427,6 +427,7 @@ Hamma ish bitta joyda — **💼 Ish e'lonlari** (telefon → 📋 E'lonlar, pau
 | F | transportdan tushish |
 | R | yo'lga qaytarish |
 | H / L | signal / faralar |
+| Z | avariya chirog'i (ikkala burilish chirog'i) |
 | T | evakuator (motor o'chganda) |
 | E | e'lonlar taxtasi / ustaxona / yo'lovchi olish |
 | 1 | «Poygalar»: cheksiz poyga, aylanma poygalar, yo'l egasi, Yulduz yo'li, mahorat |

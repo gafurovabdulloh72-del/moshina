@@ -7,7 +7,7 @@ import * as T from './terrain.js';
 //   run(g)— bajariladigan ish;  hold — tugma bosib turiladi va boshqa joyda o'qiladi (yugurish, nitro, qo'l tormozi, durbin)
 //   bar(g)— ekrandagi tugma yozuvi (null/yo'q — tugma chiqmaydi);  top — yuqori o'ngdagi kichik tugmalar qatori
 //   one   — piyoda harakatlari guruhi: bir kadrda faqat bittasi bajariladi
-const near = (g) => { const c = g.car.p, p = g.player.p; return Math.hypot(c[0] - p[0], c[2] - p[2]) < g.car.spec.len / 2 + 2.4; };
+const near = (g) => { const c = g.car.p, p = g.player.p; return Math.hypot(c[0] - p[0], c[2] - p[2]) < g.car.spec.len / 2 + 2.4 && Math.abs(c[1] - g.car.spec.com - p[1]) < 2.5; }; // bir sathda (ko'prik ustida/ostida emas)
 const counting = (g) => g.act && g.act.state === 'count';
 const free = (g) => g.player.lock <= 0;
 const outdoor = (g) => free(g) && !(g.interior && g.interior.inside); // uy/do'kon ichida tashqi harakat tugmalari chiqmaydi

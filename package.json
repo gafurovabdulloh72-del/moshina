@@ -28,6 +28,7 @@
     "test:suv": "node tools/shot.mjs tools/s_suv.js",
     "test:tryuk": "node tools/shot.mjs tools/s_tryuk.js",
     "test:qulay": "node tools/shot.mjs tools/s_qulay.js",
+    "test:mashina": "node tools/shot.mjs tools/s_mashina.js",
     "test:poyga": "node tools/shot.mjs tools/s_poyga.js",
     "test:sir": "node tools/shot.mjs tools/s_sir.js",
     "test:kurash": "node tools/shot.mjs tools/s_kurash.js",
