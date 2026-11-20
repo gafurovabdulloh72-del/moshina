@@ -11,7 +11,7 @@ const near = (g) => { const c = g.car.p, p = g.player.p; return Math.hypot(c[0] 
 const counting = (g) => g.act && g.act.state === 'count';
 const free = (g) => g.player.lock <= 0;
 const outdoor = (g) => free(g) && !(g.interior && g.interior.inside); // uy/do'kon ichida tashqi harakat tugmalari chiqmaydi
-const riding = (g) => !!(g.coop && g.coop.ride); // onlayn: do'st mashinasida yo'lovchi (coop.js) — piyoda tugmalari ishlamaydi
+const riding = (g) => !!(g.coop && g.coop.ride) || !!(g.suv && g.suv.cur); // onlayn: do'st mashinasida yo'lovchi (coop.js) yoki qayiq/deltaplanda (suv.js) — piyoda tugmalari ishlamaydi
 export const ACTIONS = [
   // --- umumiy (yuqori o'ngdagi qator) ---
   { key: 'M', codes: ['KeyM'], top: 1, bar: () => 'Xarita', run: (g) => g.ui.open('map') },
@@ -38,7 +38,8 @@ export const ACTIONS = [
     if (pt && g.player.lock <= 0) { if (pt.kind === 'board') { if (!g.act) ui.open('board', pt.place); } else if (pt.kind === 'garage') ui.open('garage', pt); else if (pt.kind === 'home') { if (g.player.onFoot && g.hayot) g.hayot.enterHome(); else ui.open('home'); } }
     else g.live.useE(); } },
   { key: 'F', codes: ['KeyF'], ok: (g) => !counting(g) && !riding(g), bar: (g) => (g.player.onFoot ? (near(g) ? 'Transportga chiqish' : null) : 'Tushish'), run: (g) => { if (g.player.onFoot) g.live.tryMount(); else g.live.dismount(); } },
-  { key: 'F', codes: ['KeyF'], ok: (g) => riding(g), bar: () => 'Tushish', run: (g) => g.coop.rideOff() }, // do'st mashinasidan tushish
+  { key: 'F', codes: ['KeyF'], ok: (g) => riding(g), bar: (g) => (g.suv && g.suv.cur ? (g.suv.cur.kind === 'glide' ? null : 'Qayiqdan tushish') : 'Tushish'), run: (g) => (g.suv && g.suv.cur ? g.suv.off() : g.coop.rideOff()) }, // do'st mashinasidan / qayiqdan tushish
+  { key: 'E', codes: ['KeyE', 'Enter'], ok: (g) => !!(g.suv && g.suv.cur && g.suv.eText()), bar: (g) => g.suv.eText(), run: (g) => g.suv.useE() }, // qayiqdan baliq ovi (suv.js)
   // --- piyoda ---
   { key: 'V', codes: ['KeyV'], on: 'foot', one: 1, ok: outdoor, bar: (g) => (near(g) ? null : 'Chaqirish'), run: (g) => g.live.doAction('whistle') },
   { key: 'Q', codes: ['KeyQ'], on: 'foot', one: 1, ok: outdoor, bar: () => "O't yulish", run: (g) => g.live.doAction('pull') },

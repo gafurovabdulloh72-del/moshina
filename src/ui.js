@@ -422,7 +422,7 @@ export class UI {
     const grid = el('div'); grid.style.cssText = 'display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px'; w.appendChild(grid);
     const cv = el('canvas'); cv.id = 'mapc'; cv.width = cv.height = 1200; grid.appendChild(cv);
     const side = el('div'); grid.appendChild(side);
-    side.innerHTML = `<div class="legend"><div><i style="background:#ffc83a"></i>E'lonlar taxtasi</div><div><i style="background:#4fb0ff"></i>Ustaxona va salon</div><div><i style="background:#5fd38a"></i>Mening uyim</div><div><i style="background:#ff6a55"></i>Tezlik radari</div><div><i style="background:#b07cff"></i>Tramplin</div><div><i style="background:#ffe14a"></i>Yo'lovchi kutmoqda</div><div><i style="background:#ff8a3a"></i>Mening bayrog'im</div><div><i style="background:#35e0ff"></i>GPS marshruti</div></div><div id="mapinfo" style="margin-top:12px"></div>`;
+    side.innerHTML = `<div class="legend"><div><i style="background:#ffc83a"></i>E'lonlar taxtasi</div><div><i style="background:#4fb0ff"></i>Ustaxona va salon</div><div><i style="background:#5fd38a"></i>Mening uyim</div><div><i style="background:#ff6a55"></i>Tezlik radari</div><div><i style="background:#b07cff"></i>Tramplin</div><div><i style="background:#ffe14a"></i>Yo'lovchi kutmoqda</div><div><i style="background:#ff8a3a"></i>Mening bayrog'im</div><div><i style="background:#35d6c8"></i>Qayiq ijarasi</div><div><i style="background:#c58bff"></i>Deltaplan</div><div><i style="background:#35e0ff"></i>GPS marshruti</div></div><div id="mapinfo" style="margin-top:12px"></div>`;
     const info = side.querySelector('#mapinfo');
     const c = cv.getContext('2d'), S = 1200, k = S / T.SIZE, P = (v) => (v + T.HALF) * k;
     const draw = () => {

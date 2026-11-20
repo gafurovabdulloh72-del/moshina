@@ -34,6 +34,7 @@ import { initObhavo } from './obhavo.js';
 import { initShahar } from './shahar.js';
 import { initTadbir } from './tadbir.js';
 import { initHafta } from './hafta.js';
+import { initSuv } from './suv.js';
 
 const FIXED = 1 / 120, TEST = !!window.__TEST;
 const game = (window.G = { T, THREE, Autopilot, COL: COLL, mode: 'menu', time: 0, hour: 9.5, dayLen: 20 * 60, hooks: [], subN: 2, hudOn: true });
@@ -89,6 +90,7 @@ async function boot() {
   initHayot2(game); // kundalik hayot 2: choyxona, kiyim do'koni, sartarosh, ishlar, telefon, ko'cha mayda narsalari
   initObhavo(game); initShahar(game); initTadbir(game); // ob-havo va taqvim, gavjum ko'chalar (svetofor, piyodalar), tadbirlar (to'y, bozor, Navro'z)
   initHayot3(game); // kundalik hayot 3: biznes, uy kengaytmalari va garaj, charchoq va kun rejasi, qishloq topshiriqlari
+  initSuv(game); // qayiqlar (Bandargoh, Ko'zgu ko'l) va Cho'qqidan deltaplan
   // boshlang'ich joy: yangi o'yin — uy oldida
   if (st.pos && !st.fresh) { car.place(st.pos[0], st.pos[1], st.pos[2]); game.hour = st.hour || 9.5; }
   else car.place(home.park[0], home.park[1], home.parkYaw);
@@ -200,7 +202,7 @@ function update(dt) {
     if (best) { L.position.set(best.x, best.y, best.z); L.color.setHex(best.hex).lerp(_wh, 0.45); L.intensity += (best.power * 34 * night * (0.9 + 0.1 * Math.sin(g.time * 9)) - L.intensity) * Math.min(1, dt * 4); } else L.intensity *= 0.9; }
   g.camera.near = g.cam.mode === 2 && !foot ? 0.3 : g.zoomView ? 0.6 : 1.2;
   const sp = car.spec;
-  const rv = g.coop && g.coop.ride ? g.coop.rideCam() : null; // onlayn: do'st mashinasida yo'lovchi — kamera o'sha mashinaga ergashadi (coop.js)
+  const rv = g.coop && g.coop.ride ? g.coop.rideCam() : g.suv.cur ? g.suv.cam() : null; // onlayn: do'st mashinasida yo'lovchi — kamera o'sha mashinaga ergashadi (coop.js); qayiq/deltaplan (suv.js)
   if (rv) g.cam.update(dt, rv.tgt, rv.cp, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), foot: false, len: rv.len, hgt: rv.hgt });
   else g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt });
   g.sky.update(dt, g.camera, focus);

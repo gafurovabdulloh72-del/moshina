@@ -315,6 +315,15 @@ Bugungi tadbir xaritada katta rangli nuqta bo'lib chiqadi, ertalab e'lon qilinad
 | **Qishloq topshiriqlari** | Ustida sariq «!» belgisi bor aholi bilan **E** — iltimos (10 xil): kampirning sumkasini uyiga olib borish, boshqa qishloqqa xat yetkazish, qochgan echkini topib yetaklab kelish (ortingizdan ergashadi), uchta tovuqni ushlash, quduqdan chelakda suv olib kelish, shamol yiqitgan to'siqni tuzatish, mashinada bozorga olib borish, ikkita non, to'rtta o'tin yoki bitta baliq olib kelish. Nishon — yashil nur va GPS (echki va tovuqlar ustida yaqindan yashil ko'rsatkich), tepada topshiriq paneli, **X** — voz kechish; boshlangan topshiriq saqlanadi va o'yin qayta ochilganda davom etadi. Mukofot: pul va 🤝 **hurmat**; har 10 hurmatda sovg'a va unvon (Yaxshi qo'shni → Hurmatli inson → Mahallaning g'ururi → Oqsoqol) |
 | **Haydovchi ko'rinishi** | Velosiped, skuter, mototsikl va boshqa ochiq transportda haydovchi endi qahramonning kiyimi, sochi, soqoli (dubulg'a bo'lmasa — shapkasi) bilan; kiyim almashsa darhol qayta quriladi. Onlayn do'stlar ham sizning kiyim-sochingizni ko'radi (holat paketida ixcham ko'rinish kodi) |
 
+
+### 2.13. Suv va havo: qayiqlar va deltaplan
+
+| Imkoniyat | Qanday |
+|---|---|
+| **Eshkakli qayiq** | Baliqchilar bandargohi va Ko'zgu ko'l iskalasi yonida turadi (xaritada feruza nuqta). Yoniga borib **E** — ijara 60 so'm (qayiq iskalaga qaytguncha qayta o'tirish bepul). **W/S** — eshkak (oldinga/orqaga, ~12 km/soat), **A/D** — burilish (joyida ham). Eshkaklar va eshkakchi harakatlanadi, qayiq to'lqinda chayqaladi; sayozlashgan sari sekinlashib qirg'oqqa yumshoq tiraladi, quruqlikka chiqmaydi, iskala va bezak qayiqlardan o'tmaydi. **F** — tushish: yaqin qirg'oq yoki iskalaga, bo'lmasa suvga. Qarmoq bo'lsa, to'xtab turganda **E** — baliq ovi (chuqur suvda katta baliq ko'proq). 350 m uzoqlashsangiz qayiq iskalaga qaytadi |
+| **Yelkanli qayiq** | Bandargohda, ijara 200 so'm. Motor yo'q — shamol: **W** — yelkanni tortish, **S** — bo'shatish (sekinlash), **A/D** — rul. Tepada shamol o'qi (ekranga nisbatan qayerga esayotgani), tezlik va yelkan foizi. Yon shamolda eng tez (~30 km/soat), orqa shamolda sekinroq, shamolga qarshi (≈30° ichida) yurmaydi — ilon izi bilan boriladi: tezlikda burilsangiz qayiq shamol chizig'idan o'tib, ikkinchi bortga chiqadi. Yelkan va gik shamolga qarab buriladi, qayiq shamoldan og'adi |
+| **Deltaplan** | Cho'qqi rasadxonasi maydonida ijara joyi (xaritada binafsha nuqta), **E** — 150 so'm: qoya chetidagi supadan uchasiz. **W** — tumshuqni pasaytirish (tezlik balandlik hisobiga), **S** — ko'tarish (sekinlash; juda sekinlasa qulab tezlashadi), **A/D** — burilish. Sekin cho'kadi (~7:1), shamol urilgan qiyaliklar va cho'l/dara/Olovtog' ustidagi issiq havo ko'taradi. HUD — yerdan balandlik, ko'tarilish/cho'kish, tezlik. Yerga tekkanda o'zi qo'nadi: har 100 m (to'g'ri chiziq) uchun 10 so'm (300 gacha), yumshoq qo'nishga +50; qattiq qo'nish — faqat yiqilib turasiz. Suvga ham qo'nsa bo'ladi. Havoda **F** ishlamaydi |
+
 ---
 
 ## 3. Boshqaruv
@@ -405,6 +414,9 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `biznes.js` | biznes: sotib olish, daromad (yarim soatlik bo'laklarda), kassa/avto-bank, tovar, ishchilar, daraja, reklama, tashqi bezaklar va mijozlar, telefon «Biznesim» |
 | `uy2.js` | uy kengaytmalari: mehmon xonasi va oshxona (`interior.js` ilgaklari `IN.homeRooms/homeFurnish`), garaj, hovli jihozlari |
 | `topshiriq.js` | qishloq topshiriqlari (10 tur), hurmat, «!» belgilari, topshiriq paneli |
+| `suv.js` | suv va havo sayohati: qayiq va deltaplan ijarasi, o'tirish/tushish (o'yinchi piyoda, lekin o'rindiqqa qo'yiladi — coop.js yo'lovchisi kabi), kamera (`game.suv.cam`), HUD (shamol o'qi), xarita nuqtalari, qayiqdan baliq ovi |
+| `qayiq.js` | eshkakli va yelkanli qayiq modeli va fizikasi (`boatStep`, `depthAt`, `sailEff`) — `physics.js` dan mustaqil |
+| `deltaplan.js` | deltaplan modeli, uchish supasi va parvoz fizikasi (`glideStep`, `airLift`, `sinkAt`) |
 | `kocha.js` | ko'cha: muzqaymoqchi, kaptarlar, futbol, avtobus bekati, mashinaga qo'l silkish |
 | `fuel.js` | yoqilg'i: sarf, shoxobchalar (nasos, xodim), quyish, kanistr, gaz pedalini cheklash (`input.poll` ustida — `physics.js` o'zgarmagan) |
 | `props.js` | daraxtlar, toshlar, butalar (InstancedMesh + LOD; uzoq variant 3×3 bo'lak guruhlarida bitta chizishga birlashadi), yaqin atrofdagi o't |
@@ -479,7 +491,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 `localStorage`, kalit `safar_save_v2`. Yuklashda saqlangan holat standart holat (`defState()` — `game.js`) ustiga qo'shiladi, shuning uchun **yangi maydon qo'shilganda eski saqlovlar buzilmaydi** — faqat `defState()` ga standart qiymat yozish kerak. v1 saqlovlari ham ochiladi.
 
-Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `errCur` (bajarilayotgan topshiriq: tur, beruvchi, bosqich — qayta yuklanganda davom etadi; tiklab bo'lmasa xabar chiqadi va beruvchi uni qayta taklif qiladi; null — yo'q), `soat` (o'tgan o'yin soatlari), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
+Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `errCur` (bajarilayotgan topshiriq: tur, beruvchi, bosqich — qayta yuklanganda davom etadi; tiklab bo'lmasa xabar chiqadi va beruvchi uni qayta taklif qiladi; null — yo'q), `soat` (o'tgan o'yin soatlari), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `suv {row, sail, glide, km, best, fish}` (qayiq ijaralari, parvozlar, suzilgan m, eng uzoq parvoz m, qayiqdan baliq), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `stats`, `set {vol, music, gfx, damage}`, `hour, pos, foot`.
 
 Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
@@ -497,6 +509,7 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `G.view(x, y, z, tx, ty, tz, soat)` | kamerani qo'yadi (skrinshot uchun) |
 | `G._adapt(kadrVaqti, n)` | moslashuvchan grafikaga sun'iy kadr vaqtini beradi |
 | `G.dunyo.set('yomgir' \| 'dovul' \| 'qor' \| 'tuman' \| 'bulut' \| 'ochiq' \| null)` | ob-havoni majburlash (null — tabiiy), darhol qo'llanadi; `G.dunyo.forecast()`, `G.car.wetGrip` |
+| `G.suv` (`enter(o, bepul)`, `off()`, `auto = [W/S, A/D]`, `windSet(burchak, m/s)`, `land()`), `G.boat`, `G.sailboat`, `G.glider` | qayiq/deltaplan: o'tirish, qo'lda boshqarish, shamolni qotirish |
 | `G.tadbir.set('toy' \| 'bozor' \| 'navruz' \| null)` | tadbirni vaqtdan qat'i nazar yoqish; `G.tadbir.upcoming()`, `G.shahar.convoy(true)` |
 
 ### 4.11. Qanday qo'shiladi
@@ -527,7 +540,8 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `npm run test:hafta` | haftalik chellenj: hafta raqami, poyga/zona boshlash, rekord, mukofot (bir marta, farqi), g'alaba/ish/km hisobi, hafta almashishi, nishon xabari, oyna va telefon ilovasi, bankda sabablar, saqlov | ~25 s |
 | `node tools/touch.mjs [papka]` | sensorli ekran: iPhone 13 / Pixel 7 (tik va yotiq) — HUD va oynalar skrinshoti, 44 px dan kichik, bir-birini to'sgan, ekrandan chiqqan tugmalar ro'yxati (`report.json`). Avval build | ~3 daq |
 | `npm run test:life3` | kundalik hayot 3: tetiklik va uyqu, ish jadvali bonusi, «Bugungi reja», biznes (sotib olish, daromad, kassa, tovar, ishchi, daraja, mijozlar, telefon), uy kengaytmalari va hovli, garaj, haydovchi ko'rinishi, 10 tur topshiriq, saqlov va qayta yuklash, bajarilayotgan topshiriqning saqlanishi va tiklanishi (tiklab bo'lmasa — xabar) | ~4 daq |
-| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta, life3) | ~8–10 daq |
+| `npm run test:suv` | suv va havo: qayiq ijarasi va suzishi, qirg'oqqa tiralib quruqlikka chiqmasligi, tushish, qayta o'tirish va iskalaga qaytish, qayiqdan baliq ovi, yelkanli qayiq tezligi shamol burchagiga bog'liqligi va burilib o'tish (tack), HUD shamol o'qi, Cho'qqidan deltaplan (asta pastlash, W/S, havoda tushib bo'lmasligi, NaN'siz qo'nish va mukofot, qattiq/yumshoq qo'nish), saqlov. `SHOTS=0` — skrinshotsiz | ~3 daq |
+| `npm run test:browser` | brauzer sinovlari ketma-ket (smoke, real, hud, adapt, save, life, life2, world, hafta, life3, suv) | ~8–10 daq |
 
 Brauzer sinovlari `tools/shot.mjs` orqali ekransiz Chrome'da ishlaydi (kompyuterda Google Chrome o'rnatilgan bo'lishi kerak). Xato bo'lsa yoki `TEST … FAIL` satri chiqsa — chiqish kodi 1.
 

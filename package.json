@@ -16,7 +16,7 @@
     "test:hud": "NO_TEST=1 node tools/shot.mjs tools/s_hud.js",
     "test:adapt": "node tools/shot.mjs tools/s_adapt.js",
     "test:save": "node tools/shot.mjs tools/s_save.js",
-    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save && npm run test:life && npm run test:life2 && npm run test:world && npm run test:hafta && npm run test:life3",
+    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save && npm run test:life && npm run test:life2 && npm run test:world && npm run test:hafta && npm run test:life3 && npm run test:suv",
     "test:api": "node --test tools/api_test.mjs",
     "test:online": "node tools/coop_test.mjs",
     "dev": "node tools/dev-server.mjs",
@@ -24,7 +24,8 @@
     "test:life2": "node tools/shot.mjs tools/s_life2.js",
     "test:world": "node tools/shot.mjs tools/s_dunyo.js",
     "test:hafta": "node tools/shot.mjs tools/s_hafta.js",
-    "test:life3": "node tools/shot.mjs tools/s_life3.js"
+    "test:life3": "node tools/shot.mjs tools/s_life3.js",
+    "test:suv": "node tools/shot.mjs tools/s_suv.js"
   },
   "dependencies": {
     "esbuild": "^0.28.2",
