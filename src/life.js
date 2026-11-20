@@ -144,6 +144,7 @@ export function buildLife(scene, game) {
       const d = Math.hypot(PQ.x - p[0], PQ.z - p[2]); if (d < minD || d > maxD) continue;
       if (hidden && inView(PQ.x, PQ.z, 870)) continue;
       if (cars.some((o) => o !== c && o.placed && (o.x - PQ.x) ** 2 + (o.z - PQ.z) ** 2 < 60 * 60)) continue;
+      if (out.ext.some((o) => o.on && (o.x - PQ.x) ** 2 + (o.z - PQ.z) ** 2 < 30 * 30)) continue; // shahar mashinasi/avtobus ustiga paydo bo'lmasin
       c.route = [ln]; c.ri = 0; c.s = s; c.v = c.v0 * (0.7 + rnd() * 0.2); c.acc = 0; c.lat = c.latT = c.dl = c.ddl = 0; c.mode = 0; c.stun = 0; c.stuck = 0; c.waitP = 0; c.ign = null; c.th = c.ph = c.thv = c.phv = 0;
       extend(c); pose(c); c.steer = c.steerT; c.placed = true; return true;
     }
@@ -166,6 +167,8 @@ export function buildLife(scene, game) {
     }
   };
   const obs = []; for (let i = 0; i < NC + 2; i++) obs.push({ x: 0, z: 0, vx: 0, vz: 0, fx: 0, fz: 1, half: 1, halfW: 1, car: null, player: false, on: false });
+  // tashqi to'siqlar (shahar.js mashinalari, kocha.js avtobusi) — ular o'zlari to'ldiradi; ilgari yo'l mashinalari ularning ichidan o'tib ketardi
+  const EXT = (out.ext = []);
   let recycleT = 0, inited = false;
   const idm = (c, gap, vl, s0, Tg) => { const ss = s0 + Math.max(0, c.v * Tg + (c.v * (c.v - vl)) / (2 * Math.sqrt(c.a * c.bc))); return -c.a * (ss / Math.max(gap, 0.25)) ** 2; };
   const updCars = (dt, t) => {
@@ -185,8 +188,9 @@ export function buildLife(scene, game) {
       // 2) to'siqlar (IDM — silliq yaqinlashish va masofa saqlash)
       let acc = c.a * (1 - (c.v / Math.max(0.6, v0)) ** 4), blk = null, byPlayer = false, pLat = 0, pGap = 1e9;
       if (c.ignT > 0) c.ignT -= dt; else c.ign = null;
-      for (let i = 0; i < NC + 2; i++) {
-        const o = obs[i]; if (!o.on || o.car === c || (o.car && o.car === c.ign)) continue;
+      let extB = null;
+      for (let i = 0, nO = NC + 2 + EXT.length; i < nO; i++) {
+        const o = i < NC + 2 ? obs[i] : EXT[i - NC - 2]; if (!o.on || o.car === c || (o.car && o.car === c.ign) || (c.extIgnT > 0 && o === c.extIgn)) continue;
         if ((o.x - c.x) ** 2 + (o.z - c.z) ** 2 > (look + 12) ** 2) continue;
         const r = corridor(c, o.x, o.z, look); if (!r || r.along < 0) continue;
         const tol = c.halfW + o.halfW + 0.35;
@@ -196,8 +200,10 @@ export function buildLife(scene, game) {
         if (o.player) { pLat = r.lat; pGap = Math.min(pGap, gap); }
         const passing = o.player && c.mode === 4, a = passing ? idm(c, gap, vl, 1.3, 0) : idm(c, gap, vl, o.player ? c.s0 + 5.5 : c.s0, c.T);
         const tot = c.a * (1 - (c.v / Math.max(0.6, v0)) ** 4) + a;
-        if (tot < acc) { acc = tot; blk = o.car; byPlayer = o.player; }
+        if (tot < acc) { acc = tot; blk = o.car; byPlayer = o.player; extB = i >= NC + 2 ? o : null; }
       }
+      // tashqi to'siq bilan bir-birini kutib qolish (chorrahada) — 3 s dan keyin bu mashina yo'l oladi
+      if (c.extIgnT > 0) c.extIgnT -= dt; if (extB && c.v < 0.3 && Math.abs(extB.v || 0) < 0.3 && (!extB.sc || extB.sc.blk === c)) { if ((c.extW = (c.extW || 0) + dt) > 3) { c.extIgn = extB; c.extIgnT = 3; c.extW = 0; } } else c.extW = 0;
       // tashqi to'xtash chizig'i (shahar.js: svetofor qizil, piyodalar o'tish joyida) — oldindagi masofa (m) yoki null
       if (out.stopFor) { const sg = out.stopFor(c, locate); if (sg != null) { const tot = c.a * (1 - (c.v / Math.max(0.6, v0)) ** 4) + idm(c, sg, 0, 1.0, 0.8); if (tot < acc) acc = tot; } }
       // yo'l chetiga to'xtash nuqtasi
