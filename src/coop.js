@@ -142,7 +142,7 @@ class Remote {
       const C = this.ctl; C.vx = hb[4]; C.vz = hb[5]; C.vy = hb[6]; C.grounded = !!hb[7]; C.swim = !!hb[8];
       if (rig.root.visible) poseRig(rig, this.anim, dt, Math.hypot(hb[4], hb[5]), C);
     } else this.fshown = false;
-    this.boatFrame(foot && B.h && this.wv && lod < 2 ? this.wv : null);
+    this.boatFrame(foot && B.h && this.wv && cam.distanceTo(this.fpos) < 450 ? this.wv : null); // masofa — do'stning o'zidan (transporti uzoqda qolgan)
     // ism yorlig'i
     const tp = foot && B.h ? this.fpos : this.pos, hh = foot ? 2.25 : (m.spec.hgt || 1.6) + 1.1, d = cam.distanceTo(tp);
     this.tag.visible = d < 900; this.tag.position.set(tp.x, tp.y + hh - (foot ? 0 : m.spec.com || 0), tp.z);

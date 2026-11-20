@@ -161,7 +161,7 @@ try {
   ok(await B.evaluate(() => { const m = [...G.coop.members.values()][0], R = m.remote; return R.fpos.y - G.T.ground(R.fpos.x, R.fpos.z, R.fpos.y).y > 2; }), "deltaplan havoda (yerda emas)");
   await A.evaluate(() => { G.suv.auto = null; G.suv.windSet(null); G.suv.land(false); G.live.mount(false); });
   ok(await until(B, () => { const m = [...G.coop.members.values()][0], R = m.remote; return !R.wv && !Object.values(R.boats || {}).some((b) => b.m.root.visible); }, null, 30, A), "A tushgach qayiq/deltaplan B da yo'qoladi");
-  await B.evaluate(() => G.live.mount(false));
+  await B.evaluate(() => G.live.mount(false)); await B.evaluate((p) => G.coop.teleportTo(p), apid); await run(1.5, A, B); // keyingi sinovlar uchun yana yonma-yon
   // xaritada do'st nuqtasi
   ok(await A.evaluate(() => (G.netDots || []).length === 1 && G.netDots[0][3] === 'Malika'), 'A xaritasida Malika');
   await A.evaluate(() => { G.ui.open('online'); G.advance(0.05); }); await shot(A, 'online_room_window'); await A.evaluate(() => G.ui.close());
