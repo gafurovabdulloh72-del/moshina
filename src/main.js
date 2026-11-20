@@ -216,11 +216,12 @@ function update(dt) {
   // eng yaqin chiroq/gulxan yorug'ligi
   { const L = g.localLight; let best = null, bd = 80 * 80; if (night > 0.25) for (const l of g.site.lights) { if (l.on === false) continue; const d = (l.x - focus.x) ** 2 + (l.z - focus.z) ** 2; if (d < bd) { bd = d; best = l; } }
     if (best) { L.position.set(best.x, best.y, best.z); L.color.setHex(best.hex).lerp(_wh, 0.45); L.intensity += (best.power * 34 * night * (0.9 + 0.1 * Math.sin(g.time * 9)) - L.intensity) * Math.min(1, dt * 4); } else L.intensity *= 0.9; }
-  g.camera.near = g.cam.mode === 2 && !foot ? 0.3 : g.zoomView ? 0.6 : 1.2;
   const sp = car.spec;
   const rv = g.coop && g.coop.ride ? g.coop.rideCam() : g.suv.cur ? g.suv.cam() : null; // onlayn: do'st mashinasida yo'lovchi — kamera o'sha mashinaga ergashadi (coop.js); qayiq/deltaplan (suv.js)
   if (rv) g.cam.update(dt, rv.tgt, rv.cp, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), foot: false, len: rv.len, hgt: rv.hgt });
   else g.cam.update(dt, foot ? pl : car, focus, g.mode === 'play' ? g.input : null, { water: T.waterY(g.camera.position.x, g.camera.position.z), freeze: g.mode === 'menu', foot, zoom: g.zoomView, len: sp.len, hgt: sp.hgt });
+  // yaqin kesish tekisligi: piyoda kamera devor tufayli qahramonga yaqinlashsa (1–1,5 m) 1,2 m tekislik qahramonni "kesib", ichini ko'rsatardi — masofaga qarab kamayadi; o'zgarsa proyeksiya darhol yangilanadi
+  { let nr = g.cam.mode === 2 && !foot && !rv ? 0.3 : g.zoomView ? 0.6 : 1.2; if (foot && !g.zoomView && !rv) { const c = g.camera.position, q = pl.p, hy = Math.min(q[1] + 1.75, Math.max(q[1] + 0.1, c.y)), dS = Math.hypot(c.x - q[0], c.y - hy, c.z - q[2]) - 0.38; nr = Math.min(1.2, Math.max(0.2, dS * 0.7)); } if (Math.abs(g.camera.near - nr) > 0.02) { g.camera.near = nr; g.camera.updateProjectionMatrix(); } }
   g.sky.update(dt, g.camera, focus);
   g.terrain.update(g.camera); g.props.update(g.camera); g.detail.update(g.camera);
   { let dh = Math.abs(g.hour - (g._envH == null ? -99 : g._envH)); if (dh > 12) dh = 24 - dh; const envF = g.state.set.gfx > 0 && dh > 0.1; if (envF) g._envH = g.hour; g.gfx.update(dt, envF); } // osmon yoritishi (PMREM) ~5 s da bir yangilanadi (0-darajada — gfx.js'ning o'z siyrak jadvali)
