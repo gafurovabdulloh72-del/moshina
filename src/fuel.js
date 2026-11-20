@@ -67,7 +67,8 @@ export function initFuel(game) {
     // xodim
     const rig = makeRig({ shirt: 0xd8392b, pants: 0x2a2c33, hair: 0x2a1d16, seed: 300 + FU.stations.length, vest: 0xf0b83a }); const [ax, az] = W(7.3, 0); rig.root.position.set(ax, ry, az); rig.root.rotation.y = Math.atan2(-ux, -uz); rig.root.visible = false; scene.add(rig.root);
     const [cx, cz] = W(6.2, 0);
-    FU.stations.push({ x: cx, z: cz, y: ry, yaw, pumps, rig, ax, az, ayaw: Math.atan2(-ux, -uz), wave: 0, name: ['Bog\'iston', 'Karvon yo\'li', 'Sharqiy yo\'l', 'Tegirmon yo\'li'][FU.stations.length] + " shoxobchasi" });
+    const [kx, kz] = W(11.9, 1.6); // kiosk eshigi oldi (piyoda [E] — do'koncha)
+    FU.stations.push({ x: cx, z: cz, y: ry, yaw, pumps, rig, ax, az, kiosk: [kx, kz], ayaw: Math.atan2(-ux, -uz), wave: 0, name: ['Bog\'iston', 'Karvon yo\'li', 'Sharqiy yo\'l', 'Tegirmon yo\'li'][FU.stations.length] + " shoxobchasi" });
   }
   // eng yaqin nasos (transport uning yonida turishi kerak)
   FU.pumpNear = (x, z, r = 4.2) => { let best = null, bd = r; for (const s of FU.stations) { if (Math.abs(s.x - x) > 30 || Math.abs(s.z - z) > 30) continue; for (const p of s.pumps) { const d = Math.hypot(p.x - x, p.z - z); if (d < bd) { bd = d; best = { s, p, d }; } } } return best; };

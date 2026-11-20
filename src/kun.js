@@ -25,7 +25,7 @@ export function initKun(game) {
   // ================= TETIKLIK =================
   // uyg'oq vaqtda asta kamayadi (20 o'yin soatida 100 → 0), yugursangiz tezroq, o'tirsangiz biroz tiklanadi; uxlash — to'liq
   K.low = () => (st.tetik < 25 ? (25 - st.tetik) / 25 : 0); // 0 — tetik, 1 — juda charchagan
-  const wake0 = HY.wake; HY.wake = () => { const S = HY.sleep, was = S && !S.done; wake0(); if (was) { st.tetik = 100; K.bad = 0; setTimeout(() => toast('😊 Yaxshi uxladingiz — tetiklik 100%', 'good'), 1600); } };
+  const wake0 = HY.wake; HY.wake = () => { const S = HY.sleep, was = S && !S.done; wake0(); if (was) { st.tetik = S.nap ? Math.min(100, st.tetik + 35) : 100; K.bad = 0; setTimeout(() => toast(`😊 ${S.nap ? 'Mizg\'ib oldingiz' : 'Yaxshi uxladingiz'} — tetiklik ${Math.round(st.tetik)}%`, 'good'), 1600); } };
   const sleep0 = L.sleep; L.sleep = (h) => { sleep0(h); st.tetik = 100; };
   // choy va boshqa iliq ichimlik (piyola bilan) biroz tetiklashtiradi
   const act0 = pl.act.bind(pl); pl.act = (anim, dur, cb, tool) => act0(anim, dur, anim === 'drink' && tool === 'cup' ? () => { st.tetik = Math.min(100, st.tetik + 6); if (cb) cb(); } : cb, tool);

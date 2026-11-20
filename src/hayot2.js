@@ -129,7 +129,7 @@ export function initHayot2(game) {
     LB.putF(I, g, gl, 3.65, 2.85, 0, (q) => F.plant(q, true), [0.25, 0.25, 1], o); LB.putF(I, g, gl, 3.65, -2.85, 0, (q) => F.plant(q), [0.2, 0.2, 1], o);
     LB.putF(I, g, gl, 0, -0.3, 0, (q) => F.rug(q, 1.4, 4.2, 0xb83a2e, 0xf0b83a), null, o);
     const lamps = []; for (const [x, z] of [[-2.2, -1.2], [2.2, -1.2], [-2.2, 1.2], [2.2, 1.2]]) { LB.putF(I, g, gl, x, z, 0, (q, ql) => F.ceilLamp(ql, h), null, o); lamps.push([x, h - 0.3, z, 0.8]); }
-    LB.spot(I, 'door', 0, -2.85, Math.PI); I.entry = [0, -2.5, 0];
+    LB.spot(I, 'door', 0, -2.85, Math.PI, { r: 0.7 }); I.entry = [0, -2.05, 0];
     LB.finish(I, g, gw, gl, lamps, 1.0); I.rooms = rooms; I.grp.visible = false;
   };
   buildCafe();
@@ -182,12 +182,12 @@ export function initHayot2(game) {
     LB.putF(I, g, gl, 1.6, 2.15, Math.PI, (q) => { q.color(0x6e4a6e).box(0, 0.5, 0, 1.8, 1.0, 0.55); q.color(0xf6eef4).box(0, 1.02, 0, 1.9, 0.05, 0.6); q.color(0x2a2c33).box(0.5, 1.12, 0, 0.36, 0.18, 0.28); }, [0.95, 0.3, 1.2], o);
     LB.putF(I, g, gl, 0, 0.6, 0, (q) => { F.table(q, 1.4, 0.8, 0xd8c8b8, 0.8); for (let i = 0; i < 6; i++) q.color(SHIRTS[(i * 3) % SHIRTS.length][0]).box(-0.5 + (i % 3) * 0.5, 0.83 + Math.floor(i / 3) * 0.06, (i % 2) * 0.1 - 0.05, 0.36, 0.05, 0.3); }, [0.72, 0.42, 1], o);
     // katta ko'zgu (orqa devorda) — oldida turib kiyim tanlanadi
-    LB.putF(I, g, gl, -1.4, 2.76, Math.PI, (q, ql) => { q.color(0xd8b860).box(0, 1.15, 0, 1.0, 2.1, 0.05); ql.color(0xd8e8f2).box(0, 1.15, -0.03, 0.88, 1.96, 0.01); }, null, o);
+    LB.putF(I, g, gl, -1.4, 2.76, Math.PI, (q, ql) => { q.color(0xd8b860).box(0, 1.15, 0, 1.0, 2.1, 0.05); ql.color(0xd8e8f2).box(0, 1.15, 0.03, 0.88, 1.96, 0.01); }, null, o);
     LB.spot(I, 'kiyim', -1.4, 0.2, 0, { r: 1.2 }); LB.spot(I, 'kassa', 1.6, 1.4, 0, { r: 1.0 });
     // kiyinish xonachasi (parda)
     LB.putF(I, g, gl, -2.7, -2.1, 0, (q) => { q.color(0xb9bec8).box(0, 2.1, 0, 1.2, 0.03, 0.03); q.color(0x8a3a8a); for (let i = 0; i < 6; i++) q.box(-0.5 + i * 0.2, 1.15, (i % 2) * 0.04, 0.2, 1.9, 0.02); }, null, o);
     const lamps = []; for (const [x, z] of [[-1.6, -1.2], [1.6, -1.2], [-1.6, 1.2], [1.6, 1.2]]) { LB.putF(I, g, gl, x, z, 0, (q, ql) => ql.color(0xf6fbff).box(0, h - 0.04, 0, 1.2, 0.05, 0.2), null, o); lamps.push([x, h - 0.3, z, 0.85]); }
-    LB.spot(I, 'door', 0, -2.45, Math.PI); I.entry = [0, -2.0, 0];
+    LB.spot(I, 'door', 0, -2.45, Math.PI, { r: 0.7 }); I.entry = [0, -1.65, 0];
     LB.finish(I, g, gw, gl, lamps, 1.02); I.rooms = rooms; I.grp.visible = false;
   };
   buildKiyim();
@@ -204,27 +204,29 @@ export function initHayot2(game) {
     for (let i = 0; i < 15; i++) for (let j = 0; j < 13; j++) if ((i + j) % 2) g.color(0x2a2c33).box(-2.8 + i * 0.4, 0.003, -2.4 + j * 0.4, 0.4, 0.004, 0.4); // shaxmat pol
     for (const cx of [-1.0, 1.0]) {
       // ko'zgu, javoncha, sartarosh kreslosi
-      LB.putF(I, g, gl, cx, 2.55, Math.PI, (q, ql) => { q.color(0x2a2c33).box(0, 1.5, 0, 1.0, 1.1, 0.04); ql.color(0xd8e8f2).box(0, 1.5, -0.025, 0.9, 1.0, 0.01); q.color(0xf2f2ee).box(0, 0.85, -0.1, 1.1, 0.06, 0.3); q.color(0x4fb0ff).cyl(8, 0.04, 0.04, 0.88, 1.08, { cap: true }); q.color(0xff8a3a).push().translate(0.25, 0, 0).cyl(8, 0.03, 0.03, 0.88, 1.02, { cap: true }).pop(); q.color(0x2a2c33).push().translate(-0.25, 0, -0.05).box(0, 0.9, 0, 0.18, 0.04, 0.08).pop(); }, [0.55, 0.2, 1.2], o);
+      LB.putF(I, g, gl, cx, 2.55, Math.PI, (q, ql) => { q.color(0x2a2c33).box(0, 1.5, 0, 1.0, 1.1, 0.04); ql.color(0xd8e8f2).box(0, 1.5, 0.025, 0.9, 1.0, 0.01); q.color(0xf2f2ee).box(0, 0.85, 0.15, 1.1, 0.06, 0.3); q.color(0x4fb0ff).push().translate(0, 0, 0.16).cyl(8, 0.04, 0.04, 0.88, 1.08, { cap: true }).pop(); q.color(0xff8a3a).push().translate(0.25, 0, 0.16).cyl(8, 0.03, 0.03, 0.88, 1.02, { cap: true }).pop(); q.color(0x2a2c33).push().translate(-0.25, 0, 0.18).box(0, 0.9, 0, 0.18, 0.04, 0.08).pop(); }, [0.55, 0.2, 1.2], o);
       LB.putF(I, g, gl, cx, 1.55, 0, (q) => { q.color(0xb9bec8).cyl(10, 0.28, 0.3, 0, 0.06, { cap: true }); q.cyl(6, 0.05, 0.05, 0.06, 0.38); q.color(0xb83a2e).box(0, 0.46, 0, 0.56, 0.12, 0.55); q.box(0, 0.85, -0.25, 0.56, 0.7, 0.1); q.box(0, 1.28, -0.27, 0.3, 0.18, 0.08); for (const sx of [-1, 1]) q.color(0x2a2c33).box(sx * 0.3, 0.62, 0, 0.06, 0.05, 0.5); q.color(0x2a2c33).box(0, 0.12, 0.42, 0.4, 0.04, 0.16); }, null, o);
     }
-    LB.spot(I, 'sartarosh', -1.0, 1.55, 0, { r: 1.1, chair: 1 });
+    LB.spot(I, 'sartarosh', -1.0, 1.55, 0, { r: 1.1, chair: 1 }); LB.spot(I, 'sit', 1.0, 1.55, 0, { r: 0.8 }); // ikkinchi kreslo — navbat kutib o'tirish
     // kutish skameykasi, plakatlar, lavabo
-    LB.putF(I, g, gl, -2.0, -1.9, Math.PI / 2, (q) => F.sofa(q, 1.6, 0x3d74a6), [0.8, 0.42, 0.9], o);
+    LB.putF(I, g, gl, -2.0, -1.9, Math.PI / 2, (q) => F.sofa(q, 1.6, 0x3d74a6), [0.8, 0.42, 0.9], o); LB.spot(I, 'sit', -2.0, -1.5, Math.PI / 2, { sofa: 1, r: 0.9 });
     for (let i = 0; i < 3; i++) LB.putF(I, g, gl, -2.96, 0.0 + i * 0.75 - 0.4, Math.PI / 2, (q) => { q.translate(0, 1.7, 0); F.frame(q, 0.55, 0.7, [0x7cc4e8, 0xf0c070, 0xff8ab0][i]); q.color(0x2a1d16).blob(0.11, 1, { cy: 0.12, cz: 0.025, sz: 0.3 }); q.color(0xe2b48e).blob(0.08, 0, { cy: 0.02, cz: 0.025, sz: 0.3 }); }, null, o);
     LB.putF(I, g, gl, 2.4, -1.6, -Math.PI / 2, (q) => F.sink(q), [0.45, 0.3, 1], o); LB.putF(I, g, gl, 2.65, 0.6, 0, (q) => F.plant(q, true), [0.25, 0.25, 1], o);
     const lamps = []; for (const [x, z] of [[-1.0, 1.2], [1.0, 1.2], [0, -1.3]]) { LB.putF(I, g, gl, x, z, 0, (q, ql) => F.ceilLamp(ql, h), null, o); lamps.push([x, h - 0.3, z, 0.9]); }
-    LB.spot(I, 'door', 0, -2.25, Math.PI); I.entry = [0, -1.8, 0];
+    LB.spot(I, 'door', 0, -2.25, Math.PI, { r: 0.7 }); I.entry = [0, -1.45, 0];
     LB.finish(I, g, gw, gl, lamps, 1.02); I.rooms = rooms; I.grp.visible = false;
   };
   buildSart();
   const barber = makeRig({ shirt: 0xf6f6f2, pants: 0x2a2c33, seed: 91, hair: 0x15110e, stache: true, sleeve: 0.42 }); barber.root.position.set(S2.o[0] - 0.3, S2.o[1], S2.o[2] + 0.9); S2.grp.add(barber.root);
-  const reader = makeRig({ shirt: 0x6a8a5a, pants: 0x3a3f4c, seed: 92 }); reader.root.position.set(S2.o[0] - 1.95, S2.o[1], S2.o[2] - 1.9); reader.root.rotation.y = Math.PI / 2; S2.grp.add(reader.root); setTool(reader, 'paper');
+  const reader = makeRig({ shirt: 0x6a8a5a, pants: 0x3a3f4c, seed: 92 }); reader.root.position.set(S2.o[0] - 1.78, S2.o[1], S2.o[2] - 2.3); reader.root.rotation.y = Math.PI / 2; S2.grp.add(reader.root); setTool(reader, 'paper'); // divanda o'tirib gazeta o'qiydi (avval divan ichida tik turardi)
   const BR = { x: barber.root.position.x, z: barber.root.position.z, cut: null }; H2.barber = BR;
 
   // ================= KIRISH VA [E] TAKLIFLARI =================
   const NAMES = { cafe: 'Choyxona', kiyim: "Kiyim do'koni", sart: 'Sartaroshxona' };
   const GREET = { cafe: ['Ofitsiant Sobir aka: «Xush kelibsiz! Joy tanlang, menyu stolda»', "Ofitsiant: «Bugun osh juda zo'r chiqdi — qozondan yangi!»"], kiyim: ["Sotuvchi Nilufar: «Xush kelibsiz! Ko'zgu oldida bemalol kiyib ko'ring»", 'Sotuvchi: «Yangi kolleksiya keldi — jiletlar va shlyapalar!»'], sart: ["Sartarosh Akmal usta: «Keling, o'tiring! Qanday qilamiz?»", 'Sartarosh: «Soch ham, soqol ham — bir zumda!»'] };
   H2.enter = (b) => { IN.enter(b.kind, b.out); clearDishes(); WT.carry.length = 0; WT.ph = 'idle'; WT.path = []; WT.x = C.o[0] + W0[0]; WT.z = C.o[2] + W0[1]; H2.toldSit = 0; const gr = GREET[b.kind]; toast(gr[(Math.random() * gr.length) | 0], 'gold'); sfx('bell'); };
+  // choyxonadan buyurtma kelmasdan chiqib ketilsa — ofitsiant pulni qaytaradi (avval pul kuyib ketardi)
+  const exitI = IN.exit; IN.exit = (...a) => { if (IN.inside === 'cafe' && WT.carry.length && WT.ph !== 'serve') { const sum = WT.carry.reduce((n, id) => n + MENU.find((q) => q[0] === id)[3], 0); WT.carry.length = 0; WT.ph = 'idle'; game.addMoney(sum, 'Choyxona: buyurtma qaytarildi'); toast(`Ofitsiant: «Buyurtmangiz hali kelmagan edi — ${som(sum)} so'm qaytardim»`, 'gold'); } return exitI(...a); };
   const spotText = (sp) => { const sit = pl.sit && HY.seat === sp;
     switch (sp.k) {
       case 'csit': if (!sit) return sp.topchan ? "<kbd>E</kbd> Topchanga o'tirish 🧺" : "<kbd>E</kbd> Stolga o'tirish 🪑";
@@ -271,14 +273,14 @@ export function initHayot2(game) {
       H2.gT = (H2.gT || 0) + dt; const [g1, g2] = guests; g1[0].actDur = 2.6; poseRig(g1[0], 'sit', dt, 0); g2[0].actDur = 4; poseRig(g2[0], H2.gT % 10 > 5 && H2.gT % 10 < 9 ? 'eat' : 'sit', dt, 0);
       if (g1[0].toolName !== (H2.gT % 9 < 2.6 ? 'cup' : null)) setTool(g1[0], H2.gT % 9 < 2.6 ? 'cup' : null); if (g2[0].toolName !== (H2.gT % 10 > 5 && H2.gT % 10 < 9 ? 'spoon' : null)) setTool(g2[0], H2.gT % 10 > 5 && H2.gT % 10 < 9 ? 'spoon' : null);
       for (const d of H2.dishes) if (d.eating) d.m.scale.setScalar(Math.max(0.35, d.m.scale.x - dt * 0.12));
-    } else if (k === 'kiyim') { const r = seller.root.position; seller.root.rotation.y = Math.atan2(pl.p[0] - r.x, pl.p[2] - r.z); poseRig(seller, Math.hypot(pl.p[0] - r.x, pl.p[2] - r.z) < 2.4 ? 'wave' : 'idle', dt, 0); for (const r2 of manek) void r2; }
+    } else if (k === 'kiyim') { const r = seller.root.position; seller.root.rotation.y = Math.atan2(pl.p[0] - r.x, pl.p[2] - r.z); poseRig(seller, Math.hypot(pl.p[0] - r.x, pl.p[2] - r.z) < 2.4 ? 'talk' : 'idle', dt, 0); for (const r2 of manek) void r2; }
     else if (k === 'sart') {
       const c = BR.cut, sp = S2.spots.find((q) => q.k === 'sartarosh');
       if (c) { c.t += dt; const a = c.t * 1.6, tx = sp.x - 0.55 * Math.cos(a) * 0.9, tz = sp.z - 0.35 + Math.sin(a) * 0.25; stepTo(BR, tx, tz, 1.2, dt); barber.root.rotation.y = Math.atan2(sp.x - BR.x, sp.z - BR.z); barber.actDur = 1; poseRig(barber, 'cook', dt, 0); setTool(barber, 'spoon');
         c.snip -= dt; if (c.snip <= 0) { c.snip = 0.22 + Math.random() * 0.2; sfx('tick'); if (Math.random() < 0.5) fx().burst(2, sp.x, S2.o[1] + 1.25, sp.z, 0.4, 0.4, 0.05, c.lk.hair, 0.8, -0.6, 4, 0.4); }
         if (c.t >= c.dur) { BR.cut = null; setTool(barber, null); fadeQuick(); restyle(c.lk); st.look = c.lk; game.addMoney(-c.cost, 'Sartaroshxona'); st.stats.cuts = (st.stats.cuts || 0) + 1; sfx('medal'); toast(`Sartarosh: «Mana, tayyor! Juda yarashdi 😎» · ${som(c.cost)} so'm`, 'gold'); pl.lock = 0; pl.lockAnim = null; pl.sit = true; game.save(); } }
-      else { stepTo(BR, S2.o[0] - 0.3, S2.o[2] + 0.9, 1.2, dt); barber.root.rotation.y = Math.atan2(pl.p[0] - BR.x, pl.p[2] - BR.z); poseRig(barber, Math.hypot(pl.p[0] - BR.x, pl.p[2] - BR.z) < 2.2 ? 'wave' : 'idle', dt, 0); }
-      barber.root.position.set(BR.x, S2.o[1], BR.z); reader.actDur = 99; poseRig(reader, 'read', dt, 0);
+      else { stepTo(BR, S2.o[0] - 0.3, S2.o[2] + 0.9, 1.2, dt); barber.root.rotation.y = Math.atan2(pl.p[0] - BR.x, pl.p[2] - BR.z); poseRig(barber, Math.hypot(pl.p[0] - BR.x, pl.p[2] - BR.z) < 2.2 ? 'talk' : 'idle', dt, 0); }
+      barber.root.position.set(BR.x, S2.o[1], BR.z); reader.actDur = 99; poseRig(reader, 'sit', dt, 0);
     }
   });
   const fadeQuick = () => { const f = game.ui && game.ui.fade; if (!f) return; f.style.opacity = 0.8; setTimeout(() => { f.style.opacity = 0; }, 220); };
@@ -287,7 +289,7 @@ export function initHayot2(game) {
   const camP = new THREE.Vector3(), lk = new THREE.Vector3();
   game.hooks.push(() => {
     const sn = game.ui && game.ui.screenName; if (H2.pv && sn !== 'kiyim' && sn !== 'sartarosh') { const pv = H2.pv; H2.pv = null; if (!pv.keep) restyle(lookOf()); }
-    if (sn !== 'kiyim' && sn !== 'sartarosh') return; const I = IN.cur(); if (!I) return; const r = I.rooms[0], o = I.o, cam = game.camera, f = [Math.sin(pl.yaw), Math.cos(pl.yaw)], seat = sn === 'sartarosh';
+    if (sn !== 'kiyim' && sn !== 'sartarosh') return; const I = IN.cur(); if (!I) return; const ri = IN.roomAt(pl.p[0], pl.p[2]), r = I.rooms[ri == null ? 0 : ri], o = I.o, cam = game.camera, f = [Math.sin(pl.yaw), Math.cos(pl.yaw)], seat = sn === 'sartarosh';
     const d = seat ? 1.45 : 2.5, hy = seat ? 1.3 : 1.3, sh = seat ? 0.32 : 0.55; camP.set(clamp(pl.p[0] + f[0] * d, o[0] + r.x0 + 0.25, o[0] + r.x1 - 0.25), pl.p[1] + hy, clamp(pl.p[2] + f[1] * d, o[2] + r.z0 + 0.25, o[2] + r.z1 - 0.25));
     cam.position.copy(camP); lk.set(pl.p[0] + f[1] * sh, pl.p[1] + (seat ? 1.1 : 0.95), pl.p[2] - f[0] * sh); cam.lookAt(lk); // qahramon ekranning chap yarmida (o'ngda — oyna)
     if (cam.near !== 0.08) { cam.near = 0.08; cam.updateProjectionMatrix(); }

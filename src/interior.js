@@ -178,12 +178,12 @@ export function initInterior(game) {
       putF(I, g, gl, 1.45, 0.3, -Math.PI / 2, (q) => F.jug(q), [0.25, 0.22, 1], o); spot(I, 'tap', 0.95, 0.3, Math.PI / 2);
       putF(I, g, gl, 1.45, -0.7, -Math.PI / 2, (q) => F.coolbox(q), [0.36, 0.24, 0.6], o); spot(I, 'fridge', 0.95, -0.7, Math.PI / 2);
       putF(I, g, gl, -0.2, 1.45, Math.PI, (q, ql) => { F.crate(q); q.translate(0.15, 0.5, 0); F.lantern(q, ql.translate(0.15, 0.5, 0)); }, [0.32, 0.27, 0.6], o);
-      putF(I, g, gl, -0.2, 0.75, Math.PI, (q) => F.stool(q, 0x8a5a36), null, o); spot(I, 'sit', -0.2, 0.85, Math.PI, { table: [-0.2, 1.45] });
+      putF(I, g, gl, -0.2, 0.75, Math.PI, (q) => F.stool(q, 0x8a5a36), null, o); spot(I, 'sit', -0.2, 0.72, 0, { table: [-0.2, 1.45], th: 0.5 }); // kursidan qutiga (stol) qarab o'tiradi
       putF(I, g, gl, -1.45, -1.3, Math.PI / 2, (q) => F.crate(q), [0.3, 0.27, 0.6], o); putF(I, g, gl, -1.45, -1.3, Math.PI / 2, (q) => { q.translate(0, 0.5, 0); F.radio(q); }, null, o); spot(I, 'desk', -0.9, -1.3, -Math.PI / 2);
       putF(I, g, gl, 0, 0, 0, (q, ql) => F.ceilLamp(ql, L.h), null, o);
       putF(I, g, gl, 0.6, -1.9 + 0.07, 0, (q, ql) => F.switchPlate(q, ql), null, o); spot(I, 'switch', 0.7, -1.5, Math.PI, { room: 0 });
-      spot(I, 'door', 0, -1.55, Math.PI); lamps.push([0, L.h - 0.3, 0, 1.0]);
-      I.entry = [0, -1.3, 0];
+      spot(I, 'door', 0, -1.55, Math.PI, { r: 0.7 }); lamps.push([0, L.h - 0.3, 0, 1.0]);
+      I.entry = [0, -0.8, 0]; // eshik taklifidan nariroqda — kirgan zahoti [E] yana tashqariga chiqarib yubormasin
     } else {
       const { A, B, C, D, E, h } = L, bathD = L.bathD || 0, Z1 = B + D;
       rooms = [{ t: 'liv', x0: -A, z0: -B, x1: C, z1: B, floor: L.floor }, { t: 'bed', x0: -A, z0: B, x1: C, z1: Z1, floor: L.floor }];
@@ -206,8 +206,8 @@ export function initInterior(game) {
       putF(I, g, gl, sx, B - 0.06, Math.PI, (q) => { q.translate(0, 1.75, 0); F.frame(q, 1.0, 0.6, 0x7cc4e8); }, null, o);
       putF(I, g, gl, -A + 0.4, -B + 0.07, 0, (q, ql) => F.switchPlate(q, ql), null, o); spot(I, 'switch', -A + 0.45, -B + 0.45, Math.PI, { room: 0, r: 0.9 });
       putF(I, g, gl, (C - A) / 2, 0, 0, (q, ql) => F.ceilLamp(ql, h), null, o); lamps.push([(C - A) / 2, h - 0.3, 0, 1.1]);
-      spot(I, 'door', -A + 1.2, -B + 0.35, Math.PI);
-      I.entry = [-A + 1.2, -B + 0.7, 0];
+      spot(I, 'door', -A + 1.2, -B + 0.35, Math.PI, { r: 0.7 });
+      I.entry = [-A + 1.2, -B + 1.1, 0];
       // --- yotoqxona ---
       const bx = (C - A) / 2 + 0.4; const frame = lvl >= 3 ? 0x5a3a26 : 0x8a5a36;
       putF(I, g, gl, bx, Z1 - 1.1, Math.PI, (q) => F.bed(q, [0x3d74a6, 0xc84a3a, 0x3d74a6, 0x6a8a5a, 0x8a7ab0][lvl], frame), [0.8, 1.05, 0.6], o);
@@ -285,7 +285,7 @@ export function initInterior(game) {
     putF(I, g, gl, 2.4, 2.2, Math.PI, (q) => { for (let k = 0; k < 3; k++) q.color([0xf0b83a, 0xd8392b, 0x2f7fd0][k]).box(0, 0.35 + k * 0.42, 0, 1.0, 0.35, 0.5); }, [0.5, 0.25, 1.4], o); // kanistrlar va qutilar
     for (const x of [-1.6, 1.6]) for (const z of [-1.2, 1.2]) putF(I, g, gl, x, z, 0, (q, ql) => ql.color(0xf6fbff).box(0, h - 0.04, 0, 1.2, 0.05, 0.2), null, o);
     putF(I, g, gl, 0, -1.6, 0, (q) => F.rug(q, 1.2, 0.8, 0x3f9a58, 0x2f6a40), null, o);
-    spot(I, 'door', 0, -2.25, Math.PI); I.entry = [0, -1.8, 0];
+    spot(I, 'door', 0, -2.25, Math.PI, { r: 0.7 }); I.entry = [0, -1.45, 0];
     finish(I, g, gw, gl, [[-1.6, h - 0.3, -1.2, 0.8], [1.6, h - 0.3, -1.2, 0.8], [-1.6, h - 0.3, 1.2, 0.8], [1.6, h - 0.3, 1.2, 0.8]], 1.0);
     I.rooms = rooms; I.grp.visible = false;
   };
@@ -338,7 +338,7 @@ export function initInterior(game) {
     const k = lit ? 1.0 : 0.62 - 0.5 * night; matIn.color.setScalar(k); matLamp.color.setScalar(lit ? 1.35 : 0.3);
     _c.setRGB(1.2 - 0.95 * night, 1.35 - 1.0 * night, 1.6 - 0.9 * night); matWin.color.copy(_c);
     if (IN.inside === 'home' && tvMesh.visible) { if (IN.tvOn) { IN.tvT = (IN.tvT || 0) + dt; if ((IN.tvA = (IN.tvA || 0) + dt) > 0.08) { IN.tvA = 0; drawTV(IN.tvT); } matTV.color.setScalar(1.6); } else matTV.color.setScalar(0.04); }
-    if (IN.inside === 'shop') { const kp = shopkeeper.root.position, d = Math.hypot(pl.p[0] - kp.x, pl.p[2] - kp.z); shopkeeper.root.rotation.y = Math.atan2(pl.p[0] - kp.x, pl.p[2] - kp.z); poseRig(shopkeeper, (IN.talkT || 0) > 0 || d < 2.6 ? 'wave' : 'idle', dt, 0); if (IN.talkT > 0) IN.talkT -= dt; }
+    if (IN.inside === 'shop') { const kp = shopkeeper.root.position, d = Math.hypot(pl.p[0] - kp.x, pl.p[2] - kp.z); shopkeeper.root.rotation.y = Math.atan2(pl.p[0] - kp.x, pl.p[2] - kp.z); poseRig(shopkeeper, (IN.talkT || 0) > 0 ? 'wave' : d < 2.6 ? 'talk' : 'idle', dt, 0); if (IN.talkT > 0) IN.talkT -= dt; }
     // mahalliy chiroq (qahramonni yoritadi): xona shifti ostida
     const Lg = game.localLight; if (Lg) { const ri = IN.roomAt(pl.p[0], pl.p[2]); const r = I.rooms[ri == null ? 0 : ri]; Lg.position.set(I.o[0] + (r.x0 + r.x1) / 2, I.o[1] + I.h - 0.4, I.o[2] + (r.z0 + r.z1) / 2); Lg.color.setHex(0xffe8c8); Lg.intensity = lit ? 60 : 8 + 30 * (1 - night); }
   };
