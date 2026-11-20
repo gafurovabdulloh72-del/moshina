@@ -208,7 +208,7 @@ export function initCoop(game) {
   const memberOf = (conn) => { for (const m of C.members.values()) if (m.conn === conn) return m; return null; };
   function addMember(conn, d) {
     const pid = String(d.pid || conn.peer); let m = C.members.get(pid);
-    if (m && m.conn !== conn) { if (m.conn && m.conn.open && !m.lost) { try { conn.close(); } catch { /* */ } return null; } const old = m.conn; m.conn = conn; m.last = performance.now(); if (m.lost) { m.lost = 0; (C.errs.length > 30 && C.errs.shift(), C.errs).push('tiklandi: ' + pid); } if (old && old !== conn) { try { old.close(); } catch { /* */ } } return m; }
+    if (m && m.conn !== conn) { if (m.conn && m.conn.open && !m.lost) { try { conn.close(); } catch { /* */ } return null; } const old = m.conn; m.conn = conn; m.last = performance.now(); if (m.lost) { m.lost = 0; (C.errs.length > 30 && C.errs.shift(), C.errs).push('tiklandi: ' + pid); } if (old && old !== conn) { try { old.close(); } catch { /* */ } } if (C.room && C.room.isHost) sendTo(m, homeSnap()); return m; } // qayta ulandi: uzilish paytida yo'qolgan uy holati (uslub, bezak...) qayta yuboriladi
     if (!m) { m = { pid, name: cleanName(d.name), uid: String(d.uid || '').slice(0, 20), slot: d.slot | 0, conn, last: performance.now(), remote: null, ping: 0, v: d.v | 0 }; C.members.set(pid, m); m.remote = new Remote(game, m); }
     m.v = d.v | 0; m.vr = !!d.vo; setTimeout(() => reconcile(m), 0); return m;
   }
@@ -635,8 +635,8 @@ export function initCoop(game) {
   function paxRig(md, s, look, hat) { const P = seatPose(md, s), r = makeRider(P.d, lookRigOpts(look)); if (hat) setHat(r, hat); const w = new THREE.Group(); w.position.x = P.x; w.add(r.root); md.tilt.add(w); return { w, r }; }
   function dropPax(o) { if (o.w.parent) o.w.parent.remove(o.w); o.r.mesh.geometry.dispose(); if (o.r.mesh.skeleton) o.r.mesh.skeleton.dispose(); }
   // har kadr: qaysi mashinada kim o'tiribdi (yo'lovchining o'z paketidagi ri/se bo'yicha) — modellarga o'rindiq qo'shiladi/olinadi
-  function syncPax() {
-    if (rideReq && performance.now() - rideReq.t > 8000) rideReq = null; // haydovchi javob bermadi
+  function syncPax(dt) {
+    if (rideReq && (rideReq.w -= dt) <= 0) rideReq = null; // haydovchi 8 soniya (o'yin vaqti — varaq qotsa yoki yashirilsa javob kutilaveradi) javob bermadi
     const want = new Map(), me = C.myId();
     const add = (drv, pid, s, look, hat) => { const dm = drv === me ? null : C.members.get(drv), md = drv === me ? game.carModel : dm && dm.remote.shown ? dm.remote.model : null; if (!md || s >= seatsOf(md)) return;
       let w = want.get(md); if (!w) want.set(md, (w = new Map())); for (const v of w.values()) if (v.s === s) return; w.set(pid, { s, look, hat, key: s + '|' + JSON.stringify(look || null) + '|' + (hat || '') }); };
@@ -656,7 +656,7 @@ export function initCoop(game) {
     if (C.ride || !pl.onFoot || pl.lock > 0 || IN.inside || game.act || (IS() && IS().cur && !(C.job && !C.job.own))) { toast("Hozir o'tirib bo'lmaydi", 'bad'); return false; }
     if (!seatsOf(R.model)) { toast(`${R.model.v.name}da yo'lovchi o'rni yo'q`, 'bad'); return false; }
     if (Math.hypot(R.pos.x - pl.p[0], R.pos.z - pl.p[2]) > R.model.spec.len / 2 + 4) { toast('Mashinaga yaqinroq boring', 'bad'); return false; }
-    rideReq = { pid, t: performance.now() }; sendTo(m, { t: 'rq' }); return true;
+    rideReq = { pid, w: 8 }; sendTo(m, { t: 'rq' }); return true;
   };
   function onRideReq(m) { // haydovchi: o'rin beramizmi
     const no = (why) => sendTo(m, { t: 'ra', ok: 0, why }), car = game.car;
@@ -670,7 +670,7 @@ export function initCoop(game) {
     C.pax.set(m.pid, s); m.paxT = performance.now(); sendTo(m, { t: 'ra', ok: 1, s }); toast(`${N(m)} mashinangizga o'tirdi 🚗`, 'good'); game.audio.sfx('door'); changed();
   }
   function onRideAns(m, d) {
-    if (!rideReq || rideReq.pid !== m.pid) return; rideReq = null;
+    if (!rideReq || rideReq.pid !== m.pid) { if (d.ok && !(C.ride && C.ride.pid === m.pid)) sendTo(m, { t: 'rx' }); return; } rideReq = null; // kech kelgan rozilik — haydovchi o'rinni bo'shatsin
     C.rideMsg = String(d.why || '').slice(0, 80); if (!d.ok) { toast(esc(C.rideMsg || "O'tirib bo'lmadi"), 'bad'); return; }
     const s = d.s | 0; if (s < 0 || s > 2 || C.ride || !pl.onFoot || IN.inside || game.act) { sendTo(m, { t: 'rx' }); return; }
     C.ride = { pid: m.pid, seat: s, footT: 0 }; pl.lock = 1e9; pl.lockAnim = 'sit'; pl.lockFn = null; pl.sit = false; pl.emote = null; pl.v[0] = pl.v[1] = pl.v[2] = 0; pl.rig.root.visible = false; pl.lamp.intensity = 0;
@@ -938,7 +938,7 @@ export function initCoop(game) {
   }
   let sitShift = false;
   function birgaFrame(dt) {
-    syncPax(); rideFrame(dt); paxFrame(); ownerJobFrame(dt); cafeFrame(dt);
+    syncPax(dt); rideFrame(dt); paxFrame(); ownerJobFrame(dt); cafeFrame(dt);
     // bir joyga (topchan, divan) ikki kishi o'tirsa — kattaroq id'li biroz yonga suriladi (ustma-ust tushmasin)
     if (pl.onFoot && pl.sit && !C.ride) { if (!sitShift) for (const m of C.members.values()) { const R = m.remote; if (m.pid > C.myId() || !R.foot || !R.fshown) continue;
       if (Math.hypot(R.fpos.x - pl.p[0], R.fpos.z - pl.p[2]) < 0.45 && Math.abs(R.fpos.y - pl.p[1]) < 1) { pl.p[0] += Math.cos(pl.yaw) * 0.62; pl.p[2] -= Math.sin(pl.yaw) * 0.62; sitShift = true; break; } } } else sitShift = false;

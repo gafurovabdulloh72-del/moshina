@@ -40,7 +40,9 @@ async function player(name, { save } = {}) {
 }
 // o'yinni oldinga yuritish (sinov rejimida kadr sikli to'xtagan) — tarmoq xabarlari orada keladi
 const run = async (secs, ...ps) => { for (let t = 0; t < secs; t += 0.2) { for (const p of ps) await p.evaluate(() => G.advance(0.2, 1 / 30)); await sleep(30); } };
-const until = async (p, fn, arg, secs = 20, ...others) => { const t0 = Date.now(); while (Date.now() - t0 < secs * 1000) { if (await p.evaluate(fn, arg)) return true; await run(0.4, p, ...others); } return false; };
+// kutish muddati soat bo'yicha, lekin kamida 8 qadam (3,2 s o'yin vaqti) va oxirida yana bir tekshiruv: dasturiy videokarta (SwiftShader) yangi joyni birinchi chizishda bitta kadr
+// 20–45 soniya qotishi mumkin — shunda muddat bitta qadamda tugab, do'st xabarini qayta ishlashga ulgurmay sinov yiqilardi
+const until = async (p, fn, arg, secs = 20, ...others) => { const t0 = Date.now(); for (let i = 0; Date.now() - t0 < secs * 1000 || i < 8; i++) { if (await p.evaluate(fn, arg)) return true; await run(0.4, p, ...others); } return !!(await p.evaluate(fn, arg)); };
 // kutish o'yinni yuritmasdan (ovoz darajasi brauzer taymerida o'lchanadi — og'ir G.advance asosiy oqimni band qilib, qisqa ohangni o'tkazib yuboradi)
 const listen = async (p, fn, arg, secs = 20) => { const t0 = Date.now(); while (Date.now() - t0 < secs * 1000) { if (await p.evaluate(fn, arg)) return true; await sleep(100); } return false; };
 const shot = async (p, name) => { const f = path.join(root, 'shots', name + '.jpg'); await p.screenshot({ path: f, type: 'jpeg', quality: 82 }); console.log('shot', f); };
