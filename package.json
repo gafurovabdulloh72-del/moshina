@@ -16,7 +16,7 @@
     "test:hud": "NO_TEST=1 node tools/shot.mjs tools/s_hud.js",
     "test:adapt": "node tools/shot.mjs tools/s_adapt.js",
     "test:save": "node tools/shot.mjs tools/s_save.js",
-    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save && npm run test:life && npm run test:life2 && npm run test:world && npm run test:hafta && npm run test:life3 && npm run test:suv && npm run test:tryuk && npm run test:qulay",
+    "test:browser": "npm run test:smoke && npm run test:real && npm run test:hud && npm run test:adapt && npm run test:save && npm run test:life && npm run test:life2 && npm run test:world && npm run test:hafta && npm run test:life3 && npm run test:suv && npm run test:tryuk && npm run test:qulay && npm run test:poyga",
     "test:api": "node --test tools/api_test.mjs",
     "test:online": "node tools/coop_test.mjs",
     "dev": "node tools/dev-server.mjs",
@@ -27,7 +27,8 @@
     "test:life3": "node tools/shot.mjs tools/s_life3.js",
     "test:suv": "node tools/shot.mjs tools/s_suv.js",
     "test:tryuk": "node tools/shot.mjs tools/s_tryuk.js",
-    "test:qulay": "node tools/shot.mjs tools/s_qulay.js"
+    "test:qulay": "node tools/shot.mjs tools/s_qulay.js",
+    "test:poyga": "node tools/shot.mjs tools/s_poyga.js"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

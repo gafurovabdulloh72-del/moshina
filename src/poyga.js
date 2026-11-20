@@ -89,6 +89,7 @@ export function initPoyga(game) {
     }
   };
   const segHud = (dt) => {
+    if (game.act) { chipT = 0; if (chip.className) chip.className = ''; return; }
     if (chipT > 0) { if ((chipT -= dt) <= 0) chip.className = ''; return; }
     const c = SG.cur; if (c && c.t > 2) { const o = S.seg[c.s.key]; const h = `⏱ ${c.s.name} · <b>${fmtTime(c.t)}</b> <small>${o ? `rekord ${fmtTime(o[0])}` : `me'yor ${fmtTime(P.par(c.s.key))}`}</small>`; if (chip.innerHTML !== h) chip.innerHTML = h; if (chip.className !== 'on') chip.className = 'on'; }
     else if (chip.className) chip.className = '';
@@ -133,13 +134,14 @@ export function initPoyga(game) {
     S.runs++; sfx('start');
   };
   // darvozadan o'tganda qo'shiladigan vaqt: yo'l uzunligi va burilishlarga qarab, darvoza ko'paygan sari biroz kamayadi
-  const refill = (A, seg) => +clamp(estimateTime(seg.pts, A.vmax, 6.5) * Math.max(0.98, 1.42 - A.gates * 0.016) + 2, 6, 45).toFixed(1);
+  // (oldingi bo'lak bilan birga baholanadi — darvozadan to'xtamay o'tiladi, start tezlanishi hisobga kirmasin)
+  const refill = (A, seg, prev) => { const run = prev ? estimateTime(prev.pts.concat(seg.pts.slice(1)), A.vmax, 6.5) - estimateTime(prev.pts, A.vmax, 6.5) : estimateTime(seg.pts, A.vmax, 6.5); return +clamp(run * Math.max(1, 1.32 - A.gates * 0.012) + 2, 6, 40).toFixed(1); };
   P.refill = refill;
   const infTick = (A) => {
     if (A.state !== 'run') return;
     const p = car.p, g = A.g0;
     if (Math.hypot(p[0] - g.x, p[2] - g.z) < GATE_R) {
-      A.gates++; A.dist += g.len; const add = refill(A, A.g1), left = A.limit - A.t;
+      A.gates++; A.dist += g.len; const add = refill(A, A.g1, g), left = A.limit - A.t;
       A.limit += add; if (A.limit - A.t > 75) A.limit = A.t + 75;
       A.g0 = A.g1; A.g1 = walk(A.g0, gap()); placeGate(G2[0], A.g0); placeGate(G2[1], A.g1); game.setWaypoint(A.g0.x, A.g0.z, true);
       popup(`<b>${A.gates}</b> · +${add.toFixed(0)} s`, INF_THR.includes(A.gates) ? 'gold' : ''); sfx(INF_THR.includes(A.gates) ? 'medal' : 'check');
@@ -258,7 +260,7 @@ export function initPoyga(game) {
   }
 
   const css = el('style'); css.textContent = `
-#pg-seg{left:50%;top:12px;transform:translate(-50%,-8px);padding:7px 16px;border-radius:999px;background:rgba(12,16,28,.62);border:1px solid var(--bd);font-weight:700;font-size:14.5px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;text-align:center;backdrop-filter:blur(4px)}
+#pg-seg{left:50%;top:108px;transform:translate(-50%,-8px);padding:7px 16px;border-radius:999px;background:rgba(12,16,28,.62);border:1px solid var(--bd);font-weight:700;font-size:14.5px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;text-align:center;backdrop-filter:blur(4px)}
 #pg-seg.on{opacity:1;transform:translate(-50%,0)}#pg-seg b{color:var(--ac)}#pg-seg small{color:var(--mut);font-weight:600}
 #pg-seg.done{font-size:16.5px;padding:9px 20px;border-color:rgba(255,255,255,.3)}#pg-seg.rec{border-color:var(--ac);box-shadow:0 0 18px rgba(255,200,58,.35)}#pg-seg.rec small{color:#ffe08a}
 #pg-seg .pg-own{font-size:13px;color:var(--good);margin-top:2px}

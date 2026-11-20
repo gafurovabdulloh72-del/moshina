@@ -41,7 +41,7 @@ export function initMahorat(game) {
     else if (r[0] === 'hat') { if (st.hats.includes(r[1])) { game.addMoney(r[2], "Yulduz yo'li"); text = `${som(r[2])} so'm (${HATN[r[1]]} allaqachon bor)`; } else st.hats.push(r[1]); }
     else if (r[0] === 'paint') { if (!st.paints.includes(r[1])) st.paints.push(r[1]); }
     else if (r[0] === 'tune') { const u = tuneFree(); if (u) { st.up[u.id]++; game.applyUpgrades(); text = `Tekin tyuning: ${u.name} ${st.up[u.id]}-daraja`; } else { game.addMoney(r[2], "Yulduz yo'li"); text = `${som(r[2])} so'm (tyuning to'la)`; } }
-    M.yy.push(i); st.xp += 30; sfx('win'); game.save();
+    M.yy.push(i); st.xp += 30; yyT = 0; sfx('win'); game.save();
     toast(`🎁 Yulduz yo'li · ${(i + 1) * STEP} ★ — ${text}`, 'gold');
     H.last = { i, text }; return H.last;
   };

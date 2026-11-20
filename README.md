@@ -344,6 +344,18 @@ Bugungi tadbir xaritada katta rangli nuqta bo'lib chiqadi, ertalab e'lon qilinad
 | **Saqlovni ko'chirish** | Sozlamalar → «Saqlovni ko'chirish»: `.json` faylni yuklab olish yoki matnli kod (`SAFAR:1:…`, siqilgan, nazorat yig'indili) nusxalash; ochish — fayl tanlash, faylni o'yin oynasiga sudrab tashlash yoki kodni qo'yish. Ochishdan oldin tekshiriladi (buzilgan/begona kod rad etiladi) va «4-daraja · 12 400 so'm · ★ 35 — shu o'yinmi?» deb so'raladi. Internetsiz (faylda ham) ishlaydi; bulutli saqlov o'zgarmagan |
 | **Avtomatik zaxira** | O'yin ochilganda va har 10 daqiqada (eng ko'pi 4 daqiqada bir) oxirgi 5 ta nusxa, saqlov ochish, «Yangi o'yin» va tiklashdan oldin yana 3 ta maxsus nusxa — alohida `safar_zaxira_v1` kalitida, siqilgan, jami ~1,6 MB dan oshmaydi (xotira to'lsa eskisi o'chiriladi). Sozlamalar → «Zaxiradan tiklash»: vaqt, daraja, pul, yulduzlar; tasdiqlab tiklanadi |
 
+### 2.15. Poygalar, Yulduz yo'li va transport mahorati
+
+Transportda **1** (yoki pauza menyusi, telefon → 🏁 Poygalar, e'lonlar taxtasi) — «Poygalar» oynasi: beshta bo'lim.
+
+| Imkoniyat | Qanday |
+|---|---|
+| **♾ Cheksiz poyga** | Yo'lda (40 m ichida) turib boshlanadi. 32 soniya bilan start; yo'l tarmog'ida 300–470 m oldinda darvoza paydo bo'ladi (chorrahada yo'nalish tasodifiy, berk ko'chada — ortga), keyingisi xira ko'rinadi, GPS yo'l ko'rsatadi. Har darvoza yo'l uzunligi va burilishlarga qarab vaqt qo'shadi (darvoza ko'paygan sari kamroq, zaxira ko'pi bilan 75 s). Vaqt tugaganda natija: ★ 8 · ★★ 16 · ★★★ 28 darvoza, mukofot 150–1 500 so'm, har transportning o'z rekordi (darvoza va masofa). Chellenj panelida yulduz shkalasi, **⌫** — o'sha joydan qayta |
+| **⟳ Aylanma poygalar** | 5 ta halqa: Sohil (5 km × 2), Savanna (4,6 km × 3), Qal'a (5,6 km × 2), G'arbiy (8,2 km × 2), Shimoliy (8,6 km × 2). Mavjud poyga tizimida: uch raqib, nazorat darvozalari, o'rin; panelda «Aylana 1/2» va aylana vaqti, har aylana oxirida yozuv, eng tez aylana alohida saqlanadi. 1-o'rin — g'olib kubogi (Sovrinlar), transport medali; yulduzlar alohida (umumiy 270 ga qo'shilmaydi). Taxtada (Bog'iston, Aerodrom, Qal'a, Ko'zgu ko'l) ham bor |
+| **🛣 Yo'l egasi** | 25 yo'l bo'lagi × 2 yo'nalish = 50 bo'lak. Erkin sayrda chorrahadan chiqishingiz bilan sanoq o'zi boshlanadi (tepada «⏱ Bog'iston → Mayoq chorrahasi 0:12»), keyingi chorrahada natija: «Bo'lak: … — 0:34 (rekord 0:31)». Yo'ldan 4 s chiqib ketish, ortga qaytish, ko'chish yoki chellenj sanoqni bekor qiladi. Me'yor vaqtdan (transport toifasiga moslangan) tezroq — yo'l «sizniki», +100 so'm. Ro'yxat: bo'lak, uzunlik, me'yor, rekord va transport |
+| **🎁 Yulduz yo'li** | Har 15 yulduzda sovg'a (18 ta): 300–3 000 so'm, ta'mir to'plamlari, 3 ta tekin tyuning bosqichi (eng arzon keyingi bosqich), «Yulduzli kumush» va «Samoviy» bo'yoqlari, kepka, do'ppi, oltin toj. Eski saqlovda oldin yig'ilgan yulduzlar ham hisoblanadi. Yangi sovg'a ochilganda banner, HUDda «🎁 2» belgisi; «Olish» / «Hammasini olish». Pasportda «keyingi sovg'agacha N ★» |
+| **🎖 Transport mahorati** | Har transportda 5 nishon: 10 km yo'l, chellenj medali (Sovrinlar), bir driftda 3 000 ochko yoki toza tryuk, urilmasdan 3 km, o'z eng yuqori tezligining 90 %. Har nishon +100 so'm, beshtasi — «Usta» (+400 so'm); 5 ta «Usta» — «Usta zumradi» bo'yog'i. Ustaxona transport kartalarida va oynadagi jadvalda ko'rinadi |
+
 ---
 
 ## 3. Boshqaruv
@@ -361,6 +373,7 @@ Bugungi tadbir xaritada katta rangli nuqta bo'lib chiqadi, ertalab e'lon qilinad
 | H / L | signal / faralar |
 | T | evakuator (motor o'chganda) |
 | E | e'lonlar taxtasi / ustaxona / yo'lovchi olish |
+| 1 | «Poygalar»: cheksiz poyga, aylanma poygalar, yo'l egasi, Yulduz yo'li, mahorat |
 
 | Piyoda | |
 |---|---|
@@ -465,6 +478,8 @@ shots/        sinov skrinshotlari (git'da yo'q)
 | `fx.js` | zarrachalar (chang, tutun, uchqun), parchalar, shina izlari |
 | `audio.js` | sintez qilingan ovoz, dvigatel (transportga qarab xarakter — `ENGINES`, `engineOf`), generativ musiqa, poyga doirasi (`raceK`) |
 | `tryuk.js` | havodagi tryuklar va kombo (havoda boshqaruv shu yerda), har transportning rekordi va medali, g'olib kuboklari, «Sovrinlar» oynasi, uydagi sovrinlar javoni, doira jadalligi |
+| `poyga.js` | «Poygalar» oynasi va **1** tugmasi; cheksiz poyga (yo'l bo'ylab yuruvchi `walk`, darvozalar), 5 aylanma poyga (`CIRCS` — tugunlar halqasi; mavjud `race` turi ustida, `a.own`/`a.lines2`), «Yo'l egasi» (bo'lak sanog'i, me'yor, rekord) |
+| `mahorat.js` | Yulduz yo'li (`ROAD` — 18 sovg'a) va transport mahorati (`BADGES`), ustaxona kartasidagi nishonlar, HUD «🎁» belgisi |
 | `controls.js` | boshqaruv jadvali (`ACTIONS`): har bir klavisha nima qiladi, qachon ishlaydi va ekranda qanday tugma bo'lib chiqadi — klaviatura va ekran tugmalari uchun yagona manba |
 | `input.js` | klaviatura, geympad, sensorli ekran | (+ virtual joystik qiymatlari `touch.jx/jy`)
 | `ui.js` | HUD, mini-xarita, menyu va barcha oynalar (o'zbekcha) |
@@ -516,7 +531,7 @@ Model interfeysi (`buildVehicle(id)` qaytaradi): `{ id, v, spec, root, tilt, bod
 
 `localStorage`, kalit `safar_save_v2`. Yuklashda saqlangan holat standart holat (`defState()` — `game.js`) ustiga qo'shiladi, shuning uchun **yangi maydon qo'shilganda eski saqlovlar buzilmaydi** — faqat `defState()` ga standart qiymat yozish kerak. v1 saqlovlari ham ochiladi.
 
-Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `errCur` (bajarilayotgan topshiriq: tur, beruvchi, bosqich — qayta yuklanganda davom etadi; tiklab bo'lmasa xabar chiqadi va beruvchi uni qayta taklif qiladi; null — yo'q), `soat` (o'tgan o'yin soatlari), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `suv {row, sail, glide, km, best, fish}` (qayiq ijaralari, parvozlar, suzilgan m, eng uzoq parvoz m, qayiqdan baliq), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `sovrin {rec, cups, best {n, pts}, tricks, tlog, paid}` (transport rekordlari `{chellenj: {transport: [natija, medal]}}`, kuboklar `{poyga: soni}`, eng uzun kombo, tryuklar soni va daftari, to'langan medal mukofotlari), `qulay {guide, tips, tipsOff, ach, achInit, day, streak, last, chests, win}` (yo'riqnoma qadami, ko'rilgan maslahatlar, yutuqlar, kunlik uchlik), `stats`, `set {vol, music, gfx, damage, ui}` (`ui` — interfeys o'lchami, %), `hour, pos, foot`. Zaxira nusxalari saqlovdan alohida — `safar_zaxira_v1` kalitida.
+Asosiy maydonlar: `money, xp, stars, best, up` (tyuning), `veh {own, cur, dmg, paint}`, `inv` (buyumlar), `tools, hats, hat, karma, sat, energy`, `home {lvl, decor, beds, wat, eggT, mailT, incT}`, `flowers, trees, flags, tasks, cnt, seen, peaks`, `thirst` (chanqoq), `fuel {transport: %}`, `fridge` (muzlatkich), `alarm` (budilnik soati), `look` (kiyim va soch; null — boshlang'ich), `clothes` (sotib olingan kiyimlar), `income` (so'nggi 30 pul harakati), `jobs` (ish hisobi), `biz` (bizneslar: daraja, ishchi, tovar, kassa, daftar), `home2` (kengaytmalar, hovli jihozlari, garajdagi transport, hosil vaqtlari), `tetik` (tetiklik), `hurmat`, `errands` (bajarilgan topshiriqlar), `errCur` (bajarilayotgan topshiriq: tur, beruvchi, bosqich — qayta yuklanganda davom etadi; tiklab bo'lmasa xabar chiqadi va beruvchi uni qayta taklif qiladi; null — yo'q), `soat` (o'tgan o'yin soatlari), `hafta {w, best, stars, paid, tries, s {money, km, jobs, wins}, hist, badges, done, weeks}` (haftalik chellenj va hafta ko'rsatkichlari, km — metrda), `suv {row, sail, glide, km, best, fish}` (qayiq ijaralari, parvozlar, suzilgan m, eng uzoq parvoz m, qayiqdan baliq), `dunyo {day, toy, nav, dtoy, dnav}` (o'yin kuni — taqvim va ob-havo shundan; tadbir sovg'asi olingan kunlar), `sovrin {rec, cups, best {n, pts}, tricks, tlog, paid}` (transport rekordlari `{chellenj: {transport: [natija, medal]}}`, kuboklar `{poyga: soni}`, eng uzun kombo, tryuklar soni va daftari, to'langan medal mukofotlari), `qulay {guide, tips, tipsOff, ach, achInit, day, streak, last, chests, win}` (yo'riqnoma qadami, ko'rilgan maslahatlar, yutuqlar, kunlik uchlik), `poyga {inf, circ, seg, runs}` (cheksiz poyga rekordlari `{transport: [darvoza, m]}`, aylanmalar `{id: {s, best, lap, n}}`, yo'l bo'laklari `{'e1>': [vaqt, transport, sizniki]}`), `mahorat {yy, veh}` (olingan sovg'alar, transport mahorati `{transport: {km, dr, top, trip, tb, tr, b, u}}`), `stats`, `set {vol, music, gfx, damage, ui}` (`ui` — interfeys o'lchami, %), `hour, pos, foot`. Zaxira nusxalari saqlovdan alohida — `safar_zaxira_v1` kalitida.
 
 Saqlov brauzerning o'zida turadi. Saytda Telegram orqali kirilsa, xuddi shu JSON bulutga ham yoziladi va boshqa qurilmada olinadi ([13](#13-onlayn-rejim)); `safar_save_v2` formati o'zgarmagan.
 
@@ -540,6 +555,9 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | `G.tadbir.set('toy' \| 'bozor' \| 'navruz' \| null)` | tadbirni vaqtdan qat'i nazar yoqish; `G.tadbir.upcoming()`, `G.shahar.convoy(true)` |
 | `G.tryuk._air(p, r, y, t, toza)` | havodagi aylanishlar (radian) bilan qo'nishni o'tkazadi; `G.tryuk.combo`, `.air`, `.record(chellenj, natija, transport)`, `.cup(chellenj)`, `.counts()`, `.refreshShelf()`, `.shelfAt()`; `G.audio.engName`, `G.audio.raceK`, `G.audio.doira` |
 
+| `G.poyga` | `startInf()`, `infDef`, `lastGate`, `lastInf`, `circs`, `circBy`, `startCirc(id)`, `lastCirc`, `segs`, `seg` (joriy sanoq, `last`), `par(bo'lak)`, `owned()`, `open(bo'lim)` |
+| `G.mahorat` | `open()`, `claimable()`, `next()`, `claim(i)`, `claimAll()`, `rec(transport)`, `check(transport)`, `count(transport)`, `prog(transport, nishon)` |
+
 ### 4.11. Qanday qo'shiladi
 
 - **Yangi transport:** `vehicles.js` → `VEHICLES` ga yozuv (`id, name, price, hex, cls, desc, eng, spec`) va model uslubi; keyin `npm test` — barqarorlikni tekshiradi.
@@ -556,6 +574,7 @@ O'yin `window.G` orqali ochiq. Sahifa yuklanishidan oldin `window.__TEST = true`
 | Buyruq | Nimani tekshiradi | Vaqt |
 |---|---|---|
 | `npm test` | 22 transport fizikasi (tinch holat, tezlanish, eng yuqori tezlik, tormoz, burilish, 4 daqiqalik tasodifiy haydash) va rulning qaytishi. Natija jadval bo'lib chiqadi: `top 121/121`, `bad0 flips0` | ~4 s |
+| `npm run test:poyga` | cheksiz poyga (darvoza yo'lda, vaqt to'ladi, tugaydi, rekord, qayta boshlash), yo'l egasi (vaqt, rekord saqlanadi, teskari yo'nalish, chellenjda sanalmaydi, «sizniki»), aylanma (aylanalar, marra, kubok, yulduz alohida), Yulduz yo'li, mahorat, oynalar, saqlov (eski saqlov ham) | ~4 daq |
 | `npm run test:roads` | avtopilot barcha yo'llarni ikki tomonga va katta halqani haydab chiqadi (`OK` / `FAIL`) | ~7 s |
 | `npm run test:smoke` | o'yin yuklanadi, 90 chellenj joyida, skrinshot | ~20 s |
 | `npm run test:real` | haqiqiy klaviatura bilan: menyu → haydash → tushish → oynalar → qayta chiqish | ~1 daq |
