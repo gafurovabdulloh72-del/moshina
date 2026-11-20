@@ -16,6 +16,7 @@ const DISHES = ['kabob', 'dimlama', 'friedfish', 'soup', 'omlet', 'salad'];
 export const RECIPES = [['friedfish', { fish: 1 }, 5], ['kabob', { bigfish: 1 }, 6], ['soup', { mush: 2 }, 6], ['omlet', { egg: 2 }, 4], ['salad', { fruit: 2 }, 3], ['dimlama', { veg: 2 }, 6]];
 export const SHOP2 = [['water', 'Suv (0,5 l)', 10], ['juice', 'Olma sharbati', 18], ['bread', 'Issiq non', 12], ['sweets', 'Shirinlik (konfet)', 15], ['snack', "Pista (sho'r)", 12], ['canister', "Yoqilg'i kanistri (+35%)", 120]];
 const GREET = ['Assalomu alaykum! Xush kelibsiz, nima kerak?', 'Yangi non hozirgina keldi — hali issiq!', 'Muzdek suv va sharbat bor, oling!', "Yo'lga chiqyapsizmi? Kanistr olib qo'ying, bak bo'shab qolsa asqotadi."];
+const KIOSK_GREET = ['Yo\'l uzoqmi? Muzdek suv va kanistr shu yerda!', 'Benzin quydingizmi? Yo\'lga pista oling — zerikmaysiz.', 'Kanistr olib qo\'ying, bak bo\'shab qolsa asqotadi.'];
 const FOODISH = ['fruit', 'berry', 'veg', 'bread', 'mush', 'fish', 'bigfish', 'egg', 'water', 'juice', 'sweets', 'snack', ...DISHES, 'tea'];
 const som = (n) => Math.round(n).toLocaleString('ru-RU');
 const hm = (h) => { const a = Math.floor(h), m = Math.round((h - a) * 60); return `${a < 10 ? '0' : ''}${a}:${m < 10 ? '0' : ''}${m}`; };
@@ -66,6 +67,13 @@ export function initHayot(game) {
   };
   placeShop('bogiston'); placeShop('bandargoh');
 
+  // do'kon ichida narxlar taxtasi (peshtaxta ortidagi devorda) — oynani ochmasdan ham narxlar ko'rinadi
+  { const c = document.createElement('canvas'); c.width = 512; c.height = 352; const x = c.getContext('2d'); x.fillStyle = '#24402c'; x.fillRect(0, 0, 512, 352); x.strokeStyle = '#d8b860'; x.lineWidth = 10; x.strokeRect(5, 5, 502, 342);
+    x.fillStyle = '#ffe08a'; x.font = 'bold 38px sans-serif'; x.textAlign = 'center'; x.fillText('NARXLAR', 256, 50); x.font = 'bold 27px sans-serif';
+    SHOP2.forEach(([id, n, c2], i) => { x.textAlign = 'left'; x.fillStyle = '#f2ead8'; x.fillText(n.replace(/ \(.*\)/, ''), 30, 98 + i * 44); x.textAlign = 'right'; x.fillStyle = '#ffd23a'; x.fillText(c2 + " so'm", 482, 98 + i * 44); void id; });
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const S = IN.S, m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.825), new THREE.MeshBasicMaterial({ map: t, fog: false }));
+    m.position.set(S.o[0] + 0.85, S.o[1] + 1.75, S.o[2] + 2.535); m.rotation.y = Math.PI; m.frustumCulled = false; S.grp.add(m); }
+
   // ================= KIRISH/CHIQISH, SAQLASH =================
   const save0 = game.save;
   game.save = () => { if (IN.inside && IN.ret) { const p = pl.p, b = p.slice(), y = pl.yaw; p[0] = IN.ret[0]; p[2] = IN.ret[1]; pl.yaw = IN.ret[2]; try { save0(); } finally { p[0] = b[0]; p[1] = b[1]; p[2] = b[2]; pl.yaw = y; } } else save0(); };
@@ -91,20 +99,23 @@ export function initHayot(game) {
   const plate = (() => { const g = new GB(1900); g.jit = 0; g.color(0xf6f6f2).cyl(12, 0.13, 0.11, 0, 0.02, { cap: true }); g.color(0xe2a050).blob(0.08, 1, { cy: 0.035, sy: 0.45 }); g.color(0x5aa83a).blob(0.03, 0, { cx: 0.05, cy: 0.05 }); g.color(0xdfeef5).push().translate(0.2, 0, 0.05).cyl(8, 0.035, 0.04, 0, 0.11, { cap: true }).pop();
     const m = new THREE.Mesh(g.build(), MAT.flat); m.visible = false; scene.add(m); return m; })();
   const sitAt = (sp) => { const f = sp.sofa ? 0.22 : sp.table ? 0.1 : 0.08; pl.p[0] = sp.x + Math.sin(sp.yaw) * f; pl.p[2] = sp.z + Math.cos(sp.yaw) * f; pl.yaw = sp.yaw; pl.v[0] = pl.v[2] = 0; pl.sit = true; pl.emote = null; HY.seat = sp; };
-  const stand = () => { pl.sit = false; const sp = HY.seat; HY.seat = null; if (sp) { pl.p[0] = sp.x + Math.sin(sp.yaw) * 0.55; pl.p[2] = sp.z + Math.cos(sp.yaw) * 0.55; } };
+  // turish: stol oldidagi o'rindiqdan — yon tomonga (avval stol ichiga turib, to'siq qarama-qarshi tomonga itarib yuborardi); bo'sh joy tanlanadi
+  const stand = () => { pl.sit = false; const sp = HY.seat; HY.seat = null; if (!sp) return; const fx = Math.sin(sp.yaw), fz = Math.cos(sp.yaw), C = sp.table ? [[fz * 0.62, -fx * 0.62], [-fz * 0.62, fx * 0.62], [-fx * 0.6, -fz * 0.6]] : [[fx * 0.55, fz * 0.55], [fz * 0.62, -fx * 0.62], [-fz * 0.62, fx * 0.62]];
+    const c = C.find((q) => freeAt(sp.x + q[0], sp.z + q[1], 0.3)) || C[0]; pl.p[0] = sp.x + c[0]; pl.p[2] = sp.z + c[1]; };
   const bestDish = () => DISHES.find((id) => st.inv[id] > 0) || ['bread', 'sweets', 'snack', 'fruit', 'veg', 'berry'].find((id) => st.inv[id] > 0);
   const eatAtTable = (sp) => { const id = bestDish(); if (!id) return toast("Yegulik yo'q — avval plitada ovqat pishiring 🍳", 'bad');
-    sitAt(sp); const [tx, tz] = W(IN.cur(), sp.table[0], sp.table[1]); plate.position.set(tx + (pl.p[0] - tx) * 0.45, IN.cur().o[1] + 0.77, tz + (pl.p[2] - tz) * 0.45); plate.rotation.y = pl.yaw; plate.visible = true;
+    sitAt(sp); const [tx, tz] = W(IN.cur(), sp.table[0], sp.table[1]); plate.position.set(tx + (pl.p[0] - tx) * 0.45, IN.cur().o[1] + (sp.th || 0.76) + 0.01, tz + (pl.p[2] - tz) * 0.45); plate.rotation.y = pl.yaw; plate.visible = true;
     pl.act('eat', 4.2, () => { plate.visible = false; pl.sit = true; const a = st.sat; if (L.eat(id)) { st.energy = Math.min(100, st.energy + 10); sfx('eat'); toast(`${ITEMS[id][1]} ${ITEMS[id][0]} — mazali! Stolda ovqatlandingiz · to'qlik ${Math.round(a)}% → ${Math.round(st.sat)}%`, 'good'); } }, 'spoon'); pl.sit = true; };
   HY.eatAtTable = eatAtTable;
   // uxlash: karavotga yotadi, ekran qorayadi, vaqt budilnikkacha o'tadi, kuch tiklanadi, o'yin saqlanadi
   const sleep = (sp) => {
-    const I = IN.cur(), b = sp.bed, [bx, bz] = W(I, b[0], b[1]), yaw = b[2]; HY.sleep = { t: 0, done: false, sp, bed: [bx, bz, yaw] };
+    const I = IN.cur(), b = sp.bed, [bx, bz] = W(I, b[0], b[1]), yaw = b[2]; HY.sleep = { t: 0, done: false, sp, bed: [bx, bz, yaw], nap: napNow() };
     pl.p[0] = bx + Math.sin(yaw) * -0.12; pl.p[2] = bz + Math.cos(yaw) * -0.12; pl.yaw = yaw; pl.v[0] = pl.v[2] = 0; pl.sit = false;
     pl.act('lie', 5.2, () => { HY.sleep = null; pl.p[0] = sp.x; pl.p[2] = sp.z; pl.yaw = sp.yaw; }); toast('Yotdingiz… 😴', '');
   };
-  HY.wake = () => { const S = HY.sleep; if (!S || S.done) return; S.done = true; const from = game.hour, to = st.alarm || 6.5; let dh = to - from; if (dh <= 0.25) dh += 24;
-    game.hour = to; game.sky.setHour(to); st.energy = 100; st.sat = 100; st.thirst = clamp(st.thirst - 12, 15, 100); st.stats.sleeps = (st.stats.sleeps || 0) + 1; game.save();
+  const napNow = () => game.hour >= 9 && game.hour < 18 && (st.tetik == null ? 100 : st.tetik) > 40; // kunduzi, charchamagan — 2 soat mizg'ib olish (ertangi tonggacha uxlab, kun yo'qolmaydi)
+  HY.wake = () => { const S = HY.sleep; if (!S || S.done) return; S.done = true; const from = game.hour, nap = S.nap, to = nap ? from + 2 : st.alarm || 6.5; let dh = to - from; if (dh <= 0.25) dh += 24;
+    game.hour = to; game.sky.setHour(to); st.energy = 100; if (nap) { st.thirst = clamp(st.thirst - 4, 15, 100); game.save(); game.banner('Mizg\'ib oldingiz 😌', `${hm(to)} · 2 soat dam oldingiz`, 'gold'); sfx('alarm'); return; } st.sat = 100; st.thirst = clamp(st.thirst - 12, 15, 100); st.stats.sleeps = (st.stats.sleeps || 0) + 1; game.save();
     game.banner('Xayrli tong! ☀️', `${hm(to)} · ${Math.round(dh)} soat uxladingiz · kuch 100%`, 'gold'); sfx('alarm'); };
   const headlines = () => { const p = game.totalStars(), lv = game.levelName(), hs = ['Chodir', 'Kulba', 'Hovli uy', 'Ikki qavatli uy', 'Villa'][st.home.lvl];
     return [`«Orol xabarlari»: yangi sayyoh ${p} ta yulduz to'pladi — unvoni «${lv}»!`, `Mahalliy yangilik: «${hs}» egasi mahalladagilarga yordam berdi (❤ ${Math.floor(st.karma)})`, `Ob-havo: bugun ${['quyoshli', 'iliq', 'salqin', 'shamolli'][Math.floor(game.hour / 6) % 4]}, yo'llar ochiq. Shoxobchalarda yoqilg'i 2 so'm/1%`, `E'lon: Bog'iston do'konida issiq non va muzdek sharbat!`, `Sport: aerodromda poyga — eng yaxshi natija ${st.stats.top} km/soat`]; };
@@ -120,7 +131,8 @@ export function initHayot(game) {
       case 'tap': pl.yaw = sp.yaw; sfx('pour'); return pl.act('drink', 2.2, () => { st.thirst = clamp(st.thirst + 45, 0, 100); sfx('sip'); toast(`Bir stakan muzdek suv 💧 ${Math.round(st.thirst)}%`, 'good'); }, 'cup');
       case 'sink': pl.yaw = sp.yaw; sfx('pour'); return pl.act('wash', 2.6, () => { st.energy = Math.min(st.sat, st.energy + 4); toast("Qo'llaringiz top-toza ✨", 'good'); });
       case 'mirror': { pl.yaw = sp.yaw; const own = st.hats; let msg = "Ko'zgudagi o'zingizga qo'l silkidingiz 😄"; if (own.length) { const i = own.indexOf(st.hat), nx = i + 1 < own.length ? own[i + 1] : null; st.hat = nx; pl.setHat(nx); msg = nx ? 'Yangi bosh kiyim yarashdi! 😎' : "Bosh kiyimsiz ham chiroyli ko'rinasiz 🙂"; } return pl.act('wave', 1.6, () => toast(msg, 'good')); }
-      case 'shower': pl.yaw = sp.yaw; sfx('pour'); HY.showerT = 4.6; return pl.act('shower', 4.6, () => { st.energy = Math.min(100, st.energy + 20); st.sat = Math.max(st.sat, Math.min(100, st.energy)); toast('Dushdan keyin tetik bo\'ldingiz! 🚿 Kuch +20', 'good'); });
+      case 'shower': pl.p[0] = sp.x - 0.12; pl.p[2] = sp.z - 0.12; pl.v[0] = pl.v[2] = 0; pl.yaw = sp.yaw; sfx('pour'); // kabina ichiga, suv ostiga (avval kabina tashqarisida turib cho'milardi)
+      HY.showerT = 4.6; return pl.act('shower', 4.6, () => { st.energy = Math.min(st.sat, st.energy + 20); st.tetik = Math.min(100, (st.tetik == null ? 100 : st.tetik) + 15); toast(`Dushdan keyin tetik bo'ldingiz! 🚿 Tetiklik ${Math.round(st.tetik)}%`, 'good'); });
       case 'tv': { if (!IN.tvOn) { IN.tvOn = true; IN.tvCh = 0; } else if (IN.tvCh < 2) IN.tvCh++; else IN.tvOn = false; sfx('click'); return toast(IN.tvOn ? `📺 ${TV_CH[IN.tvCh]} — divanga o'tirib tomosha qiling` : "📺 Televizor o'chirildi"); }
       case 'radio': { const s = st.set; s.music = !s.music; game.audio.setMusic(s.music); return toast(s.music ? '📻 Radio yoqildi — kuy chalinmoqda' : "📻 Radio o'chirildi"); }
       case 'kettle': pl.yaw = sp.yaw; sfx('pour'); return pl.act('cook', 2.6, () => { pl.act('drink', 2.2, () => { st.thirst = clamp(st.thirst + 30, 0, 100); st.energy = Math.min(100, st.energy + 10); toast(`Issiq ko'k choy 🍵 · 💧 ${Math.round(st.thirst)}% · kuch +10`, 'good'); sfx('sip'); }, 'cup'); });
@@ -136,8 +148,8 @@ export function initHayot(game) {
   const spotText = (sp) => {
     switch (sp.k) {
       case 'door': return '<kbd>E</kbd> Tashqariga chiqish';
-      case 'bed': return `<kbd>E</kbd> Uxlash (budilnik ${hm(st.alarm || 6.5)}) 🛏`;
-      case 'sit': if (pl.sit && HY.seat === sp) return sp.table ? (bestDish() ? `<kbd>E</kbd> Ovqatlanish (${ITEMS[bestDish()][1]} ${ITEMS[bestDish()][0]})` : "Yegulik yo'q — plitada pishiring") : null; return sp.sofa ? "<kbd>E</kbd> Divanga o'tirish" : "<kbd>E</kbd> O'tirish";
+      case 'bed': return napNow() ? "<kbd>E</kbd> Mizg'ib olish (2 soat) 🛏" : `<kbd>E</kbd> Uxlash (budilnik ${hm(st.alarm || 6.5)}) 🛏`;
+      case 'sit': if (pl.sit && HY.seat === sp) return sp.table && bestDish() ? `<kbd>E</kbd> Ovqatlanish (${ITEMS[bestDish()][1]} ${ITEMS[bestDish()][0]})` : null; // yegulik yo'q — [E] o'rnidan turg'izadi (avval «yegulik yo'q» taklifi turishni to'sib qo'yardi) return sp.sofa ? "<kbd>E</kbd> Divanga o'tirish" : "<kbd>E</kbd> O'tirish";
       case 'stove': return '<kbd>E</kbd> Ovqat pishirish 🍳';
       case 'fridge': return `<kbd>E</kbd> ${st.home.lvl < 2 ? 'Salqin quti' : 'Muzlatkich'} 🧊`;
       case 'tap': return '<kbd>E</kbd> Bir stakan suv ichish 💧';
@@ -165,6 +177,7 @@ export function initHayot(game) {
     const I = IN.cur();
     if (I) { for (const sp of I.spots) { const d = Math.hypot(sp.x - px, sp.z - pz); if (d > sp.r && !(pl.sit && HY.seat === sp)) continue; const tx = spotText(sp); if (tx) offer(pl.sit && HY.seat === sp ? -1 : d, tx, () => spotAct(sp)); } }
     else { for (const sh of HY.shops) { const d = Math.hypot(sh.x - px, sh.z - pz); if (d < 2.2) offer(d, `<kbd>E</kbd> Do'konga kirish 🛒`, () => HY.enterShop(sh)); }
+      for (const s of FU.stations) { if (!s.kiosk || !pl.onFoot) continue; const d = Math.hypot(s.kiosk[0] - px, s.kiosk[1] - pz); if (d < 1.9) offer(d, `<kbd>E</kbd> Shoxobcha do'konchasi 🏪`, () => { pl.yaw = Math.atan2(s.x - px, s.z - pz) + Math.PI; game.ui.open('dokon', { kiosk: s.name }); }); }
       if (st.inv.canister > 0 && FU.uses() && FU.get() < 99) { const d = Math.hypot(car.p[0] - px, car.p[2] - pz) - car.spec.len / 2; if (d < 2.2) offer(d + 0.6, `<kbd>E</kbd> Kanistrdan yoqilg'i quyish ⛽ (${Math.round(FU.get())}%)`, () => pl.act('bend', 2.2, () => FU.canister())); } }
     if (pl.sit) offer(0, "<kbd>E</kbd> O'rnidan turish", stand);
   };
@@ -254,9 +267,9 @@ export function initHayot(game) {
   };
   HY.buy = (id) => { const it = SHOP2.find((q) => q[0] === id); if (!it || st.money < it[2]) return false; game.addMoney(-it[2], 'Do\'kon: ' + it[1]); give(id); sfx('buy'); return true; };
   ui.s_dokon = function (w, d, btn, x) {
-    x(); const gr = GREET[(HY.greetI = ((HY.greetI || 0) + 1)) % GREET.length];
-    const render = () => { w.innerHTML = `<h1>🛒 Do'kon <small>💰 ${som(st.money)} so'm · 💧 ${Math.round(st.thirst)}% · ⛽ ${FU.uses() ? Math.round(FU.get()) + '%' : '—'}</small></h1>
-      <div class="card" style="margin-bottom:10px;flex-direction:row;align-items:center;gap:12px"><div style="font-size:34px">🧔</div><div class="grow"><h4>Sotuvchi Hamid aka</h4><p>«${gr}»</p></div></div>
+    x(); const ki = d && d.kiosk, gr = ki ? KIOSK_GREET[(HY.greetI = ((HY.greetI || 0) + 1)) % KIOSK_GREET.length] : GREET[(HY.greetI = ((HY.greetI || 0) + 1)) % GREET.length];
+    const render = () => { w.innerHTML = `<h1>${ki ? `🏪 ${ki} do'konchasi` : "🛒 Do'kon"} <small>💰 ${som(st.money)} so'm · 💧 ${Math.round(st.thirst)}% · ⛽ ${FU.uses() ? Math.round(FU.get()) + '%' : '—'}</small></h1>
+      <div class="card" style="margin-bottom:10px;flex-direction:row;align-items:center;gap:12px"><div style="font-size:34px">${ki ? '🧑‍🔧' : '🧔'}</div><div class="grow"><h4>${ki ? 'Kassir Jasur' : 'Sotuvchi Hamid aka'}</h4><p>«${gr}»</p></div></div>
       <div class="grid2"><div>${SHOP2.slice(0, 3).map(([id, n, c]) => card(`<h4>${ITEMS[id][1]} ${n}</h4><p>Sizda: ${st.inv[id] || 0}${DRINK[id] > 0 ? ` · 💧 +${DRINK[id]}` : ''}${ITEMS[id][3] > 1 ? ` · 🍽 +${ITEMS[id][3]}` : ''}</p>`, `<button data-a="buy:${id}" ${st.money < c ? 'disabled' : ''}>${c} so'm</button>`)).join('')}</div>
       <div>${SHOP2.slice(3).map(([id, n, c]) => card(`<h4>${ITEMS[id][1]} ${n}</h4><p>Sizda: ${st.inv[id] || 0}${ITEMS[id][3] > 1 ? ` · 🍽 +${ITEMS[id][3]}` : ''}${id === 'canister' ? ' · istalgan joyda bakka quyiladi' : ''}</p>`, `<button data-a="buy:${id}" ${st.money < c ? 'disabled' : ''}>${c} so'm</button>`)).join('')}</div></div>
       <p class="sub" style="margin-top:8px">Ichimlikni <kbd>Y</kbd> bilan ichasiz (chanqagan bo'lsangiz avval ichimlik tanlanadi). Kanistr — transport yonida <kbd>E</kbd>.</p>`; };

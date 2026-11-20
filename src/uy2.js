@@ -48,7 +48,7 @@ export function initUy2(game) {
       LB.putF(I, g, gl, x0 + 1.1, -0.35, Math.PI / 2, (q) => F.bed(q, [0xb84a34, 0x3f7a4a, 0x8a54c8, 0xd08a2a, 0x3d74a6][lvl], frame), [0.8, 1.05, 0.6], o);
       LB.spot(I, 'bed', x0 + 1.1, -0.35 + 1.2, Math.PI, { bed: [x0 + 1.1, -0.35, Math.PI / 2], r: 1.1 });
       LB.putF(I, g, gl, x0 + 0.3, -0.35 - 1.1, Math.PI / 2, (q) => F.nightstand(q, frame), [0.2, 0.24, 0.6], o); LB.putF(I, g, gl, x0 + 0.3, -0.35 - 1.1, Math.PI / 2, (q, ql) => { q.translate(0, 0.56, 0); F.lantern(q, ql.translate(0, 0.56, 0)); }, null, o);
-      LB.putF(I, g, gl, x1 - 1.0, -B + 0.32, 0, (q) => F.wardrobe(q, 1.2, frame), [0.62, 0.3, 2], o); LB.spot(I, 'wardrobe', x1 - 1.0, -B + 0.95, 0, { r: 1.0 });
+      LB.putF(I, g, gl, x1 - 1.0, -B + 0.32, 0, (q) => F.wardrobe(q, 1.2, frame), [0.62, 0.3, 2], o); LB.spot(I, 'wardrobe', x1 - 1.0, -B + 0.95, Math.PI, { r: 1.0 }); // yuz shkafga: oynada kamera xonaga qaraydi (avval shkaf ichida qolardi)
       LB.putF(I, g, gl, cx + 0.3, 0.1, 0, (q) => F.rug(q, 2.0, 2.6, 0x8a3a5a, 0xf0b83a), null, o);
       LB.putF(I, g, gl, x1 - 0.5, B - 0.4, 0, (q) => F.plant(q, lvl >= 3), [0.2, 0.2, 1], o);
       LB.putF(I, g, gl, x0 + 0.06, 0.9, Math.PI / 2, (q) => { q.translate(0, 1.6, 0); F.frame(q, 0.8, 0.55, 0xa8d8a0); }, null, o);

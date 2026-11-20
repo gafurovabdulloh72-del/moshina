@@ -34,7 +34,8 @@
     "test:kurash": "node tools/shot.mjs tools/s_kurash.js",
     "test:daromad": "node tools/shot.mjs tools/s_daromad.js",
     "test:piyoda": "node tools/shot.mjs tools/s_piyoda.js",
-    "test:kocha": "node tools/shot.mjs tools/s_kocha.js"
+    "test:kocha": "node tools/shot.mjs tools/s_kocha.js",
+    "test:mebel": "node tools/shot.mjs tools/s_mebel.js"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

@@ -127,7 +127,7 @@ export function initBiznes(game) {
     // ichkarida
     const id = Object.keys(IX).find((k) => IX[k] && IN.cur() === IX[k]); if (id && INR[id]) { const R = INR[id], show = id !== 'dokon' || B.shopPid === 'bogiston';
       for (const { r, q } of R.g) { r.root.visible = show; if (show) { r.actDur = 4; poseRig(r, q[3] === 'eat' && (game.time % 9) > 5 ? 'eat' : q[3], dt, 0); if (q[3] === 'eat' && r.toolName !== ((game.time % 9) > 5 ? 'spoon' : null)) setTool(r, (game.time % 9) > 5 ? 'spoon' : null); } }
-      if (R.w) { R.w.root.visible = show && st.biz[id].staff > 0; if (R.w.root.visible) poseRig(R.w, Math.hypot(pl.p[0] - R.w.root.position.x, pl.p[2] - R.w.root.position.z) < 2.4 ? 'wave' : 'idle', dt, 0); } }
+      if (R.w) { R.w.root.visible = show && st.biz[id].staff > 0; if (R.w.root.visible) poseRig(R.w, Math.hypot(pl.p[0] - R.w.root.position.x, pl.p[2] - R.w.root.position.z) < 2.4 ? 'talk' : 'idle', dt, 0); } }
   });
   const ent0 = HY.enterShop; HY.enterShop = (sh) => { B.shopPid = sh.pid; ent0(sh); };
 

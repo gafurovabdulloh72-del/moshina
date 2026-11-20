@@ -449,6 +449,7 @@ export function initGame(game) {
     else if (site.lava) { const l = site.lava; if (Math.hypot(p[0] - l.x, p[2] - l.z) < l.r && p[1] < l.y + 2.2) { game.damage.engine = Math.max(0, game.damage.engine - 30); game.damage.zone.front = Math.max(0, game.damage.zone.front - 25); game.damage.apply(); game.fx.burst(30, p[0], p[1], p[2], 8, 1, 1.2, 0xff7a20, 1, 2, 4, 1); const v = site.places.vulqon; car.place(v.x, v.z, 0); game.prevP = car.p.slice(); game.cam.snap(); game.toast('Lavaga tushdingiz! Mashina kuydi.', 'bad'); game.audio.sfx('crash'); if (game.damage.engine <= 0 && !game.damage.wrecked) { game.damage.wrecked = true; game.onWreck(); } } }
     // manzilni aniqlash
     let np = null; for (const id in site.places) { const pl = site.places[id]; const d = Math.hypot(p[0] - pl.x, p[2] - pl.z); if (d < pl.r) { np = pl; break; } }
+    const ins = game.interior && game.interior.inside; if (ins) np = curPlace; else if (np === curPlace) game.curPlace = curPlace; // ichki makon (dengiz ustida) manzilni almashtirmaydi: chiqqanda nom qotib qolmaydi va manzil banneri qayta chiqmaydi
     if (np !== curPlace) { curPlace = game.curPlace = np; if (np) { if (!st.places[np.id]) { st.places[np.id] = 1; addMoney(150, 'Yangi manzil'); st.xp += 60; game.banner(np.id === 'uy' ? 'Bu — sizning uyingiz!' : 'Yangi manzil ochildi', `${np.name} · +150 so'm`, 'gold'); game.audio.sfx('medal'); game.save(); } else game.banner(np.name, '', 'place'); } }
     game.region = REGION[T.biomeAt(p[0], p[2])];
     // yaqin nuqta (E)
