@@ -109,7 +109,7 @@ export class UI {
     const kmh = Math.round(Math.abs(car.speed) * 3.6);
     this.set('h-money', som(st.money)); this.set('h-stars', g.totalStars() + '/' + g.maxStars); this.set('h-karma', Math.floor(st.karma));
     const lv = g.level(); if (this._lv !== lv) { if (this._lv && lv > this._lv) { this.banner('Yangi daraja!', g.levelName(), 'gold'); g.audio.sfx('win'); } this._lv = lv; this.$('h-lvl').innerHTML = `<small>${lv}-daraja</small> ${g.levelName()}`; }
-    if (this._foot !== foot) { this._foot = foot; this.$('h-spd').style.display = this.$('h-dmgp').style.display = foot ? 'none' : ''; this.$('h-foot').style.display = foot ? '' : 'none'; this.touch.classList.toggle('foot', foot); }
+    if (this._foot !== foot) { this._foot = foot; this.$('h-spd').style.display = this.$('h-dmgp').style.display = foot ? 'none' : ''; this.$('h-foot').style.display = foot ? '' : 'none'; this.touch.classList.toggle('foot', foot); this.hud.classList.toggle('foot', foot); }
     if (foot) { this.$('h-en').style.width = Math.round(st.energy) + '%'; this.$('h-sat').style.width = Math.round(st.sat) + '%'; const iv = st.inv, s = `🌱${iv.seed} 🍎${iv.fruit + iv.berry} 🌾${iv.hay} 🪵${iv.wood}`; this.set('h-inv', s); }
     else { this.set('h-speed', kmh); this.set('h-gear', car.reverse ? 'R' : car.bike && g.carModel.v.eng === 0 ? '·' : car.gear); this.set('h-vn', g.carModel.v.name);
       this.$('h-rpm').style.width = Math.round(car.rpm * 100) + '%'; this.$('h-nitro').style.width = Math.round(g.nitro * 100) + '%'; this.$('h-nb').className = 'bar nitro' + (car.nitroOn ? ' on' : ''); this.drawDmg(); }

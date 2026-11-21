@@ -334,3 +334,9 @@ html.touch .ph-list>div{min-height:48px}
 /* oyna yoki menyu ochiq bo'lsa sensorli boshqaruv tugmalari ko'rinmaydi (ular ostidan xiralashib turmasin) */
 html:has(#screen.on) #touch{display:none}
 html.touch .m-foot{display:none}
+/* telefonda ortiqcha detallar kamaytirilgan: tepada faqat Xarita·Kamera·Telefon·Menyu (Onlayn, Hafta, Surat — pauza menyusida ham bor),
+   haydashda «Avariya chirog'i» tugmasi ko'rinmaydi (piyodadagi Durbin — KeyZ — qoladi), «Harakatlar» ham yashirin, shikast paneli kichik ekranda chiqmaydi */
+#hud.touch .keys2 .ab[data-code=KeyO],#hud.touch .keys2 .ab[data-code=Digit6]{display:none}
+#hud.touch:not(.foot) .abar .ab[data-code=KeyZ]{display:none}
+#hud.touch .abar .ab[data-code=KeyB]{display:none}
+@media(max-width:900px),(max-height:560px){#hud.touch #h-dmgp{display:none!important}}
