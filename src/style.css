@@ -204,6 +204,10 @@ input[type=range]{width:200px;accent-color:var(--ac)}
 .onl-user b{display:block;font-size:17px}.onl-user small{display:block;color:var(--mut);font-size:12.5px}
 .onl-cloud{font-size:13px;color:#cfd6e6}.onl-note{font-size:12.5px;color:var(--mut)!important;margin:4px 0 0}.onl-err{color:var(--bad)!important;font-weight:700}.onl-wait{color:var(--ac)!important;font-weight:700}
 .onl-tg{min-height:46px;margin:6px 0}.onl-site b{color:var(--ac)}
+.onl-pass{display:flex;flex-direction:column;gap:8px;margin:10px 0;max-width:340px}
+.onl-pass input{padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(13,17,29,.6);color:#fff;font:inherit;font-size:15px}
+.onl-pass input:focus{outline:none;border-color:var(--ac)}
+.onl-pass .row{gap:8px}
 .onl-join input,.onl-sel{flex:1;min-width:0;font:inherit;font-weight:700;color:var(--tx);background:rgba(255,255,255,.08);border:1px solid var(--bd);border-radius:11px;padding:10px 12px;-webkit-user-select:text;user-select:text}
 .onl-join input{text-transform:uppercase;letter-spacing:2px}.onl-sel option{color:#141824}
 .onl-code-big{display:flex;align-items:baseline;gap:12px}.onl-code-big span{color:var(--mut);font-size:13px}.onl-code-big b{font-size:34px;letter-spacing:6px;color:var(--ac);font-family:ui-monospace,Menlo,Consolas,monospace}

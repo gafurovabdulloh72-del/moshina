@@ -825,7 +825,7 @@ Saytda (`https://cargame-self.vercel.app`) o'yin onlayn imkoniyatlarga ega: **Te
 
 | Imkoniyat | Qanday ishlaydi |
 |---|---|
-| Kirish | Bosh menyu yoki pauza → **🌐 Onlayn** (yoki **O**) → "Log in with Telegram" tugmasi. Telefon raqami yoki parol so'ralmaydi — Telegram o'zi tasdiqlaydi |
+| Kirish | Bosh menyu yoki pauza → **🌐 Onlayn** (yoki **O**). Ikki yo'l: **akkaunt** (login + parol — o'yinning o'zida ochiladi, "Yangi akkaunt ochish") yoki "Log in with Telegram" tugmasi (bot sozlangan bo'lsa). Login 3–20 belgi (lotin harf, raqam, _), parol kamida 4 belgi; parol serverda faqat scrypt xeshi bilan saqlanadi, tiklab berilmaydi |
 | Eski o'yinni ulash | Kirgan zahoti shu qurilmadagi o'yin hisobga biriktiriladi — **noldan boshlanmaydi**. Hisobda boshqa saqlov bo'lsa, ikkalasining puli, yulduzi, darajasi va o'ynalgan vaqti ko'rsatilib, qaysi biri davom etishi so'raladi |
 | Bulutli saqlov | O'yin har saqlanganda (ko'pi bilan 45 soniyada bir marta) va sahifa yopilganda bulutga yoziladi. Boshqa kompyuter yoki telefonda kirsangiz — o'sha o'yin ochiladi. Brauzerdagi saqlov ham qoladi |
 | Reyting | Onlayn → **🏆 Reyting**: yulduzlar, daraja va har bir poyga, drift/buzish zonasi, radar, tramplin bo'yicha eng yaxshi 20 sayyoh. Rekordlar o'zi yuboriladi |
@@ -890,7 +890,9 @@ Muhim qarorlar:
 
 Terminal kerak emas — hammasi brauzerda.
 
-**1. Telegram bot (kirish uchun)**
+**Eng qisqa yo'l:** faqat 2-qadamni (Upstash Redis) qiling — shunda **akkaunt (login-parol) bilan kirish**, bulutli saqlov va reyting ishlaydi (sessiya kaliti Redis tokenidan hosil qilinadi). Telegram bot — ixtiyoriy qo'shimcha.
+
+**1. Telegram bot (ixtiyoriy, Telegram tugmasi uchun)**
 
 1. Telegram'da **@BotFather** ni oching → `/newbot` → bot nomi (masalan, `SAFAR o'yini`) → bot manzili (`..._bot` bilan tugaydi, masalan `safar_oyin_bot`). BotFather **token** beradi (`1234567890:AA...`) — uni hech kimga ko'rsatmang.
 2. Shu yerda `/setdomain` → botingizni tanlang → `cargame-self.vercel.app` deb yozing. (Busiz kirish tugmasi "Bot domain invalid" deydi.)

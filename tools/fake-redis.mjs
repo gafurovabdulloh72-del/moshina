@@ -24,6 +24,7 @@ export async function startFakeRedis({ token = 'fake-token', port = 0 } = {}) {
       case 'ZREVRANK': { const i = sorted(a[0]).reverse().findIndex(([m]) => m === String(a[1])); return i < 0 ? null : i; }
       case 'ZSCORE': { const z = zs.get(a[0]); return z && z.has(String(a[1])) ? String(z.get(String(a[1]))) : null; }
       case 'HSET': { const h = H(a[0]); let n = 0; for (let i = 1; i < a.length; i += 2) { if (!h.has(String(a[i]))) n++; h.set(String(a[i]), String(a[i + 1])); } return n; }
+      case 'HSETNX': { const h = H(a[0]); if (h.has(String(a[1]))) return 0; h.set(String(a[1]), String(a[2])); return 1; }
       case 'HGET': { const h = hs.get(a[0]); return h && h.has(String(a[1])) ? h.get(String(a[1])) : null; }
       case 'HMGET': { const h = hs.get(a[0]); return a.slice(1).map((f) => (h && h.has(String(f)) ? h.get(String(f)) : null)); }
       default: throw new Error('ERR unknown command ' + cmd);

@@ -37,7 +37,7 @@ export function initNet(game) {
     try { net.cfg = await net.api('/api/config', { timeout: 7000 }); net.status = 'ok'; }
     catch (e) { net.status = 'off'; net.why = typeof navigator !== 'undefined' && navigator.onLine === false ? "Internet yo'q — onlayn imkoniyatlar vaqtincha ishlamaydi. O'yinni oddiy rejimda davom ettirishingiz mumkin." : "Onlayn server javob bermadi. Keyinroq qayta urinib ko'ring — oddiy o'yin ishlayveradi."; changed(); return; }
     const tok = ls.get(SKEY);
-    if (tok && net.cfg.login) {
+    if (tok && (net.cfg.login || net.cfg.pass)) {
       net.token = tok; net.user = jparse(ls.get(SKEY + ':user'), null);
       try { const r = await net.api('/api/auth'); net.user = r.user; ls.set(SKEY + ':user', JSON.stringify(r.user)); changed(); await net.syncSave(); }
       catch (e) { if (e.status === 401) net.logout(true); else changed(); }

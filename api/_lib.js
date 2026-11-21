@@ -39,10 +39,12 @@ export function clientIp(req) { const h = req.headers || {}; const xf = String(h
 // ---------- base64url va sessiya tokeni (HS256 JWT) ----------
 const b64u = (buf) => Buffer.from(buf).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
 const unb64u = (s) => Buffer.from(s.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
-// SESSION_SECRET berilmagan bo'lsa — bot tokenidan hosil qilinadi (egasi uchun bitta qadam kamroq); ikkalasi ham bo'lmasa — kirish o'chiq
+// SESSION_SECRET berilmagan bo'lsa — bot tokenidan, u ham bo'lmasa Redis tokenidan hosil qilinadi (egasi uchun kamroq qadam);
+// uchchalasi ham bo'lmasa — kirish o'chiq. Diqqat: manba token almashsa, eski sessiyalar bekor bo'ladi (qayta kirish kifoya)
 export function sessionSecret() {
   const s = env('SESSION_SECRET'); if (s) return s;
-  const bt = env('TELEGRAM_BOT_TOKEN'); return bt ? crypto.createHmac('sha256', 'safar-session-v1').update(bt).digest('hex') : '';
+  const src = env('TELEGRAM_BOT_TOKEN') || env('KV_REST_API_TOKEN') || env('UPSTASH_REDIS_REST_TOKEN');
+  return src ? crypto.createHmac('sha256', 'safar-session-v1').update(src).digest('hex') : '';
 }
 export function signToken(payload, secret, days = SESSION_DAYS) {
   const now = Math.floor(Date.now() / 1000), body = Object.assign({}, payload, { iat: now, exp: now + days * 86400 });

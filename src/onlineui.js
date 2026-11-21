@@ -34,7 +34,7 @@ const P = UI.prototype;
 P.s_online = function (w, d, btn, x) {
   const g = this.g, net = g.net, C = g.coop, VC = C.voice; d = d || {};
   if (d.back !== 'menu') x();
-  w.innerHTML = `<h1>Onlayn <small>do'stlar bilan birga</small></h1><p class="sub">Telegram orqali kiring — yutuqlaringiz bulutda saqlanadi. Xona oching va do'stlaringizni kod yoki havola bilan chaqiring (2–4 kishi): birga sayohat, birga poyga, chat.<br>Do'stingiz havolasi orqali kirsangiz — uning uyida yashaysiz va uni birga rivojlantirasiz.</p>`;
+  w.innerHTML = `<h1>Onlayn <small>do'stlar bilan birga</small></h1><p class="sub">Akkaunt bilan kiring — yutuqlaringiz bulutda saqlanadi va boshqa qurilmada ham ochiladi. Xona oching va do'stlaringizni kod yoki havola bilan chaqiring (2–4 kishi): birga sayohat, birga poyga, chat.<br>Do'stingiz havolasi orqali kirsangiz — uning uyida yashaysiz va uni birga rivojlantirasiz.</p>`;
   const grid = el('div', 'onl'); w.appendChild(grid);
   const acct = el('div', 'card onl-acct'), room = el('div', 'card onl-room'); grid.appendChild(acct); grid.appendChild(room);
   const foot = el('div', 'row'); foot.style.marginTop = '14px'; w.appendChild(foot);
@@ -64,16 +64,30 @@ P.s_online = function (w, d, btn, x) {
       r.appendChild(btn('Chiqish', () => net.logout(), 'sec')); acct.appendChild(r);
       return;
     }
-    if (!net.cfg.login) { acct.appendChild(el('p', '', "Telegram orqali kirish hali sozlanmagan (sayt egasi botni ulashi kerak). Do'stlar bilan mehmon sifatida o'ynash mumkin.")); return; }
-    acct.appendChild(el('p', '', "Telegram orqali kiring: hozirgi o'yiningiz <b>yo'qolmaydi</b> — u hisobingizga biriktiriladi va boshqa qurilmada ham davom etadi."));
-    const box = el('div', 'onl-tg'); acct.appendChild(box); net.widget(box);
-    acct.appendChild(el('p', 'onl-note', 'Tugma chiqmasa — sahifani yangilang yoki Telegram ilovasida tasdiqlang.'));
+    if (!net.cfg.login && !net.cfg.pass) { acct.appendChild(el('p', '', "Kirish hali sozlanmagan (sayt egasi bulut bazasini ulashi kerak). Do'stlar bilan mehmon sifatida o'ynash mumkin.")); return; }
+    acct.appendChild(el('p', '', "Kirsangiz hozirgi o'yiningiz <b>yo'qolmaydi</b> — u akkauntingizga biriktiriladi va boshqa qurilmada ham davom etadi."));
+    if (net.cfg.pass) { // ism-parol akkaunti (Telegram shart emas)
+      const f = el('form', 'onl-pass'); acct.appendChild(f);
+      f.innerHTML = `<input name="l" maxlength="20" placeholder="Login (masalan ali_2014)" autocomplete="username" spellcheck="false">
+        <input name="p" type="password" maxlength="64" placeholder="Parol" autocomplete="current-password">
+        <div class="row"><button type="submit" data-m="in">Kirish</button><button type="button" data-m="new" class="sec">Yangi akkaunt ochish</button></div>
+        <p class="onl-note">Login — lotin harf, raqam yoki _ (3–20 belgi). Parolni unutmang: tiklab bo'lmaydi.</p>`;
+      const go = (mode) => { const lg = f.l.value.trim(), ps = f.p.value; if (!lg || !ps) return g.toast('Login va parolni yozing', 'bad');
+        net.login({ type: 'pass', mode, login: lg, pass: ps }).catch((e) => g.toast(e.message || 'Kirish amalga oshmadi', 'bad')); };
+      f.onsubmit = (e) => { e.preventDefault(); go('in'); };
+      f.querySelector('[data-m=new]').onclick = () => go('new');
+    }
+    if (net.cfg.login) {
+      acct.appendChild(el('p', 'onl-note', net.cfg.pass ? 'Yoki Telegram orqali:' : 'Telegram orqali kiring:'));
+      const box = el('div', 'onl-tg'); acct.appendChild(box); net.widget(box);
+      acct.appendChild(el('p', 'onl-note', 'Tugma chiqmasa — sahifani yangilang yoki Telegram ilovasida tasdiqlang.'));
+    }
   };
   const renderRoom = () => {
     room.innerHTML = '<h4>🌐 Birga o\'ynash</h4>';
     if (net.status !== 'ok') { room.appendChild(el('p', '', net.status === 'wait' ? 'Kutilmoqda…' : "Onlayn rejim hozir mavjud emas. Bitta o'yinchi rejimi to'liq ishlaydi.")); return; }
     if (!C.room) {
-      room.appendChild(el('p', '', `Ismingiz: <b>${esc(C.myName())}</b>${net.user ? '' : ' <small>(Telegram orqali kirsangiz — haqiqiy ismingiz)</small>'}`));
+      room.appendChild(el('p', '', `Ismingiz: <b>${esc(C.myName())}</b>${net.user ? '' : " <small>(akkaunt bilan kirsangiz — haqiqiy ismingiz)</small>"}`));
       if (C.status === 'connecting' || C.status === 'error') room.appendChild(el('p', C.status === 'error' ? 'onl-err' : 'onl-wait', esc(C.msg)));
       const busy = C.status === 'connecting';
       const mk = btn("＋ Xona ochish", () => C.create().then((ok) => ok && C.enterPlay())); mk.disabled = busy; room.appendChild(mk);
@@ -151,7 +165,7 @@ P.s_top = function (w, d, btn, x) {
   const bar = el('div', 'row'); bar.innerHTML = `<select class="onl-sel">${opts.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('')}</select>`; w.appendChild(bar);
   const sel = bar.querySelector('select'); sel.value = this._topSel || 'stars';
   const body = el('div', 'onl-top'); w.appendChild(body);
-  if (!net.user) w.appendChild(el('p', 'onl-note', "Natijangiz reytingga tushishi uchun Telegram orqali kiring (Onlayn oynasi)."));
+  if (!net.user) w.appendChild(el('p', 'onl-note', "Natijangiz reytingga tushishi uchun akkaunt bilan kiring (Onlayn oynasi)."));
   if (back) { const r = el('div', 'row'); r.style.marginTop = '12px'; r.appendChild(btn('Orqaga', () => this.open(...back), 'sec')); w.appendChild(r); }
   const fmt = (kind, v) => (kind === 'race' ? fmtTime(v) : kind === 'radar' ? `${v} km/soat` : kind === 'jump' ? `${v} m` : kind === 'level' ? `${v}-daraja` : kind === 'stars' ? `★ ${v}` : `${som(v)} ochko`);
   const load = () => {

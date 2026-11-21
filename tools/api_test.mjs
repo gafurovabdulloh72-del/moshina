@@ -64,6 +64,26 @@ test('/api/auth — kirish, rad etish, sessiyani tekshirish', async () => {
   assert.equal((await login(1002, '<b>Ko\'k</b>')).user.name, "bKo'k/b");
 });
 
+test('/api/auth — ism-parol akkaunti: ochish, band login, kirish, xato parol', async () => {
+  const pa = (body, ip = '9.9.9.9') => call(auth, { method: 'POST', body: Object.assign({ type: 'pass' }, body), ip });
+  const r1 = (await pa({ mode: 'new', login: 'Ali_2014', pass: 'sirli4' })).json; // katta harf kichraytiriladi
+  assert.equal(r1.ok, true); assert.equal(r1.user.id, 'p:ali_2014'); assert.equal(r1.user.username, 'ali_2014'); assert.equal(r1.user.name, 'Ali_2014');
+  assert.equal((await call(auth, { token: r1.token })).json.user.id, 'p:ali_2014'); // sessiya ishlaydi
+  assert.equal((await pa({ mode: 'new', login: 'ali_2014', pass: 'boshqa' })).status, 409); // login band
+  assert.equal((await pa({ mode: 'in', login: 'ali_2014', pass: 'xato' })).status, 401); // parol xato
+  const r2 = (await pa({ mode: 'in', login: 'ALI_2014', pass: 'sirli4' })).json; assert.equal(r2.ok, true); assert.equal(r2.user.id, 'p:ali_2014');
+  assert.equal((await pa({ mode: 'in', login: 'yoq_odam', pass: 'sirli4' })).status, 401); // akkaunt yo'q
+  assert.equal((await pa({ mode: 'new', login: 'ab', pass: 'sirli4' })).status, 400); // login qisqa
+  assert.equal((await pa({ mode: 'new', login: 'to g ri', pass: 'sirli4' })).status, 400); // bo'shliq mumkin emas
+  assert.equal((await pa({ mode: 'new', login: 'parolsiz', pass: '12' })).status, 400); // parol qisqa
+  assert.equal(R.hs.get('names').get('p:ali_2014'), 'Ali_2014'); // reyting ismi yozildi
+  // shu akkaunt bilan bulutga saqlash ham ishlaydi
+  const p = await call(save, { method: 'PUT', token: r2.token, body: { save: { v: 2, money: 77, xp: 10, stars: {}, stats: { time: 60 } } } });
+  assert.equal(p.status, 200); assert.equal((await call(save, { token: r2.token })).json.save.money, 77);
+  // config endi pass bayrog'ini beradi
+  assert.equal((await call(config)).json.pass, true);
+});
+
 test('/api/save — saqlash, o\'qish, cheklovlar', async () => {
   const { token } = await login(2001, 'Malika');
   assert.equal((await call(save)).status, 401);

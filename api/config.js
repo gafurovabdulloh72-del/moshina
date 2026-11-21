@@ -11,6 +11,6 @@ export default wrap(async (req, res) => {
   if (turn) ice.push({ urls: turn.split(',').map((s) => s.trim()).filter(Boolean), username: env('TURN_USERNAME'), credential: env('TURN_CREDENTIAL') });
   let peer = null; // bo'sh — PeerJS'ning bepul ommaviy brokeri (0.peerjs.com)
   if (env('PEER_HOST')) peer = { host: env('PEER_HOST'), port: +env('PEER_PORT') || 443, path: env('PEER_PATH') || '/', secure: env('PEER_SECURE') !== '0', key: env('PEER_KEY') || 'peerjs' };
-  const login = !!(bot && env('TELEGRAM_BOT_TOKEN') && sessionSecret()), cloud = !!redisCfg();
-  send(res, 200, { ok: true, v: 1, bot: bot || null, login, save: cloud && login, top: cloud, peer, ice });
+  const login = !!(bot && env('TELEGRAM_BOT_TOKEN') && sessionSecret()), cloud = !!redisCfg(), pass = !!(cloud && sessionSecret()); // pass — ism-parol akkaunti (bot shart emas)
+  send(res, 200, { ok: true, v: 1, bot: bot || null, login, pass, save: cloud && (login || pass), top: cloud, peer, ice });
 });
