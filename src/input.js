@@ -51,6 +51,7 @@ export class Input {
       break;
     }
     if (t.gas) thr = Math.max(thr, t.gas); if (t.brake) brk = Math.max(brk, t.brake);
+    if (t.auto && !brk) thr = Math.max(thr, 1); // avto-gaz (telefon, sozlamalardan): tormoz bosilmaganda gaz o'zi bosiladi
     if (t.steer) st = t.steer; if (t.hand) hb = true; if (t.nitro) ni = true;
     if (t.jx) st = -t.jx; if (t.jy < 0) thr = Math.max(thr, -t.jy); if (t.jy > 0) brk = Math.max(brk, t.jy);
     if (!this.enabled) { thr = 0; brk = 0; st = 0; hb = false; ni = false; }

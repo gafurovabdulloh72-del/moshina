@@ -25,7 +25,7 @@ const ICON = { sheep: 0xf6f3ea, shell: 0xffc8d8, mush: 0xfff2d0, oar: 0xc79a66, 
 
 function defState() {
   return { v: 2, money: 300, xp: 0, stars: {}, best: {}, up: { engine: 0, nitro: 0, tires: 0, susp: 0, armor: 0, brake: 0 }, paint: 'qizil', paints: ['qizil'], coins: [], chests: [], places: {},
-    stats: { dist: 0, top: 0, jump: 0, smashed: 0, crashes: 0, time: 0, drift: 0, air: 0, walk: 0 }, set: { vol: 0.8, music: true, gfx: 2, damage: true, ui: 100 }, hour: 9.5, pos: null, dmg: null, fresh: true,
+    stats: { dist: 0, top: 0, jump: 0, smashed: 0, crashes: 0, time: 0, drift: 0, air: 0, walk: 0 }, set: { vol: 0.8, music: true, gfx: 2, damage: true, ui: 100, ctl: 'btn', autogas: false }, hour: 9.5, pos: null, dmg: null, fresh: true, // ctl — sensorli boshqaruv: 'btn' (tugmalar) yoki 'joy' (joystik); autogas — telefonda gaz avtomatik
     veh: { own: ['jip', 'velo'], cur: 'jip', dmg: {}, paint: {}, col: {}, fin: {}, tone: {}, tyre: {}, tyres: {} }, foot: null, // col/fin/tone — bo'yoq ustaxonasi (istalgan rang, qoplama, ikkinchi rang), tyre/tyres — shina to'plami va sotib olinganlari (boyoq.js); hammasi transport bo'yicha
     inv: { seed: 3, sapling: 0, fruit: 0, berry: 0, veg: 0, bread: 1, mush: 0, shell: 0, flower: 0, wood: 0, hay: 0, fish: 0, bigfish: 0, egg: 0, ore: 0, gem: 0, kit: 0, water: 1, juice: 0, sweets: 0, snack: 0, canister: 0, friedfish: 0, kabob: 0, soup: 0, omlet: 0, salad: 0, dimlama: 0, tea: 0 },
     tools: {}, hats: [], hat: null, karma: 0, sat: 100, energy: 100,

@@ -80,7 +80,14 @@ export class UI {
     const tc = (this.touch = el('div')); tc.id = 'touch'; this.root.appendChild(tc);
     const t = inp.touch;
     const tb = (txt, cls, style, on, off) => { const b = el('div', 'tb ' + cls, txt); b.style.cssText = style; const dn = (e) => { e.preventDefault(); b.classList.add('act'); on(); }, up = (e) => { e.preventDefault(); b.classList.remove('act'); off(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); tc.appendChild(b); };
-    tb('▲', 'pedal', 'right:22px', () => (t.gas = 1), () => (t.gas = 0)); tb('▼', 'pedal', 'right:112px', () => (t.brake = 1), () => (t.brake = 0));
+    tb('▲', 'pedal', '', () => (t.gas = 1), () => (t.gas = 0)); tb('▼', 'pedal', '', () => (t.brake = 1), () => (t.brake = 0)); // joylashuv to'liq style.css'da (yotiqda yonma-yon, tikda ustma-ust)
+    // tugmali boshqaruv (standart): haydashda chapda ◀ ▶ rul, piyodada to'liq yo'nalish tugmalari (↑ ◀ ▼ ▶). t.jx/jy joystik bilan bir xil kanal
+    const dir = { l: 0, r: 0, u: 0, d: 0 }, dsync = () => { t.jx = dir.r - dir.l; t.jy = dir.d - dir.u; };
+    const steer = el('div'); steer.id = 'steer'; tc.appendChild(steer);
+    const dp = el('div'); dp.id = 'dp'; tc.appendChild(dp);
+    const db = (box, txt, cls, k, v) => { const b = el('div', 'tb ' + cls, txt); const dn = (e) => { e.preventDefault(); b.classList.add('act'); dir[k] = v; dsync(); }, up = (e) => { e.preventDefault(); b.classList.remove('act'); dir[k] = 0; dsync(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); box.appendChild(b); };
+    db(steer, '◀', 'sl', 'l', 1); db(steer, '▶', 'sr', 'r', 1);
+    db(dp, '▲', 'dpu', 'u', 1); db(dp, '◀', 'dpl', 'l', 1); db(dp, '▼', 'dpd', 'd', 1); db(dp, '▶', 'dpr', 'r', 1);
     const joy = el('div', 'joy'), knob = el('i'); joy.appendChild(knob); tc.appendChild(joy);
     let jid = null, jx = 0, jy = 0;
     const jmove = (e) => { const r = joy.getBoundingClientRect(), R = r.width / 2; let dx = e.clientX - r.left - R, dy = e.clientY - r.top - R; const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
@@ -89,7 +96,9 @@ export class UI {
     joy.addEventListener('pointermove', (e) => { if (e.pointerId === jid) jmove(e); });
     const jend = (e) => { if (e.pointerId !== jid) return; jid = null; t.jx = t.jy = 0; knob.style.transform = ''; joy.classList.remove('act'); };
     joy.addEventListener('pointerup', jend); joy.addEventListener('pointercancel', jend);
-    this.touchOn = () => { tc.classList.add('on'); hud.classList.add('touch'); document.documentElement.classList.add('touch'); };
+    this.touchOn = () => { tc.classList.add('on'); hud.classList.add('touch'); document.documentElement.classList.add('touch'); this.applyCtl(); };
+    // boshqaruv turi: tugmalar (standart) yoki joystik — Sozlamalardan almashtiriladi; avto-gaz bayrog'i ham shu yerda sinxronlanadi
+    this.applyCtl = () => { const s = this.g.state.set, j = s.ctl === 'joy'; tc.classList.toggle('joyctl', j); inp.touch.auto = !!s.autogas; if (!j) { t.jx = t.jy = 0; knob.style.transform = ''; } else { dir.l = dir.r = dir.u = dir.d = 0; dsync(); } };
     addEventListener('touchstart', this.touchOn, { once: true, passive: true });
   }
   // Interfeysni yashirish (surat rejimi) — hech qachon "yo'qolib qolmaydi": yozuv turadi va 20 soniyadan keyin o'zi qaytadi
@@ -263,6 +272,10 @@ export class UI {
     row('Transport shikastlanishi', tgl(() => s.damage !== false, (v) => { s.damage = v; g.applyUpgrades(); }));
     const QN = ['Past (tez)', "O'rta", 'Yuqori (eng chiroyli)'];
     const q = btn(QN[s.gfx], () => { s.gfx = (s.gfx + 1) % 3; q.textContent = QN[s.gfx]; g.applyQuality(); }, 'sec'); row('Grafika sifati', q);
+    if (document.documentElement.classList.contains('touch')) { // faqat sensorli ekranda ko'rinadi
+      const cb = btn(s.ctl === 'joy' ? 'Joystik' : 'Tugmalar', () => { s.ctl = s.ctl === 'joy' ? 'btn' : 'joy'; cb.textContent = s.ctl === 'joy' ? 'Joystik' : 'Tugmalar'; this.applyCtl(); }, 'sec'); row('Sensorli boshqaruv', cb);
+      row('Avto-gaz (gaz o\'zi bosiladi)', tgl(() => !!s.autogas, (v) => { s.autogas = v; this.applyCtl(); }));
+    }
     w.appendChild(el('p', 'sub', "O'yin sekinlashsa, grafika sifatini pasaytiring. Aniqlik avtomatik moslashadi."));
     w.appendChild(btn('Tayyor', () => { g.save(); this.open(d.back); }));
   }
@@ -423,7 +436,7 @@ export class UI {
   s_map(w, d, btn, x) {
     const g = this.g, st = g.state, pl = g.player, me = pl.onFoot ? pl.p : g.car.p, myYaw = pl.onFoot ? pl.yaw : g.car.yaw; x();
     w.innerHTML = `<h1>Xarita <small>bosib GPS belgilang</small></h1>`;
-    const grid = el('div'); grid.style.cssText = 'display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px'; w.appendChild(grid);
+    const grid = el('div', 'mapgrid'); w.appendChild(grid); // joylashuv style.css'da (telefonda bitta ustun: xarita katta, izoh pastda)
     const cv = el('canvas'); cv.id = 'mapc'; cv.width = cv.height = 1200; grid.appendChild(cv);
     const side = el('div'); grid.appendChild(side);
     side.innerHTML = `<div class="legend"><div><i style="background:#ffc83a"></i>E'lonlar taxtasi</div><div><i style="background:#4fb0ff"></i>Ustaxona va salon</div><div><i style="background:#5fd38a"></i>Mening uyim</div><div><i style="background:#ff6a55"></i>Tezlik radari</div><div><i style="background:#b07cff"></i>Tramplin</div><div><i style="background:#ffe14a"></i>Yo'lovchi kutmoqda</div><div><i style="background:#ff8a3a"></i>Mening bayrog'im</div><div><i style="background:#35d6c8"></i>Qayiq ijarasi</div><div><i style="background:#c58bff"></i>Deltaplan</div><div><i style="background:#35e0ff"></i>GPS marshruti</div></div><div id="mapinfo" style="margin-top:12px"></div>`;
