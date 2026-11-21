@@ -103,16 +103,12 @@ input[type=range]{width:200px;accent-color:var(--ac)}
 .tb{position:absolute;width:74px;height:74px;border-radius:50%;background:rgba(18,22,34,.5);border:2px solid rgba(255,255,255,.35);color:#fff;font-size:24px;font-weight:900;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none}
 .tb.act{background:rgba(255,200,58,.6)}
 #touch.foot .pedal{display:none}
-/* chap pastda boshqaruv: standart — TUGMALAR (haydashda ◀ ▶ rul, piyodada ↑ ◀ ▼ ▶); sozlamalarda joystik tanlansa .joyctl */
+/* chap pastda boshqaruv: haydashda ◀ ▶ rul tugmalari (standart; sozlamalarda joystik tanlansa .joyctl), piyodada esa doim joystik */
 #steer{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;pointer-events:none}
 #steer .tb{position:static;width:96px;height:84px;border-radius:20px;font-size:30px}
-#dp{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,66px);grid-template-rows:66px 66px;gap:8px;pointer-events:none}
-#dp .tb{position:static;width:66px;height:66px;border-radius:18px;font-size:24px}
-#dp .dpu{grid-area:1/2}#dp .dpl{grid-area:2/1}#dp .dpd{grid-area:2/2}#dp .dpr{grid-area:2/3}
-#touch:not(.foot) #dp{display:none}#touch.foot #steer{display:none}
-#touch.joyctl #dp,#touch.joyctl #steer{display:none}
+#touch.foot #steer,#touch.joyctl #steer{display:none}
 .joy{position:absolute;left:30px;bottom:30px;width:136px;height:136px;border-radius:50%;background:rgba(18,22,34,.35);border:2px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none;display:none}
-#touch.joyctl .joy{display:block}
+#touch.foot .joy,#touch.joyctl .joy{display:block}
 .joy i{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 3px 10px rgba(0,0,0,.35)}
 .joy.act{border-color:rgba(255,200,58,.8)}.joy.act i{background:rgba(255,200,58,.85)}
 /* amal tugmalari: pastki markazda (vaziyatga qarab) va yuqori o'ngda (umumiy) — klaviatura bilan bir xil ishlaydi */
@@ -141,7 +137,7 @@ input[type=range]{width:200px;accent-color:var(--ac)}
 #touch .pedal{right:calc(16px + env(safe-area-inset-right,0px))}
 #touch .pedal+.pedal{right:calc(112px + env(safe-area-inset-right,0px))}
 #hud.touch .br{right:12px;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:scale(.8);transform-origin:right bottom}
-@media(max-height:560px){#touch .pedal{width:72px;height:72px}#touch .pedal+.pedal{right:calc(98px + env(safe-area-inset-right,0px))}#hud.touch .bl{transform:scale(.5)}.joy{left:22px;bottom:22px;width:120px;height:120px}#steer .tb{width:84px;height:76px}#dp{grid-template-columns:repeat(3,58px);grid-template-rows:58px 58px;gap:6px}#dp .tb{width:58px;height:58px}}
+@media(max-height:560px){#touch .pedal{width:72px;height:72px}#touch .pedal+.pedal{right:calc(98px + env(safe-area-inset-right,0px))}#hud.touch .bl{transform:scale(.5)}.joy{left:22px;bottom:22px;width:120px;height:120px}#steer .tb{width:84px;height:76px}}
 @media(max-width:520px){#hud.touch .bcol{width:calc(100vw - 24px);bottom:326px}#hud.touch .bl{top:146px}}
 #photo{pointer-events:auto;cursor:pointer}
 /* ===== v2 ===== */

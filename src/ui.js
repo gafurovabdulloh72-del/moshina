@@ -81,13 +81,11 @@ export class UI {
     const t = inp.touch;
     const tb = (txt, cls, style, on, off) => { const b = el('div', 'tb ' + cls, txt); b.style.cssText = style; const dn = (e) => { e.preventDefault(); b.classList.add('act'); on(); }, up = (e) => { e.preventDefault(); b.classList.remove('act'); off(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); tc.appendChild(b); };
     tb('▲', 'pedal', '', () => (t.gas = 1), () => (t.gas = 0)); tb('▼', 'pedal', '', () => (t.brake = 1), () => (t.brake = 0)); // joylashuv to'liq style.css'da (yotiqda yonma-yon, tikda ustma-ust)
-    // tugmali boshqaruv (standart): haydashda chapda ◀ ▶ rul, piyodada to'liq yo'nalish tugmalari (↑ ◀ ▼ ▶). t.jx/jy joystik bilan bir xil kanal
-    const dir = { l: 0, r: 0, u: 0, d: 0 }, dsync = () => { t.jx = dir.r - dir.l; t.jy = dir.d - dir.u; };
+    // haydashda chapda ◀ ▶ rul tugmalari (standart); piyodada esa joystik qoladi — yurish uchun u qulayroq
+    const dir = { l: 0, r: 0 }, dsync = () => { t.jx = dir.r - dir.l; };
     const steer = el('div'); steer.id = 'steer'; tc.appendChild(steer);
-    const dp = el('div'); dp.id = 'dp'; tc.appendChild(dp);
-    const db = (box, txt, cls, k, v) => { const b = el('div', 'tb ' + cls, txt); const dn = (e) => { e.preventDefault(); b.classList.add('act'); dir[k] = v; dsync(); }, up = (e) => { e.preventDefault(); b.classList.remove('act'); dir[k] = 0; dsync(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); box.appendChild(b); };
-    db(steer, '◀', 'sl', 'l', 1); db(steer, '▶', 'sr', 'r', 1);
-    db(dp, '▲', 'dpu', 'u', 1); db(dp, '◀', 'dpl', 'l', 1); db(dp, '▼', 'dpd', 'd', 1); db(dp, '▶', 'dpr', 'r', 1);
+    const db = (box, txt, cls, k) => { const b = el('div', 'tb ' + cls, txt); const dn = (e) => { e.preventDefault(); b.classList.add('act'); dir[k] = 1; dsync(); }, up = (e) => { e.preventDefault(); b.classList.remove('act'); dir[k] = 0; dsync(); }; b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); box.appendChild(b); };
+    db(steer, '◀', 'sl', 'l'); db(steer, '▶', 'sr', 'r');
     const joy = el('div', 'joy'), knob = el('i'); joy.appendChild(knob); tc.appendChild(joy);
     let jid = null, jx = 0, jy = 0;
     const jmove = (e) => { const r = joy.getBoundingClientRect(), R = r.width / 2; let dx = e.clientX - r.left - R, dy = e.clientY - r.top - R; const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
@@ -98,7 +96,7 @@ export class UI {
     joy.addEventListener('pointerup', jend); joy.addEventListener('pointercancel', jend);
     this.touchOn = () => { tc.classList.add('on'); hud.classList.add('touch'); document.documentElement.classList.add('touch'); this.applyCtl(); };
     // boshqaruv turi: tugmalar (standart) yoki joystik — Sozlamalardan almashtiriladi; avto-gaz bayrog'i ham shu yerda sinxronlanadi
-    this.applyCtl = () => { const s = this.g.state.set, j = s.ctl === 'joy'; tc.classList.toggle('joyctl', j); inp.touch.auto = !!s.autogas; if (!j) { t.jx = t.jy = 0; knob.style.transform = ''; } else { dir.l = dir.r = dir.u = dir.d = 0; dsync(); } };
+    this.applyCtl = () => { const s = this.g.state.set, j = s.ctl === 'joy'; tc.classList.toggle('joyctl', j); inp.touch.auto = !!s.autogas; t.jx = t.jy = 0; knob.style.transform = ''; dir.l = dir.r = 0; };
     addEventListener('touchstart', this.touchOn, { once: true, passive: true });
   }
   // Interfeysni yashirish (surat rejimi) — hech qachon "yo'qolib qolmaydi": yozuv turadi va 20 soniyadan keyin o'zi qaytadi
